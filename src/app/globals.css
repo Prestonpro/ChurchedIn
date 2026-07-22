@@ -1,0 +1,125 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ */
+/*  Church LinkedIn (working name) — design tokens                     */
+/*  A calm, professional-but-warm system: deep indigo brand color on a  */
+/*  soft neutral paper, distinct from both stark "LinkedIn blue" and    */
+/*  the terracotta warmth of the sibling launch-kit app.                */
+/* ------------------------------------------------------------------ */
+
+@theme {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #f6f7fc;
+  --color-surface: #ffffff;
+  --color-line: #e4e7f2;
+  --color-line-strong: #c7ccdf;
+
+  --color-ink: #14172a;
+  --color-ink-soft: #3a3f5c;
+  --color-ink-muted: #6b7094;
+  --color-ink-faint: #9298b8;
+
+  /* Brand — deep indigo */
+  --color-brand-50: #eef0fc;
+  --color-brand-100: #dde1f8;
+  --color-brand-200: #b7bfef;
+  --color-brand-300: #8f9ce4;
+  --color-brand-400: #6273d8;
+  --color-brand-500: #4055c9;
+  --color-brand-600: #3243ab;
+  --color-brand-700: #28368a;
+  --color-brand-800: #202b6d;
+  --color-brand-900: #1a234f;
+
+  /* Accent — warm coral, for mentor/connection surfaces + CTA highlight */
+  --color-accent-50: #fdf1ed;
+  --color-accent-100: #fbdfd4;
+  --color-accent-300: #ef9d85;
+  --color-accent-500: #de6640;
+  --color-accent-600: #bf4b2a;
+  --color-accent-700: #983b21;
+
+  --color-success: #157a4c;
+  --color-success-soft: #e2f4ea;
+  --color-warning: #9c6408;
+  --color-warning-soft: #fbf0d9;
+  --color-danger: #b13527;
+  --color-danger-soft: #fbe6e2;
+
+  /* Event category family — distinct hues at matched lightness/chroma so
+     they read as one coherent set rather than random accents. */
+  --color-cat-dinner: #b45309;
+  --color-cat-dinner-soft: #fdf1e0;
+  --color-cat-mentorship: #bf4b2a;
+  --color-cat-mentorship-soft: #fdf1ed;
+  --color-cat-coffee: #78350f;
+  --color-cat-coffee-soft: #fbf0e6;
+  --color-cat-study: #1d4ed8;
+  --color-cat-study-soft: #e9eefd;
+  --color-cat-cultural: #7e22ce;
+  --color-cat-cultural-soft: #f5ecfd;
+  --color-cat-airport: #475569;
+  --color-cat-airport-soft: #edeff3;
+  --color-cat-holiday: #be185d;
+  --color-cat-holiday-soft: #fde7f0;
+  --color-cat-other: #4b5065;
+  --color-cat-other-soft: #eceef4;
+
+  --radius-lg: 0.625rem;
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.25rem;
+
+  --shadow-soft: 0 1px 2px rgba(20, 23, 42, 0.05);
+  --shadow-card: 0 1px 2px rgba(20, 23, 42, 0.04), 0 8px 24px rgba(20, 23, 42, 0.06);
+  --shadow-lifted: 0 16px 40px rgba(20, 23, 42, 0.16);
+  --shadow-brand-glow: 0 8px 28px rgba(64, 85, 201, 0.28);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-paper);
+    color: var(--color-ink-soft);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, h4 {
+    color: var(--color-ink);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+  }
+
+  a {
+    color: inherit;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-200);
+    color: var(--color-brand-800);
+  }
+}
+
+@layer utilities {
+  /* Soft directional mesh used behind the landing hero — subtle, not decorative noise. */
+  .bg-hero-mesh {
+    background-image:
+      radial-gradient(60% 50% at 15% 0%, color-mix(in srgb, var(--color-brand-100) 70%, transparent) 0%, transparent 100%),
+      radial-gradient(50% 40% at 100% 10%, color-mix(in srgb, var(--color-accent-100) 60%, transparent) 0%, transparent 100%);
+  }
+
+  .transition-brand {
+    transition-property: color, background-color, border-color, box-shadow, transform, opacity;
+    transition-duration: 180ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
