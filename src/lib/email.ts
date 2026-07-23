@@ -8,11 +8,10 @@ export type EmailMessage = {
 
 /**
  * Sends a transactional email. In local development (no RESEND_API_KEY set)
- * this just logs to the console so every flow — verification, RSVP
- * confirmations, connection requests — is testable without a real email
- * account. Swap the body of this function for a Resend (or other provider)
- * call in production; every call site in this app goes through here, so
- * that's the only file that needs to change.
+ * this just logs to the console so every flow — RSVP confirmations, waitlist
+ * promotions, mentor connection requests — is testable without a real email
+ * account. Every call site in this app goes through here, so this is the
+ * only file that needs to change to swap providers.
  */
 export async function sendEmail(message: EmailMessage): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;

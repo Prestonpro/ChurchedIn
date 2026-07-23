@@ -73,17 +73,17 @@ export function EventForm() {
           label="Volunteer capacity"
           name="volunteerCap"
           type="number"
-          min={1}
+          min={0}
           icon={HandHeart}
-          hint="Leave blank for no limit."
+          hint="0 = no helpers needed. Leave blank for no limit."
         />
         <Field
           label="Student capacity"
           name="studentCap"
           type="number"
-          min={1}
+          min={0}
           icon={GraduationCap}
-          hint="Leave blank for no limit."
+          hint="0 = no attendees needed. Leave blank for no limit."
         />
       </div>
 

@@ -9,7 +9,6 @@ import { LinkButton } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { appUrl } from "@/lib/email";
 import { ROLES, type EventCategory } from "@/lib/constants";
 
 function StatCard({
@@ -98,7 +97,7 @@ export default async function AdminDashboardPage() {
           <code className="rounded-lg bg-paper px-4 py-2.5 text-lg font-bold tracking-[0.3em] text-brand-700">
             {church?.joinCode}
           </code>
-          <CopyButton text={appUrl(`/join/${church?.joinCode}`)} label="Copy invite link" />
+          <CopyButton text={church?.joinCode ?? ""} label="Copy code" />
         </div>
       </Card>
 

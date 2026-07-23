@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { SquaresFour, CalendarBlank, Flag, UserCircle, UsersThree, SignOut } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, SignOut } from "@phosphor-icons/react/dist/ssr";
 import type { CurrentUser } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { logoutAction } from "@/lib/actions/auth";
@@ -8,26 +8,26 @@ import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
 
 function navLinksForRole(role: string): NavLink[] {
-  const events = { href: "/events", label: "Events", icon: CalendarBlank };
+  const events: NavLink = { href: "/events", label: "Events", iconKey: "events" };
   if (role === ROLES.CHURCH_ADMIN) {
     return [
-      { href: "/admin/dashboard", label: "Dashboard", icon: SquaresFour },
+      { href: "/admin/dashboard", label: "Dashboard", iconKey: "dashboard" },
       events,
-      { href: "/admin/reports", label: "Reports", icon: Flag },
+      { href: "/admin/reports", label: "Reports", iconKey: "reports" },
     ];
   }
   if (role === ROLES.VOLUNTEER) {
     return [
-      { href: "/volunteer/dashboard", label: "Dashboard", icon: SquaresFour },
+      { href: "/volunteer/dashboard", label: "Dashboard", iconKey: "dashboard" },
       events,
-      { href: "/volunteer/profile", label: "My profile", icon: UserCircle },
+      { href: "/volunteer/profile", label: "My profile", iconKey: "profile" },
     ];
   }
   return [
-    { href: "/student/dashboard", label: "Dashboard", icon: SquaresFour },
+    { href: "/student/dashboard", label: "Dashboard", iconKey: "dashboard" },
     events,
-    { href: "/student/mentors", label: "Mentors", icon: UsersThree },
-    { href: "/student/profile", label: "My profile", icon: UserCircle },
+    { href: "/student/mentors", label: "Mentors", iconKey: "mentors" },
+    { href: "/student/profile", label: "My profile", iconKey: "profile" },
   ];
 }
 

@@ -86,6 +86,7 @@ export default async function EventDetailPage({
                   eventId={event.id}
                   currentStatus={(myRsvp?.status as typeof RSVP_STATUS[keyof typeof RSVP_STATUS]) ?? null}
                   roleLabel={roleBucket === RSVP_ROLE.HELPER ? "helper" : "attendee"}
+                  cap={roleBucket === RSVP_ROLE.HELPER ? event.volunteerCap : event.studentCap}
                 />
               </div>
             )}

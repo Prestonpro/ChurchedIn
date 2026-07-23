@@ -4,8 +4,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { createSessionToken, setSessionCookie, clearSessionCookie } from "@/lib/session";
-import { generateJoinCode, generateToken } from "@/lib/codes";
-import { sendEmail, appUrl } from "@/lib/email";
+import { generateJoinCode } from "@/lib/codes";
 import { requireUser } from "@/lib/auth";
 import { ROLES, type Role } from "@/lib/constants";
 import {
@@ -14,8 +13,6 @@ import {
   loginSchema,
   firstIssueMessage,
 } from "@/lib/validation";
-
-const VERIFICATION_TOKEN_TTL_MS = 1000 * 60 * 60 * 24; // 24 hours
 
 function dashboardPathForRole(role: Role): string {
   switch (role) {
@@ -26,24 +23,6 @@ function dashboardPathForRole(role: Role): string {
     case ROLES.STUDENT:
       return "/student/dashboard";
   }
-}
-
-async function issueVerificationEmail(userId: string, email: string) {
-  const token = generateToken();
-  await prisma.emailVerificationToken.create({
-    data: {
-      token,
-      userId,
-      expiresAt: new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS),
-    },
-  });
-  await sendEmail({
-    to: email,
-    subject: "Verify your email",
-    body: `Confirm your email address to start RSVPing to events and messaging mentors:\n\n${appUrl(
-      `/verify/${token}`,
-    )}\n\nThis link expires in 24 hours.`,
-  });
 }
 
 export type ActionResult = { error: string } | void;
@@ -89,8 +68,6 @@ export async function createChurchAction(
     return { user, church };
   });
 
-  await issueVerificationEmail(user.id, user.email);
-
   const token = await createSessionToken({ userId: user.id, activeChurchId: church.id });
   await setSessionCookie(token);
 
@@ -133,8 +110,6 @@ export async function joinChurchAction(
     });
     return user;
   });
-
-  await issueVerificationEmail(user.id, user.email);
 
   const token = await createSessionToken({ userId: user.id, activeChurchId: church.id });
   await setSessionCookie(token);
@@ -195,16 +170,4 @@ export async function switchChurchAction(churchId: string) {
   const token = await createSessionToken({ userId: user.id, activeChurchId: churchId });
   await setSessionCookie(token);
   redirect(dashboardPathForRole(membership.role as Role));
-}
-
-export async function verifyEmailAction(token: string): Promise<{ error?: string }> {
-  const record = await prisma.emailVerificationToken.findUnique({ where: { token } });
-  if (!record || record.expiresAt < new Date()) {
-    return { error: "That verification link is invalid or has expired." };
-  }
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: record.userId }, data: { emailVerified: true } }),
-    prisma.emailVerificationToken.deleteMany({ where: { userId: record.userId } }),
-  ]);
-  return {};
 }

@@ -51,8 +51,10 @@ export const eventSchema = z.object({
   endsAt: z.string().min(1, "Choose an end time"),
   location: z.string().trim().min(1, "Enter a location").max(300),
   isVirtual: z.boolean().default(false),
-  volunteerCap: z.number().int().positive().optional().nullable(),
-  studentCap: z.number().int().positive().optional().nullable(),
+  // 0 is valid — "this event needs no helpers/attendees of this kind" —
+  // distinct from leaving it blank, which means uncapped.
+  volunteerCap: z.number().int().nonnegative().optional().nullable(),
+  studentCap: z.number().int().nonnegative().optional().nullable(),
 });
 
 export const mentorProfileSchema = z.object({

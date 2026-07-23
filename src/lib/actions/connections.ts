@@ -19,9 +19,6 @@ export async function requestConnectionAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (!user.emailVerified) {
-    return { error: "Verify your email before contacting mentors." };
-  }
   if (user.activeMembership?.role !== ROLES.STUDENT) {
     return { error: "Only students can send mentor connection requests." };
   }

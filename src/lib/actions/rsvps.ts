@@ -20,9 +20,6 @@ function roleBucketFor(membershipRole: string): RsvpRole | null {
 
 export async function rsvpToEventAction(eventId: string): Promise<ActionResult> {
   const user = await requireUser();
-  if (!user.emailVerified) {
-    return { error: "Verify your email before RSVPing." };
-  }
 
   const event = await prisma.event.findUnique({ where: { id: eventId } });
   if (!event || event.status !== EVENT_STATUS.PUBLISHED) {

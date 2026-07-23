@@ -9,5 +9,8 @@ export default defineConfig({
   },
   test: {
     environment: "node",
+    // e2e/ contains Playwright specs (run via `npm run test:e2e`), not Vitest
+    // unit tests — Vitest's default glob would otherwise also pick them up.
+    exclude: ["**/node_modules/**", "e2e/**"],
   },
 });

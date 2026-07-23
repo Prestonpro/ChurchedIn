@@ -69,14 +69,13 @@ model Church {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  passwordHash  String
-  name          String
-  photoUrl      String?
-  bio           String?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  photoUrl     String?
+  bio          String?
+  createdAt    DateTime @default(now())
 
   memberships          Membership[]
   mentorProfile        MentorProfile?
@@ -89,18 +88,6 @@ model User {
   reportsReceived      Report[]           @relation("ReportsReceived")
   blocksInitiated      Block[]            @relation("BlocksInitiated")
   blocksReceived       Block[]            @relation("BlocksReceived")
-
-  emailVerificationTokens EmailVerificationToken[]
-}
-
-model EmailVerificationToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-
-  userId String
-  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Membership {

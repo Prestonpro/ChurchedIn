@@ -22,6 +22,16 @@ The review also caught several structural gaps in the original data model, folde
 in below: a missing `Block` model, unspecified waitlist-promotion behavior, and an
 unclear semantics for re-requesting a mentor connection after a decline.
 
+**Later change**: email verification (confirm-your-address-before-you-can-RSVP)
+was built, then removed entirely by explicit user decision — it was slowing down
+manual testing (the link was only reachable via server console logs, with no UI
+shortcut), and the tradeoff wasn't worth it for the current stage. There is now
+no verification gate anywhere: `User.emailVerified`, the `EmailVerificationToken`
+model, and the `/verify/[token]` route no longer exist. The contact-reveal safety
+rule in section 8 is unaffected and remains fully enforced — if anything, it now
+carries more of the trust burden, since it's the only checkpoint left between an
+open signup and a student's contact info being reachable.
+
 ## 1. What this is
 
 A LinkedIn-style networking and scheduling platform connecting three groups around
@@ -47,12 +57,17 @@ church, with any church able to sign up and run its own instance of the platform
   browsers. (PWA installability was mentioned in the original planning
   conversation but is not built in this phase — no manifest/service worker exists.
   Add it as a later phase if wanted, don't assume it's already there.)
-- **Open signup, light verification.** Anyone can sign up and self-select a role
-  (volunteer or student); verification is email confirmation + choosing/joining a
-  church, not manual admin approval. Because the population includes international
-  students interacting with people they haven't vetted, this is paired with one
-  hard safety rule (section 8) that is non-negotiable regardless of how "open" the
-  signup is.
+- **Open signup, no verification step.** Anyone can sign up and self-select a
+  role (volunteer or student) and start using the app immediately — no email
+  confirmation gate, no manual admin approval. (An earlier version of this app
+  required email verification before RSVPing or messaging mentors; it was
+  removed by explicit user decision — see the Revision note at the top of this
+  file. Choosing not to verify accounts makes the safety rule below carry more
+  weight, not less: it's now the *only* checkpoint standing between signup and
+  a student's contact info being reachable.) Because the population includes
+  international students interacting with people they haven't vetted, this is
+  paired with one hard safety rule (section 8) that is non-negotiable
+  regardless of how "open" the signup is.
 
 ## 3. Roles & permissions
 
@@ -76,9 +91,9 @@ another admin or claimed by whoever creates the org, not self-selected at signup
 1. **Org (church) creation & join flow** — anyone can create a church org
    (becomes its first admin) or join an existing one via a join code. Simple, no
    approval step.
-2. **Auth** — email + password, email verification required before an account can
-   RSVP or send a connection request (browsing is allowed pre-verification),
-   password reset.
+2. **Auth** — email + password. No email verification step (removed — see the
+   Revision note above); a new account can RSVP and message mentors
+   immediately after signup. Password reset is not yet built.
 3. **Profiles** — photo, name, short bio; role-specific fields (volunteer:
    availability, skills/interests, "open to mentor" toggle + mentor bio/languages;
    student: country of origin, school/program, languages, interests).
@@ -105,10 +120,9 @@ another admin or claimed by whoever creates the org, not self-selected at signup
    connection record per pair); it is not blocked outright, but is subject to
    the same per-student daily rate limit as any other request, which is the
    actual anti-harassment control. Either side can end an `ACCEPTED` connection.
-9. **Notifications (email)** — verification, RSVP confirmation, waitlist
-   promotion, new mentor connection request, connection accepted/declined, event
-   cancellation. No in-app chat or push notifications in MVP — email is the only
-   channel.
+9. **Notifications (email)** — RSVP confirmation, waitlist promotion, new
+   mentor connection request, connection accepted/declined, event cancellation.
+   No in-app chat or push notifications in MVP — email is the only channel.
 10. **Admin dashboard** — church admin sees all events, all RSVP counts, and a
     Reports queue.
 11. **Report & block** — two separate mechanisms. **Report**: file a reason
@@ -197,14 +211,13 @@ model Church {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  emailVerified Boolean  @default(false)
-  passwordHash  String
-  name          String
-  photoUrl      String?
-  bio           String?
-  createdAt     DateTime @default(now())
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  photoUrl     String?
+  bio          String?
+  createdAt    DateTime @default(now())
 
   memberships          Membership[]
   mentorProfile        MentorProfile?
@@ -374,9 +387,9 @@ in the entire app that exists specifically to protect a vulnerable population
 "open signup" trust model.
 
 The post-acceptance reveal is limited to **email address**, deliberately not an
-in-app open-ended messaging surface — email at least ties the interaction to a
-verified, identifiable account rather than an anonymous in-app handle, and
-building real-time messaging is out of scope for MVP (section 5). If a later
+in-app open-ended messaging surface — narrower blast radius than a full
+messaging feature, and building real-time messaging is out of scope for MVP
+(section 5) regardless. If a later
 request asks to relax the reveal boundary itself ("just show the email on the
 directory card", "let students email mentors directly without a request"), treat
 that as a scope/safety decision requiring explicit confirmation from the user —
@@ -395,7 +408,7 @@ church-linkedin/
     schema.prisma
   src/
     app/
-      (public)/        landing, signup, login, verify/[token], join/[code]
+      (public)/        landing, signup, login, join/[code]
       admin/            church admin dashboard, events, reports
       volunteer/         dashboard, profile, events (create/manage), mentor toggle
       student/            dashboard, profile, mentors (directory), connections
@@ -421,8 +434,8 @@ church-linkedin/
 2. **Schema & migration** — the data model in section 6.
 3. **Core libs** — password hashing, session/JWT, auth guards, validation, dev
    email transport.
-4. **Auth & org join flow** — signup, login, logout, email verification,
-   church create/join-by-code.
+4. **Auth & org join flow** — signup, login, logout, church create/join-by-code.
+   (No email verification step — see the Revision note.)
 5. **Domain server actions** — events CRUD, RSVP with capacity + waitlist +
    auto-promotion, mentor profiles, mentor connections (with the
    decline-then-re-request state flip), reports, blocks.
@@ -434,9 +447,13 @@ church-linkedin/
    flows smoke-tested manually.
 9. **README** — setup, architecture, the safety rule in section 8.
 
-**Not done in this pass** (call these out explicitly if picking this up later,
-don't assume they're covered): Playwright e2e tests, a dedicated security-review
-pass by a second reviewer, Vercel/production deployment config, Resend wired to a
-real API key, rate-limiting implementation for connection requests (the rule is
-specified in section 8 but needs an actual counter/store), and the cross-church
-connection restriction's enforcement should be double-checked once built.
+**Update**: Playwright e2e tests were added after this plan was first written —
+see `e2e/` and the README's Testing section. Connection-request rate limiting
+is also implemented (DB-backed count against `MentorConnection.lastRequestedAt`,
+no external store needed).
+
+**Still not done** (call these out explicitly if picking this up later, don't
+assume they're covered): a dedicated security-review pass by a second
+reviewer, Vercel/production deployment config, Resend wired to a real API
+key, and the cross-church connection restriction (implemented in
+`requestConnectionAction`) isn't yet covered by an automated test.
