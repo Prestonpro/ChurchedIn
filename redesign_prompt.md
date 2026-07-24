@@ -327,3 +327,26 @@ _(Updated as phases complete — check here first when resuming.)_
   earmarked for the final security review pass rather than re-litigated
   here.
   **Not yet done:** Phases 9-10 + final gates.
+
+- **Phase 9: DONE** (pushed). New `ChurchAdminInvite` model (migration
+  `20260724234634_add_church_admin_invite`, applied to dev — still owes
+  production along with Phases 5/6's migrations). New
+  `src/lib/actions/churchInvites.ts`: `inviteCoAdminAction` (admin-only,
+  same hash-at-rest/single-use/7-day-expiry pattern as password reset),
+  `checkCoAdminInvite`, `acceptNewCoAdminAction` (creates account +
+  CHURCH_ADMIN membership together for a brand-new email),
+  `acceptExistingCoAdminAction` (just adds the membership for an
+  already-logged-in matching email). Church creation now redirects to a
+  new `/admin/welcome` page (instead of straight to the dashboard)
+  prompting "invite a co-leader" with a skip link. New public
+  `/join-as-admin/[token]` page branches three ways: invalid/expired token,
+  existing account (told to log in then revisit), or new account (signup
+  form). Landing page gained a new section using the brief's exact
+  suggested copy ("You don't have to be a pastor..."). Admin dashboard
+  gained a dashed "Collaborate with another church" teaser card with a
+  "Coming soon" badge — UI only, no backend, as specified.
+  Updated e2e/helpers.ts's `signupChurch` to wait for `/admin/welcome`
+  instead of `/admin/dashboard` (the redirect target changed) — all 4 e2e
+  specs + 24 unit tests still pass after the fix. Visually verified the
+  welcome page, invite form, and dashboard teaser card.
+  **Not yet done:** Phase 10 + final gates.

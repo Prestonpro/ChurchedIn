@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   ChatCircleDots,
   ForkKnife,
+  Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -142,6 +143,22 @@ export default function LandingPage() {
           volunteer&apos;s email is ever shown before both sides have agreed
           to connect.
         </p>
+      </section>
+
+      <section className="border-t border-line bg-surface">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+            <Sparkle weight="fill" className="size-6" />
+          </span>
+          <h2 className="mt-5 text-2xl font-extrabold text-ink sm:text-3xl">
+            You don&apos;t have to be a pastor.
+          </h2>
+          <p className="mx-auto mt-3 max-w-xl text-ink-soft">
+            If you and a friend want to start welcoming international
+            students, you can set it up together — no official title needed,
+            just a willingness to open your door.
+          </p>
+        </div>
       </section>
 
       <footer className="border-t border-line px-6 py-10 text-center text-sm text-ink-muted">

@@ -202,3 +202,25 @@ export function passwordResetEmail(opts: { resetUrl: string }): EmailContent {
   });
   return { subject, text, html };
 }
+
+// ---------------------------------------------------------------------------
+// Church co-admin invite
+// ---------------------------------------------------------------------------
+
+export function coAdminInviteEmail(opts: { inviterName: string; churchName: string; acceptUrl: string }): EmailContent {
+  const subject = `${opts.inviterName} wants you to help lead ${opts.churchName} on ChurchedIn`;
+  const text = `${opts.inviterName} invited you to co-lead ${opts.churchName}'s space on ChurchedIn — you don't have to be a pastor, just someone who wants to help welcome international students. This link expires in 7 days and can only be used once: ${opts.acceptUrl}`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "You're invited to help lead",
+    bodyHtml: [
+      paragraph(
+        `<strong>${escapeHtml(opts.inviterName)}</strong> invited you to co-lead <strong>${escapeHtml(opts.churchName)}</strong>'s space on ChurchedIn.`,
+      ),
+      paragraph("You don't have to be a pastor — just someone who wants to help welcome international students."),
+      paragraph("This link expires in 7 days and can only be used once."),
+    ].join(""),
+    cta: { label: "Accept and join as a co-leader", url: opts.acceptUrl },
+  });
+  return { subject, text, html };
+}

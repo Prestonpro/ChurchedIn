@@ -66,6 +66,28 @@ model Church {
   memberships Membership[]
   events      Event[]
   reports     Report[]
+  adminInvites ChurchAdminInvite[]
+}
+
+/**
+ * An invitation for someone (by email, not yet necessarily a user) to
+ * become a CHURCH_ADMIN co-leader — the "you don't have to do this alone"
+ * prompt shown right after creating a church. Same hash-at-rest /
+ * single-use / expiring pattern as PasswordResetToken. Accepting one
+ * creates a Membership with role CHURCH_ADMIN for the invited email,
+ * either immediately (if that email already has an account) or once they
+ * sign up (see acceptCoAdminInviteAction in src/lib/actions/auth.ts).
+ */
+model ChurchAdminInvite {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  churchId String
+  church   Church @relation(fields: [churchId], references: [id])
 }
 
 model User {

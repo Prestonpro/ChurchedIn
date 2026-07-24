@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UsersThree, CalendarBlank, Flag, Plus, Buildings } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, CalendarBlank, Flag, Plus, Buildings, HandsClapping } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -86,6 +86,23 @@ export default async function AdminDashboardPage() {
             {church?.joinCode}
           </code>
           <CopyButton text={church?.joinCode ?? ""} label="Copy code" />
+        </div>
+      </Card>
+
+      <Card className="mb-6 border-dashed">
+        <div className="flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-paper text-ink-faint">
+            <HandsClapping weight="fill" className="size-5" />
+          </span>
+          <div>
+            <h2 className="flex items-center gap-2 font-bold text-ink">
+              Collaborate with another church
+              <Badge tone="brand">Coming soon</Badge>
+            </h2>
+            <p className="text-sm text-ink-muted">
+              Share events and combine friend directories with a nearby church doing the same work.
+            </p>
+          </div>
         </div>
       </Card>
 

@@ -10,7 +10,9 @@ export async function signupChurch(
   await page.getByLabel("Password").fill(opts.password);
   await page.getByLabel("Church name").fill(opts.churchName);
   await page.getByRole("button", { name: "Create your church" }).click();
-  await page.waitForURL("**/admin/dashboard");
+  // Signup now lands on the "invite a co-leader" welcome page first, not
+  // straight on the dashboard — see redesign_prompt.md Phase 9.
+  await page.waitForURL("**/admin/welcome");
 }
 
 export async function getJoinCode(page: Page): Promise<string> {

@@ -60,7 +60,7 @@ export async function createChurchAction(
   const token = await createSessionToken({ userId: user.id, activeChurchId: church.id });
   await setSessionCookie(token);
 
-  redirect("/admin/dashboard");
+  redirect("/admin/welcome");
 }
 
 /** Joins an existing church via its join code, as a volunteer or student. */
