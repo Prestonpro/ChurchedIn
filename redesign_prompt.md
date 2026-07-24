@@ -294,3 +294,18 @@ _(Updated as phases complete — check here first when resuming.)_
   brief — just a visible signal. All 4 e2e specs + 24 unit tests pass;
   visually verified the auto-fill.
   **Not yet done:** Phases 7-10 + final gates.
+
+- **Phase 7: DONE** (pushed). "Run this again" link on the event detail
+  page, shown to the creator or a co-host when the event is cancelled or
+  in the past. Links to `/volunteer/events/new?from=<eventId>`; the page
+  fetches that event server-side, verifies the current user is still the
+  creator or a co-host AND it's the same church (re-checked server-side,
+  not just a UI-visibility rule), then passes a `prefill` object into
+  EventForm. EventForm skips the preset picker when prefill is present and
+  pre-fills category/title/description/location/isVirtual/atChurch/
+  capacities — Starts/Ends stay blank so the user picks a new date. Reuses
+  createEventAction unchanged; this is purely a pre-fill convenience, no
+  recurring-event data model. Verified visually end-to-end (past event →
+  "Run this again" → correctly prefilled form). All 4 e2e specs + 24 unit
+  tests pass.
+  **Not yet done:** Phases 8-10 + final gates.

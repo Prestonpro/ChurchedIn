@@ -24,12 +24,27 @@ const PRESETS: { category: EventCategory; label: string; title: string; descript
   { category: "MENTORSHIP", label: "Friend chat", title: "Friend chat", description: "One-on-one time to get to know each other." },
 ];
 
-export function EventForm({ churchName }: { churchName: string }) {
+type Prefill = {
+  category: EventCategory;
+  title: string;
+  description: string;
+  location: string;
+  isVirtual: boolean;
+  atChurch: boolean;
+  volunteerCap: number | null;
+  studentCap: number | null;
+};
+
+export function EventForm({ churchName, prefill }: { churchName: string; prefill?: Prefill }) {
   const router = useRouter();
   const [state, formAction] = useActionState(createEventAction, undefined);
-  const [picked, setPicked] = useState<{ category: EventCategory; title: string } | null>(null);
-  const [atChurch, setAtChurch] = useState(false);
-  const [location, setLocation] = useState("");
+  // Prefill (from "Run this again") skips the picker entirely — it already
+  // implies a category and title, just missing new date/time.
+  const [picked, setPicked] = useState<{ category: EventCategory; title: string } | null>(
+    prefill ? { category: prefill.category, title: prefill.title } : null,
+  );
+  const [atChurch, setAtChurch] = useState(prefill?.atChurch ?? false);
+  const [location, setLocation] = useState(prefill?.location ?? "");
 
   useEffect(() => {
     if (state && "ok" in state && state.ok) {
@@ -106,7 +121,12 @@ export function EventForm({ churchName }: { churchName: string }) {
         defaultValue={picked.title}
         placeholder="Friday night welcome dinner"
       />
-      <TextAreaField label="Description" name="description" required />
+      <TextAreaField
+        label="Description"
+        name="description"
+        required
+        defaultValue={prefill?.description}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Starts" name="startsAt" type="datetime-local" required />
@@ -131,7 +151,7 @@ export function EventForm({ churchName }: { churchName: string }) {
           if (e.target.checked) setLocation(churchName);
         }}
       />
-      <CheckboxField label="This is a virtual event" name="isVirtual" />
+      <CheckboxField label="This is a virtual event" name="isVirtual" defaultChecked={prefill?.isVirtual} />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
@@ -141,6 +161,7 @@ export function EventForm({ churchName }: { churchName: string }) {
           min={0}
           icon={HandHeart}
           hint="0 = no helpers needed. Leave blank for no limit."
+          defaultValue={prefill?.volunteerCap ?? undefined}
         />
         <Field
           label="Student capacity"
@@ -149,6 +170,7 @@ export function EventForm({ churchName }: { churchName: string }) {
           min={0}
           icon={GraduationCap}
           hint="0 = no attendees needed. Leave blank for no limit."
+          defaultValue={prefill?.studentCap ?? undefined}
         />
       </div>
 

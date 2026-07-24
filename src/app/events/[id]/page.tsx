@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings } from "@phosphor-icons/react/dist/ssr";
+import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings, ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getEventById, listCohostCandidates } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
@@ -7,6 +7,7 @@ import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge, StyledBadge } from "@/components/ui/Badge";
 import { CapacityBar } from "@/components/ui/CapacityBar";
+import { LinkButton } from "@/components/ui/Button";
 import { RsvpControls } from "./RsvpControls";
 import { CancelEventButton } from "./CancelEventButton";
 import { CohostManager } from "./CohostManager";
@@ -42,10 +43,12 @@ export default async function EventDetailPage({
   const confirmedAttendees = attendees.filter((r) => r.status === RSVP_STATUS.CONFIRMED).length;
 
   const isCreator = event.createdById === user.id;
+  const isCohost = event.cohosts.some((c) => c.userId === user.id);
   const isAdmin = membership.role === ROLES.CHURCH_ADMIN;
   const style = categoryStyle(event.category as EventCategory);
   const CategoryIcon = style.icon;
   const isCancelled = event.status === EVENT_STATUS.CANCELLED;
+  const isPast = event.startsAt < new Date();
   const cohostCandidates = isCreator ? await listCohostCandidates(event.churchId, event.id) : [];
 
   return (
@@ -105,6 +108,14 @@ export default async function EventDetailPage({
             {(isCreator || isAdmin) && !isCancelled && (
               <div className="mt-4">
                 <CancelEventButton eventId={event.id} />
+              </div>
+            )}
+
+            {(isCreator || isCohost) && (isCancelled || isPast) && (
+              <div className="mt-4">
+                <LinkButton href={`/volunteer/events/new?from=${event.id}`} variant="secondary" size="sm">
+                  <ArrowClockwise weight="bold" className="size-4" /> Run this again
+                </LinkButton>
               </div>
             )}
           </Card>
