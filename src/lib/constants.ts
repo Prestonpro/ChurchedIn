@@ -73,6 +73,17 @@ export const REPORT_STATUS = {
 
 export type ReportStatus = (typeof REPORT_STATUS)[keyof typeof REPORT_STATUS];
 
+export function dashboardPathForRole(role: Role): string {
+  switch (role) {
+    case ROLES.CHURCH_ADMIN:
+      return "/admin/dashboard";
+    case ROLES.VOLUNTEER:
+      return "/volunteer/dashboard";
+    case ROLES.STUDENT:
+      return "/student/dashboard";
+  }
+}
+
 // A student can send at most this many mentor connection requests (new
 // requests or re-requests after a decline) in a rolling 24h window. This is
 // the actual anti-harassment control referenced in the safety rule — it is

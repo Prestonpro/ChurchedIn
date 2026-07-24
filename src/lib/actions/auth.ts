@@ -6,24 +6,13 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { createSessionToken, setSessionCookie, clearSessionCookie } from "@/lib/session";
 import { generateJoinCode } from "@/lib/codes";
 import { requireUser } from "@/lib/auth";
-import { ROLES, type Role } from "@/lib/constants";
+import { ROLES, dashboardPathForRole, type Role } from "@/lib/constants";
 import {
   createChurchSchema,
   joinChurchSchema,
   loginSchema,
   firstIssueMessage,
 } from "@/lib/validation";
-
-function dashboardPathForRole(role: Role): string {
-  switch (role) {
-    case ROLES.CHURCH_ADMIN:
-      return "/admin/dashboard";
-    case ROLES.VOLUNTEER:
-      return "/volunteer/dashboard";
-    case ROLES.STUDENT:
-      return "/student/dashboard";
-  }
-}
 
 export type ActionResult = { error: string } | void;
 
@@ -131,7 +120,11 @@ export async function loginAction(_prev: ActionResult, formData: FormData): Prom
     where: { email },
     include: { memberships: true },
   });
-  if (!user) {
+  if (!user || !user.passwordHash) {
+    // Same generic message whether the account doesn't exist or is a
+    // Google-only account with no password — avoids revealing which case
+    // it is (the app already accepts some enumeration on the signup forms,
+    // but there's no reason to add a *new* distinguishing signal here).
     return { error: "Incorrect email or password." };
   }
   const valid = await verifyPassword(password, user.passwordHash);

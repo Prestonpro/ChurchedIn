@@ -3,7 +3,7 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { getSessionPayload } from "@/lib/session";
-import { ROLES, type Role } from "@/lib/constants";
+import { dashboardPathForRole, type Role } from "@/lib/constants";
 
 /**
  * Loads the signed-in user plus all their church memberships, and resolves
@@ -39,17 +39,6 @@ export async function requireUser() {
     redirect("/login");
   }
   return user;
-}
-
-function dashboardPathForRole(role: Role): string {
-  switch (role) {
-    case ROLES.CHURCH_ADMIN:
-      return "/admin/dashboard";
-    case ROLES.VOLUNTEER:
-      return "/volunteer/dashboard";
-    case ROLES.STUDENT:
-      return "/student/dashboard";
-  }
 }
 
 /** Redirects unless the signed-in user's *active* membership has this role. */

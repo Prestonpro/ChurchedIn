@@ -1,8 +1,17 @@
 import Link from "next/link";
+import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
+import { GoogleButton, OrDivider } from "@/components/ui/GoogleButton";
+import { FormError } from "@/components/ui/Field";
 import { LoginForm } from "./LoginForm";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; reset?: string }>;
+}) {
+  const { error, reset } = await searchParams;
+
   return (
     <AuthPageLayout
       panelTitle="Welcome back."
@@ -10,7 +19,18 @@ export default function LoginPage() {
     >
       <h1 className="text-2xl font-extrabold text-ink">Log in</h1>
       <p className="mt-1.5 text-sm text-ink-muted">Good to see you again.</p>
-      <div className="mt-8">
+      <div className="mt-8 space-y-4">
+        {error === "google_oauth_failed" && (
+          <FormError message="Google sign-in didn't go through. Please try again." />
+        )}
+        {reset === "success" && (
+          <div className="flex items-start gap-2.5 rounded-lg border border-line bg-paper px-4 py-3.5 text-sm text-ink-soft">
+            <CheckCircle weight="fill" className="mt-0.5 size-5 shrink-0 text-brand-600" />
+            <span>Your password has been reset. Log in with your new password.</span>
+          </div>
+        )}
+        <GoogleButton href="/api/auth/google" />
+        <OrDivider />
         <LoginForm />
       </div>
       <p className="mt-8 text-center text-sm text-ink-muted">

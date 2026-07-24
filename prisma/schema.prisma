@@ -71,7 +71,13 @@ model Church {
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
-  passwordHash String
+  // Nullable because a Google-only account has no password to check —
+  // loginAction must reject email/password attempts against such an account
+  // rather than pass null to bcrypt.
+  passwordHash String?
+  // Set the first time this email signs in via Google; also used to link an
+  // existing email/password account to Google on first Google sign-in.
+  googleId     String?  @unique
   name         String
   photoUrl     String?
   bio          String?
