@@ -21,40 +21,63 @@ this pass (see "What's not done yet" below before assuming something exists).
 ## Tech stack
 
 - **Next.js 16** (App Router, Turbopack, React 19), server actions for all
-  mutations — no separate REST layer.
+  mutations — no separate REST layer (except the Google OAuth redirect/
+  callback routes under `src/app/api/auth/`, which have to be real HTTP
+  routes since Google redirects a browser to them).
 - **Tailwind CSS v4** — a small custom design system in `src/app/globals.css`
   (`@theme` tokens: deep indigo brand color, warm coral accent, plus a
   7-color event-category palette in `src/lib/eventCategoryStyle.tsx`).
   Plus Jakarta Sans (`next/font/google`) and Phosphor Icons
   (`@phosphor-icons/react`) throughout — hand-built primitives in
-  `src/components/ui/`, no shadcn/ui.
-- **Prisma 7** with the new `prisma-client` (query-compiler) generator.
-  - Local dev: SQLite via `@prisma/adapter-better-sqlite3`.
-  - Production: swap the datasource/adapter for Postgres (see below).
+  `src/components/ui/`, no shadcn/ui. Responsive down to 320px, with a
+  hamburger/drawer nav below the `lg` breakpoint (`src/components/nav/
+  MobileMenu.tsx`) and PWA support (`public/manifest.json`, app icons).
+- **Prisma 7** with the new `prisma-client` (query-compiler) generator,
+  Postgres via `@prisma/adapter-pg`. See [DEPLOYMENT.md](./DEPLOYMENT.md) for
+  provisioning a database (Neon recommended).
 - **Auth**: custom session cookies (httpOnly JWT via `jose`) + `bcryptjs`
-  password hashing — no third-party auth provider. Tenant isolation (one
+  password hashing, plus a hand-rolled Google OAuth flow (no NextAuth — see
+  `PLAN.md` for the reasoning) — `src/lib/googleOAuth.ts`,
+  `src/lib/oauthState.ts`, `src/app/api/auth/`. Tenant isolation (one
   church's data never leaking to another) is enforced in the server actions
   themselves, by checking the caller's `Membership` rows — there is no
   database-level policy layer doing this for you.
 - **Validation**: Zod.
-- **Email**: `src/lib/email.ts` logs to the console in development (no
-  external account needed to run the app) and is designed to be swapped for
-  Resend or another provider in production by changing that one file.
+- **Email**: Resend (`src/lib/email.ts`), with branded HTML templates
+  (`src/lib/emailLayout.ts`, `src/lib/emailTemplates.ts`) sent alongside a
+  plain-text fallback. Logs to the console instead of calling Resend when
+  `RESEND_API_KEY` isn't set, so the app is fully testable with zero external
+  accounts. A delivery failure is logged, never thrown — it can't crash the
+  action (RSVP, connection request, etc.) that triggered it. Covers RSVP
+  confirmation/waitlist/promotion, event cancellation, the full mentor
+  connection lifecycle, and password reset.
 - **Tests**: Vitest for the RSVP capacity/waitlist logic and the mentor
   connection state machine (`src/lib/rsvp.test.ts`,
   `src/lib/connectionState.test.ts`), plus Playwright e2e tests for the
-  critical flows against a dedicated SQLite file (`e2e/` — see Testing below).
+  critical flows against a dedicated Postgres schema (`e2e/` — see Testing
+  below).
 - Route protection via `src/proxy.ts` (Next 16's renamed `middleware.ts`) plus
   server-side role guards in `src/lib/auth.ts`.
+- Error boundaries (`src/app/error.tsx`, `global-error.tsx`, `not-found.tsx`)
+  and per-route `loading.tsx` fallbacks for every data-fetching page.
+- SEO: per-page metadata, Open Graph/Twitter cards on the landing page,
+  `robots.ts` excluding the authenticated app routes from crawling, and a
+  `sitemap.ts` for the public pages.
 
 ## Getting started
 
 ```bash
 npm install
-cp .env.example .env   # then generate a real SESSION_SECRET (see below)
+cp .env.example .env   # then fill in real values — see below
 npx prisma migrate dev
 npm run dev
 ```
+
+You'll need a Postgres database even for local dev — there's no zero-setup
+SQLite fallback. The fastest path is a free [Neon](https://neon.tech) project
+(see [DEPLOYMENT.md](./DEPLOYMENT.md) step 1). Google OAuth and Resend are
+both optional for local dev (see the env var table below) — everything else
+works without them.
 
 Open [http://localhost:3000](http://localhost:3000).
 
@@ -62,27 +85,26 @@ Open [http://localhost:3000](http://localhost:3000).
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | SQLite file path in dev, e.g. `file:./dev.db` |
+| `DATABASE_URL` | Postgres connection string (pooled, if your provider distinguishes) — see [DEPLOYMENT.md](./DEPLOYMENT.md) |
+| `DIRECT_URL` | Direct/unpooled Postgres connection string, used only for `prisma migrate` commands (see DEPLOYMENT.md for why) |
 | `SESSION_SECRET` | Random secret used to sign session cookies (`openssl rand -hex 32`) |
-| `APP_URL` | Base URL used to build links in emails (event links, etc.) |
+| `APP_URL` | Base URL used to build links in emails and the Google OAuth redirect URI |
 | `RESEND_API_KEY` | Optional — set this to switch `src/lib/email.ts` from console logging to real Resend delivery |
 | `EMAIL_FROM` | Optional — the "from" address Resend sends as, e.g. `Church LinkedIn <onboarding@resend.dev>` (see Email setup below) |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional — set both to enable "Continue with Google". Without them, the button redirects back to login with a generic error (fails closed, doesn't crash). See DEPLOYMENT.md step 3. |
 
 ### Database
 
-The Prisma schema lives in `prisma/schema.prisma`. Local dev uses SQLite for a
-zero-setup experience:
+The Prisma schema lives in `prisma/schema.prisma`, Postgres-only:
 
 ```bash
 npx prisma migrate dev     # apply migrations + regenerate the client
 npx prisma studio          # inspect data
 ```
 
-To move to Postgres for a real deployment: change `datasource db { provider }`
-in `schema.prisma` to `"postgresql"`, swap the adapter in `src/lib/prisma.ts`
-from `@prisma/adapter-better-sqlite3` to `@prisma/adapter-pg` (or your host's
-adapter), point `DATABASE_URL` at your Postgres instance, and re-run
-`prisma migrate dev`.
+Migrations from before this app ran on Postgres are preserved for reference
+under `prisma/migrations.sqlite-archive/` — not applied by anything, just
+history.
 
 ## Email setup (Resend)
 
@@ -120,57 +142,15 @@ real users to receive real emails, you need to:
 Until then, `EMAIL_FROM` must stay on `onboarding@resend.dev` or Resend will
 reject the send entirely.
 
-## Deployment (Vercel)
+## Deployment
 
-**Why Vercel, not Cloudflare**: this app needs a real Node.js server (server
-actions, `bcryptjs`, native SQLite bindings in dev) — Cloudflare Workers/Pages
-run a more restricted edge runtime without native modules or a writable
-filesystem, so it can't run this as-is without a real rework (swapping to
-Cloudflare D1, adjusting the Prisma adapter, reworking anything that assumes
-Node APIs). Vercel runs Node.js natively, which is a much smaller lift from
-what's already built.
-
-**Also important**: SQLite (the local dev database) will not work in
-production on Vercel — serverless functions get a fresh, throwaway filesystem
-per invocation, so a SQLite file wouldn't persist between requests. A real
-deployment needs Postgres. This isn't optional polish, it's a hard
-requirement before anyone's data would reliably survive a page reload.
-
-Steps, in order:
-
-1. **Provision a Postgres database.** Easiest paths: Vercel's own Postgres
-   integration (via Neon, added from your Vercel project's Storage tab), or
-   a free tier elsewhere (Neon, Supabase, Railway all work) — you just need
-   a `postgresql://...` connection string.
-2. **Switch the schema to Postgres**:
-   - In `prisma/schema.prisma`, change `datasource db { provider = "sqlite" }`
-     to `provider = "postgresql"`.
-   - Install the Postgres adapter: `npm install @prisma/adapter-pg`.
-   - In `src/lib/prisma.ts`, swap `PrismaBetterSqlite3` for `PrismaPg` (from
-     `@prisma/adapter-pg`) — same shape, just a different constructor.
-   - This is a real branch point: your local dev environment will also need
-     to point at a Postgres database from here on (or keep a separate
-     branch/schema for local SQLite dev — your call).
-3. **Push the schema to your production database**: with `DATABASE_URL`
-   pointed at the new Postgres instance, run `npx prisma migrate deploy`
-   (applies existing migrations; doesn't prompt interactively, safe for
-   scripted/CI use unlike `migrate dev`).
-4. **Already configured**: `package.json` has a `postinstall: "prisma generate"`
-   script, so the Prisma client regenerates automatically on every deploy's
-   `npm install` — Vercel needs this since it doesn't otherwise know to
-   regenerate the client from the schema.
-5. **Import the repo into Vercel**: [vercel.com/new](https://vercel.com/new)
-   → import `Prestonpro/church-linkedin` from GitHub. Vercel auto-detects
-   Next.js; no custom build command needed beyond step 4.
-6. **Set environment variables** in the Vercel project's Settings →
-   Environment Variables (production values, not your local `.env`):
-   `DATABASE_URL` (your Postgres connection string), `SESSION_SECRET` (a
-   fresh `openssl rand -hex 32` — don't reuse your local dev one),
-   `APP_URL` (your real deployed URL, e.g. `https://your-app.vercel.app`),
-   and `RESEND_API_KEY`/`EMAIL_FROM` if you've set up email per the section
-   above.
-7. **Deploy.** Vercel builds and deploys on every push to `main` once
-   connected.
+Live at **https://church-linkedin.vercel.app**, deployed on Vercel via its
+GitHub integration (auto-deploys on every push to `master`). See
+[DEPLOYMENT.md](./DEPLOYMENT.md) for the full step-by-step: provisioning
+Neon Postgres, Resend, Google OAuth, importing the project into Vercel,
+required environment variables, a post-deploy verification checklist, custom
+domain setup, and a troubleshooting section for the gotchas actually hit
+while deploying this app.
 
 ## Testing
 
@@ -179,12 +159,13 @@ npm run test        # Vitest — pure logic: RSVP capacity/waitlist, connection 
 npm run test:e2e     # Playwright — critical flows, real browser, real (temporary) database
 ```
 
-The e2e suite (`e2e/`) runs against its own dedicated SQLite file
-(`e2e/.test.db`) and its own dev server port (3100), so it never touches your
-real `dev.db` or collides with a `npm run dev` you might have running on
-3000 — **Next.js only allows one dev instance per project directory**, though,
-so if you have your own `npm run dev` running, stop it first or the e2e
-server will fail to start.
+The e2e suite (`e2e/`) runs against a dedicated `e2e_test` Postgres schema in
+the same database as `DATABASE_URL` (dropped and recreated before every run —
+see `e2e/global-setup.ts`) and its own dev server port (3100), so it never
+touches your real dev data or collides with a `npm run dev` you might have
+running on 3000 — **Next.js only allows one dev instance per project
+directory**, though, so if you have your own `npm run dev` running, stop it
+first or the e2e server will fail to start.
 
 Four specs cover the flows in section 8's threat model plus the core
 scheduling mechanics: signup → host an event; RSVP capacity waitlisting a
@@ -234,31 +215,48 @@ external rate limiter needed), and the `Block`/`Report` mechanisms are
 enforced inside the relevant server actions themselves (a blocked user is
 rejected at the RSVP/connection-request action, not just hidden in the UI).
 
+The reveal is enforced at the **query layer**, not just by page authors
+remembering to only render `.email` inside the right status branch:
+`listConnectionsAsStudent`/`listConnectionsAsMentor` in `src/lib/queries.ts`
+strip the other party's email to `null` for anything not `ACCEPTED` before
+the data ever reaches a page component, using `contactInfoVisible()` in
+`src/lib/connectionState.ts`. A future page that mistakenly references
+`.email` outside the accepted branch gets `null`, not a leak.
+
 ## Project structure
 
 ```
-e2e/                                    Playwright specs + helpers (own SQLite file, own port)
+e2e/                                    Playwright specs + helpers (own Postgres schema, own port)
 src/
   app/
-    (public)/          landing, signup, login, join, join/[code]
+    (public)/          landing, signup, login, join, join/[code], forgot-password, reset-password/[token]
     admin/               church admin dashboard, reports
     volunteer/           dashboard, profile (mentor toggle), events/new
     student/              dashboard, profile, mentors (directory)
     events/                shared event feed + detail page (RSVP lives here)
+    api/auth/               Google OAuth start + callback routes
+    error.tsx, global-error.tsx, not-found.tsx    error/404 boundaries
+    robots.ts, sitemap.ts                          SEO metadata routes
   components/
     ui/                   hand-built primitives (Button, Card, Field, Badge, Avatar,
-                           CapacityBar, EmptyState, CopyButton, SubmitButton, ...)
-    nav/                    AuthShell (authenticated layout + top nav), AuthPageLayout
-                            (split-panel auth screens), NavLinks, ChurchSwitcher
+                           CapacityBar, EmptyState, CopyButton, SubmitButton, PageLoading,
+                           GoogleButton, ...)
+    nav/                    AuthShell (authenticated layout + top nav), MobileMenu
+                            (hamburger/drawer below lg), AuthPageLayout (split-panel auth
+                            screens), NavLinks, ChurchSwitcher
     ConnectionActions.tsx    accept/decline/end buttons for mentor connections
     BlockButton.tsx
   lib/
-    actions/               server actions (auth, events, rsvps, mentors, connections, reports, blocks)
+    actions/               server actions (auth, events, rsvps, mentors, connections, reports,
+                           blocks, passwordReset)
     auth.ts                 session + role/membership guards
     session.ts                JWT cookie signing/verification
     password.ts                bcrypt hashing
-    email.ts                    dev-log transport, swappable for Resend
-    prisma.ts                     Prisma client singleton
+    googleOAuth.ts              Google auth URL building, token exchange, ID token verification
+    oauthState.ts                signed CSRF state for the OAuth redirect round-trip
+    email.ts                    Resend transport (dev-log fallback if no API key)
+    emailLayout.ts, emailTemplates.ts   branded HTML email templates
+    prisma.ts                     Prisma client singleton (Postgres via @prisma/adapter-pg)
     queries.ts                     shared read helpers (events, mentors, connections, reports)
     rsvp.ts                         pure capacity/waitlist decision logic (unit tested)
     connectionState.ts               pure connection state machine (unit tested)
@@ -272,19 +270,28 @@ proxy.ts                                route protection middleware
 
 Called out explicitly so a future session doesn't assume these exist:
 
-- Email verification and password reset — neither exists. Any email/password
-  works at signup with no confirmation step; there's no "forgot password"
-  flow if someone loses their password.
-- A dedicated second-reviewer security pass.
-- Not actually deployed yet — the Deployment section above has the exact
-  steps, but nobody's run them (no Postgres provisioned, no Vercel project
-  created, schema is still `sqlite`).
-- Not actually wired to a real Resend account yet — the Email setup section
-  above has the exact steps, but no API key has been added.
+- The Google OAuth consent screen is in Google Cloud Console's "Testing"
+  publish status, which caps sign-in to test users explicitly added there —
+  switch it to "Production" publish status when you're ready for anyone to
+  sign in with Google.
+- `npm audit` flags 3 remaining vulnerabilities nested inside Next.js's own
+  bundled `postcss`/`sharp` (image optimization / CSS pipeline) and Prisma's
+  optional `prisma dev` local-server tooling (`find-my-way`/`valibot`, a
+  devDependency chain this app doesn't invoke). None are reachable through
+  this app's actual code paths — no `next/image` usage, no untrusted CSS
+  processing, no use of `prisma dev`. `npm audit fix --force` "fixes" the
+  first two by downgrading Next.js 7 major versions, which is far worse than
+  the vulnerabilities themselves — don't do that. Revisit when Next.js ships
+  a real patch release with updated bundled dependencies.
 - The cross-church connection restriction (a student can only request a
   mentor who shares a church with them) is enforced in
   `requestConnectionAction`, but isn't covered by the e2e suite yet — double
   check it if you touch that code path.
-- The e2e suite covers the four critical flows in the Testing section above,
-  not every edge case (e.g. email/RSVP rate limiting, multi-church
-  membership switching, report filing) — extend it as new flows matter.
+- The e2e suite covers the critical flows in the Testing section above, not
+  every edge case (e.g. multi-church membership switching, report filing) —
+  extend it as new flows matter.
+- No rate limiting on login attempts or password reset requests beyond the
+  existing per-student connection-request limit — a determined attacker
+  could brute-force a password or spam reset emails. Low risk at current
+  scale (single-church-per-deploy, no public signup discovery), worth adding
+  before wider rollout.
