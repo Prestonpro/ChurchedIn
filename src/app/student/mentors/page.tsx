@@ -11,6 +11,13 @@ import { EndConnectionButton } from "@/components/ConnectionActions";
 import { ConnectionRequestForm } from "./ConnectionRequestForm";
 import { CONNECTION_STATUS, ROLES } from "@/lib/constants";
 
+function tags(value: string): string[] {
+  return value
+    .split(",")
+    .map((t) => t.trim())
+    .filter(Boolean);
+}
+
 export default async function MentorDirectoryPage() {
   const user = await requireRole(ROLES.STUDENT);
   if (!user.activeMembership) {
@@ -44,10 +51,15 @@ export default async function MentorDirectoryPage() {
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {mentors.map((m) => {
+          {mentors.map((m, i) => {
             const connection = connectionByMentor.get(m.userId);
             return (
-              <Card key={m.id} className="flex flex-col">
+              <Card
+                key={m.id}
+                interactive
+                className="flex animate-fade-up flex-col"
+                style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <Avatar name={m.user.name} />
@@ -56,18 +68,28 @@ export default async function MentorDirectoryPage() {
                   <BlockButton userId={m.userId} />
                 </div>
                 {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
-                <div className="mt-3 space-y-1.5 text-xs text-ink-muted">
-                  {m.languages && (
-                    <p className="flex items-center gap-1.5">
-                      <Translate weight="bold" className="size-3.5 shrink-0" /> {m.languages}
-                    </p>
-                  )}
-                  {m.interests && (
-                    <p className="flex items-center gap-1.5">
-                      <Sparkle weight="bold" className="size-3.5 shrink-0" /> {m.interests}
-                    </p>
-                  )}
-                </div>
+                {(m.languages || m.interests) && (
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {m.languages &&
+                      tags(m.languages).map((t) => (
+                        <span
+                          key={`lang-${t}`}
+                          className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700"
+                        >
+                          <Translate weight="bold" className="size-3" /> {t}
+                        </span>
+                      ))}
+                    {m.interests &&
+                      tags(m.interests).map((t) => (
+                        <span
+                          key={`int-${t}`}
+                          className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-medium text-accent-700"
+                        >
+                          <Sparkle weight="bold" className="size-3" /> {t}
+                        </span>
+                      ))}
+                  </div>
+                )}
 
                 <div className="mt-4 flex-1 border-t border-line pt-4">
                   {!connection && <ConnectionRequestForm mentorId={m.userId} />}
