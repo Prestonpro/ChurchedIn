@@ -54,7 +54,7 @@ export function EventForm() {
       <Field label="Title" name="title" required placeholder="Friday night welcome dinner" />
       <TextAreaField label="Description" name="description" required />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Starts" name="startsAt" type="datetime-local" required />
         <Field label="Ends" name="endsAt" type="datetime-local" required />
       </div>
@@ -68,7 +68,7 @@ export function EventForm() {
       />
       <CheckboxField label="This is a virtual event" name="isVirtual" />
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
           label="Volunteer capacity"
           name="volunteerCap"

@@ -6,6 +6,7 @@ import { logoutAction } from "@/lib/actions/auth";
 import { Avatar } from "@/components/ui/Avatar";
 import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
+import { MobileMenu } from "./MobileMenu";
 
 function navLinksForRole(role: string): NavLink[] {
   const events: NavLink = { href: "/events", label: "Events", iconKey: "events" };
@@ -44,17 +45,19 @@ export function AuthShell({
   return (
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line bg-surface/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-5">
             <Link href="/events" className="flex items-center gap-2 text-base font-bold text-brand-700">
               <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
                 <UsersThree weight="fill" className="size-4.5" />
               </span>
-              <span className="hidden md:inline">Church LinkedIn</span>
+              <span className="hidden lg:inline">Church LinkedIn</span>
             </Link>
-            <NavLinks links={links} />
+            <div className="hidden lg:block">
+              <NavLinks links={links} />
+            </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-3 lg:flex">
             {user.activeMembership && (
               <ChurchSwitcher
                 memberships={user.memberships}
@@ -75,6 +78,13 @@ export function AuthShell({
               </button>
             </form>
           </div>
+          <MobileMenu
+            links={links}
+            userName={user.name}
+            churchName={user.activeMembership?.church.name}
+            memberships={user.memberships}
+            activeChurchId={user.activeMembership?.churchId}
+          />
         </div>
       </header>
       <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>

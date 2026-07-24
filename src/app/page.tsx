@@ -39,21 +39,21 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <span className="flex items-center gap-2 text-base font-bold text-brand-700">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
               <UsersThree weight="fill" className="size-4.5" />
             </span>
-            Church LinkedIn
+            <span className="hidden sm:inline">Church LinkedIn</span>
           </span>
-          <nav className="flex items-center gap-2 text-sm">
+          <nav className="flex items-center gap-1 text-sm sm:gap-2">
             <Link
               href="/login"
-              className="rounded-xl px-3.5 py-2 font-medium text-ink-soft transition-brand hover:text-ink"
+              className="whitespace-nowrap rounded-xl px-2.5 py-2 font-medium text-ink-soft transition-brand hover:text-ink sm:px-3.5"
             >
               Log in
             </Link>
-            <LinkButton href="/signup" size="sm">
+            <LinkButton href="/signup" size="sm" className="whitespace-nowrap">
               Start a church <ArrowRight weight="bold" className="size-3.5" />
             </LinkButton>
           </nav>

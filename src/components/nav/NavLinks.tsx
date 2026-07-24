@@ -8,7 +8,7 @@ import { SquaresFour, CalendarBlank, Flag, UserCircle, UsersThree } from "@phosp
 // icon) as props to Client Components — only plain serializable data crosses
 // that boundary. So the icon lookup lives here, keyed by a plain string that
 // AuthShell (a server component) can safely pass in.
-const ICONS = {
+export const NAV_ICONS = {
   dashboard: SquaresFour,
   events: CalendarBlank,
   reports: Flag,
@@ -16,7 +16,7 @@ const ICONS = {
   mentors: UsersThree,
 } as const;
 
-export type NavIconKey = keyof typeof ICONS;
+export type NavIconKey = keyof typeof NAV_ICONS;
 export type NavLink = { href: string; label: string; iconKey: NavIconKey };
 
 export function NavLinks({ links }: { links: NavLink[] }) {
@@ -26,7 +26,7 @@ export function NavLinks({ links }: { links: NavLink[] }) {
     <nav className="flex items-center gap-1">
       {links.map((link) => {
         const active = pathname === link.href || pathname?.startsWith(`${link.href}/`);
-        const Icon = ICONS[link.iconKey];
+        const Icon = NAV_ICONS[link.iconKey];
         return (
           <Link
             key={link.href}

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -12,6 +12,23 @@ export const metadata: Metadata = {
   title: "Church LinkedIn (working name)",
   description:
     "Schedule events, find volunteers, and connect international students with mentors — church by church.",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: "/icon-192.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Church LinkedIn",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#3243ab",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
