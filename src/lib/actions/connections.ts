@@ -27,7 +27,7 @@ export async function requestConnectionAction(
 ): Promise<ActionResult> {
   const user = await requireUser();
   if (user.activeMembership?.role !== ROLES.STUDENT) {
-    return { error: "Only students can send mentor connection requests." };
+    return { error: "Only students can reach out to friends." };
   }
 
   const parsed = connectionRequestSchema.safeParse({
@@ -44,16 +44,16 @@ export async function requestConnectionAction(
     include: { user: { include: { memberships: true } } },
   });
   if (!mentorProfile || !mentorProfile.openToMentor) {
-    return { error: "That mentor isn't available right now." };
+    return { error: "That friend isn't available right now." };
   }
   const sharesChurch = mentorProfile.user.memberships.some((mm) =>
     user.memberships.some((um) => um.churchId === mm.churchId),
   );
   if (!sharesChurch) {
-    return { error: "You can only connect with mentors at a church you belong to." };
+    return { error: "You can only connect with friends at a church you belong to." };
   }
   if (await isBlockedPair(user.id, mentorId)) {
-    return { error: "You can't connect with this mentor." };
+    return { error: "You can't connect with this friend." };
   }
 
   const since = new Date(Date.now() - 1000 * 60 * 60 * 24);
@@ -70,14 +70,14 @@ export async function requestConnectionAction(
 
   if (existing) {
     if (existing.status === CONNECTION_STATUS.PENDING) {
-      return { error: "You already have a pending request with this mentor." };
+      return { error: "You already have a pending request with this friend." };
     }
     if (existing.status === CONNECTION_STATUS.ACCEPTED) {
-      return { error: "You're already connected with this mentor." };
+      return { error: "You're already connected with this friend." };
     }
     if (existing.status === CONNECTION_STATUS.ENDED) {
       return {
-        error: "This connection has ended and can't be restarted. Contact your church admin if you'd like to reconnect.",
+        error: "This connection has ended and can't be restarted. Contact your church leader if you'd like to reconnect.",
       };
     }
     try {
@@ -143,7 +143,7 @@ export async function respondToConnectionAction(
 ): Promise<ActionResult> {
   const { user, connection } = await requireConnectionParticipant(connectionId);
   if (connection.mentorId !== user.id) {
-    return { error: "Only the mentor can respond to this request." };
+    return { error: "Only the friend can respond to this request." };
   }
 
   let nextStatus;

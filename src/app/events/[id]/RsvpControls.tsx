@@ -68,7 +68,7 @@ export function RsvpControls({
       <FormError message={rsvpState && "error" in rsvpState ? rsvpState.error : undefined} />
       <form action={rsvpAction}>
         <SubmitButton pendingText="RSVPing…">
-          {roleLabel === "helper" ? "RSVP to help" : "RSVP to attend"}
+          {roleLabel === "helper" ? "I'm in to help!" : "I'm in!"}
         </SubmitButton>
       </form>
     </div>

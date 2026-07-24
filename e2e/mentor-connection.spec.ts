@@ -26,10 +26,10 @@ test("student can request a mentor connection; contact info is revealed only aft
     password: "password123",
   });
   await mentorPage.goto("/volunteer/profile");
-  await mentorPage.getByLabel("I'm open to being matched as a mentor").check();
-  await mentorPage.getByRole("button", { name: "Save mentor profile" }).click();
+  await mentorPage.getByLabel("I'm open to being a friend to a student").check();
+  await mentorPage.getByRole("button", { name: "Save my profile" }).click();
   await mentorPage.reload();
-  await expect(mentorPage.getByLabel("I'm open to being matched as a mentor")).toBeChecked();
+  await expect(mentorPage.getByLabel("I'm open to being a friend to a student")).toBeChecked();
 
   const studentEmail = uniqueEmail("student");
   const studentPage = await (await browser.newContext()).newPage();
@@ -44,7 +44,7 @@ test("student can request a mentor connection; contact info is revealed only aft
   await expect(studentPage.getByText("Mentor Person")).toBeVisible();
 
   await studentPage.getByLabel("Message (optional)").fill("Would love to connect!");
-  await studentPage.getByRole("button", { name: "Send connection request" }).click();
+  await studentPage.getByRole("button", { name: "Say hi" }).click();
   await expect(studentPage.getByText("Request pending")).toBeVisible();
 
   // The core safety rule: no contact info before acceptance.

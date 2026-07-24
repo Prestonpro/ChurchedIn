@@ -14,9 +14,9 @@ export default async function NewEventPage() {
   return (
     <AuthShell user={user}>
       <div className="mx-auto max-w-2xl">
-        <h1 className="text-2xl font-extrabold text-ink">Host an event</h1>
+        <h1 className="text-2xl font-extrabold text-ink">Plan a gathering</h1>
         <p className="mt-1 mb-6 text-sm text-ink-muted">
-          Publish it and your church will see it on the events feed right away.
+          Share it and your church family will see it right away.
         </p>
         <Card>
           <EventForm />

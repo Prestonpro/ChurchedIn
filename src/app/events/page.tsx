@@ -47,7 +47,7 @@ export default async function EventsPage() {
         </div>
         {canHost && (
           <LinkButton href="/volunteer/events/new">
-            <Plus weight="bold" className="size-4" /> Host an event
+            <Plus weight="bold" className="size-4" /> Plan a gathering
           </LinkButton>
         )}
       </div>
@@ -56,11 +56,11 @@ export default async function EventsPage() {
         <EmptyState
           icon={CalendarBlank}
           title="No upcoming events yet"
-          body={canHost ? "Be the first to host one." : "Check back soon — your church hasn't posted anything yet."}
+          body={canHost ? "Be the first to plan one." : "Check back soon — your church hasn't posted anything yet."}
           action={
             canHost ? (
               <LinkButton href="/volunteer/events/new" size="sm">
-                <Plus weight="bold" className="size-4" /> Host an event
+                <Plus weight="bold" className="size-4" /> Plan a gathering
               </LinkButton>
             ) : undefined
           }

@@ -60,10 +60,10 @@ export default async function AdminDashboardPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-ink">{church?.name}</h1>
-          <p className="mt-1 text-sm text-ink-muted">Admin overview</p>
+          <p className="mt-1 text-sm text-ink-muted">Church leader overview</p>
         </div>
         <LinkButton href="/volunteer/events/new">
-          <Plus weight="bold" className="size-4" /> Host an event
+          <Plus weight="bold" className="size-4" /> Plan a gathering
         </LinkButton>
       </div>
 
@@ -106,10 +106,10 @@ export default async function AdminDashboardPage() {
         {events.length === 0 ? (
           <EmptyState
             icon={CalendarBlank}
-            title="No events yet"
+            title="Nothing on the calendar yet"
             action={
               <LinkButton href="/volunteer/events/new" size="sm">
-                <Plus weight="bold" className="size-4" /> Host the first one
+                <Plus weight="bold" className="size-4" /> Plan the first one
               </LinkButton>
             }
           />
@@ -130,7 +130,7 @@ export default async function AdminDashboardPage() {
                     </span>
                     <div>
                       <p className="text-sm font-semibold text-ink">{event.title}</p>
-                      <p className="text-xs text-ink-muted">Hosted by {event.createdBy.name}</p>
+                      <p className="text-xs text-ink-muted">Planned by {event.createdBy.name}</p>
                     </div>
                   </div>
                   <span className="flex items-center gap-2 text-xs text-ink-muted">

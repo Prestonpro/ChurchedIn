@@ -19,7 +19,7 @@ export async function createEventAction(
     return { error: "Join a church before creating an event." };
   }
   if (user.activeMembership.role === ROLES.STUDENT) {
-    return { error: "Only volunteers and church admins can create events." };
+    return { error: "Only volunteers and church leaders can create events." };
   }
 
   const raw = {
@@ -85,7 +85,7 @@ export async function cancelEventAction(eventId: string): Promise<ActionResult> 
     user.activeMembership?.role === ROLES.CHURCH_ADMIN &&
     user.activeMembership.churchId === event.churchId;
   if (!isCreator && !isAdmin) {
-    return { error: "Only the event's creator or a church admin can cancel it." };
+    return { error: "Only the event's creator or a church leader can cancel it." };
   }
 
   await prisma.event.update({

@@ -34,13 +34,13 @@ export default async function VolunteerDashboardPage() {
           <p className="mt-1 text-sm text-ink-muted">{user.activeMembership?.church.name}</p>
         </div>
         <LinkButton href="/volunteer/events/new">
-          <Plus weight="bold" className="size-4" /> Host an event
+          <Plus weight="bold" className="size-4" /> Plan a gathering
         </LinkButton>
       </div>
 
       {pending.length > 0 && (
         <Card className="mb-6">
-          <h2 className="mb-3 font-bold text-ink">Mentor requests waiting on you</h2>
+          <h2 className="mb-3 font-bold text-ink">Friend requests waiting on you</h2>
           <div className="space-y-3">
             {pending.map((c) => (
               <div
@@ -63,7 +63,7 @@ export default async function VolunteerDashboardPage() {
 
       {active.length > 0 && (
         <Card className="mb-6">
-          <h2 className="mb-3 font-bold text-ink">Active mentor connections</h2>
+          <h2 className="mb-3 font-bold text-ink">Your friends</h2>
           <div className="space-y-3">
             {active.map((c) => (
               <div
@@ -87,15 +87,15 @@ export default async function VolunteerDashboardPage() {
       )}
 
       <Card>
-        <h2 className="mb-3 font-bold text-ink">Events you&apos;re hosting</h2>
+        <h2 className="mb-3 font-bold text-ink">Gatherings you&apos;re planning</h2>
         {myEvents.length === 0 ? (
           <EmptyState
             icon={CalendarBlank}
-            title="No events yet"
-            body="Host your first dinner, coffee chat, or mentorship meetup."
+            title="Nothing on the calendar yet"
+            body="Plan your first dinner, coffee chat, or friend meetup."
             action={
               <LinkButton href="/volunteer/events/new" size="sm">
-                <Plus weight="bold" className="size-4" /> Host an event
+                <Plus weight="bold" className="size-4" /> Plan a gathering
               </LinkButton>
             }
           />

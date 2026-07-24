@@ -21,7 +21,7 @@ export default function JoinEntryPage() {
   return (
     <AuthPageLayout
       panelTitle="Every church runs its own space."
-      panelBody="A join code keeps your church's events, roster, and mentor directory separate from every other church on the platform."
+      panelBody="A join code keeps your church's events, roster, and friend directory separate from every other church on the platform."
     >
       <h1 className="text-2xl font-extrabold text-ink">Join a church</h1>
       <p className="mt-1.5 text-sm text-ink-muted">

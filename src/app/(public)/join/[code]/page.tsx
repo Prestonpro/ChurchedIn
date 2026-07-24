@@ -28,7 +28,7 @@ export default async function JoinWithCodePage({
       panelTitle={church ? `Welcome to ${church.name}.` : "Codes are church-specific."}
       panelBody={
         church
-          ? "Sign up below to RSVP to events and browse the mentor directory."
+          ? "Sign up below to RSVP to events and browse the friend directory."
           : "Double-check the code with whoever shared it, or start your own church's space instead."
       }
     >

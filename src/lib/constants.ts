@@ -25,7 +25,7 @@ export type EventCategory = (typeof EVENT_CATEGORIES)[keyof typeof EVENT_CATEGOR
 
 export const EVENT_CATEGORY_LABELS: Record<EventCategory, string> = {
   DINNER: "Dinner",
-  MENTORSHIP: "Mentorship",
+  MENTORSHIP: "Friend chat",
   COFFEE_CHAT: "Coffee chat",
   STUDY_GROUP: "Study group",
   CULTURAL_OUTING: "Cultural outing",

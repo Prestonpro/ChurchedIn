@@ -21,7 +21,7 @@ export async function updateMentorProfileAction(
     user.activeMembership?.role !== ROLES.VOLUNTEER &&
     user.activeMembership?.role !== ROLES.CHURCH_ADMIN
   ) {
-    return { error: "Only volunteers can set up a mentor profile." };
+    return { error: "Only volunteers can set up a friend profile." };
   }
 
   const parsed = mentorProfileSchema.safeParse({

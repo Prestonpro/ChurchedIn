@@ -16,7 +16,7 @@ export default async function MentorDirectoryPage() {
   if (!user.activeMembership) {
     return (
       <AuthShell user={user}>
-        <EmptyState icon={UsersThree} title="Join a church to see its mentors" />
+        <EmptyState icon={UsersThree} title="Join a church to meet your friends" />
       </AuthShell>
     );
   }
@@ -30,17 +30,17 @@ export default async function MentorDirectoryPage() {
   return (
     <AuthShell user={user}>
       <div className="mb-8">
-        <h1 className="text-2xl font-extrabold text-ink">Mentors</h1>
+        <h1 className="text-2xl font-extrabold text-ink">Friends</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Browse volunteers open to mentoring at {user.activeMembership.church.name}.
+          Browse church members ready to be your friend at {user.activeMembership.church.name}.
         </p>
       </div>
 
       {mentors.length === 0 ? (
         <EmptyState
           icon={UsersThree}
-          title="No mentors listed yet"
-          body="Check back soon — volunteers at your church haven't opted in yet."
+          title="No friends listed yet"
+          body="Check back soon — church members haven't signed up to be a friend yet."
         />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -87,7 +87,7 @@ export default async function MentorDirectoryPage() {
                   {connection?.status === CONNECTION_STATUS.DECLINED && (
                     <div className="space-y-2">
                       <p className="text-sm text-ink-muted">
-                        This mentor wasn&apos;t able to connect last time. You can try again.
+                        This friend wasn&apos;t able to connect last time. You can try again.
                       </p>
                       <ConnectionRequestForm mentorId={m.userId} />
                     </div>

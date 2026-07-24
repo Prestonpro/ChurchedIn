@@ -14,25 +14,25 @@ import { Card } from "@/components/ui/Card";
 const FEATURES = [
   {
     icon: CalendarPlus,
-    title: "Host events",
-    body: "Dinners, coffee chats, study groups, airport pickups — post it, set a capacity, and see who's coming.",
+    title: "Plan a gathering",
+    body: "Dinners, coffee chats, study groups, airport pickups — share it, set a headcount, and see who's coming.",
   },
   {
     icon: HandHeart,
     title: "RSVP together",
-    body: "Students RSVP to attend. Other volunteers RSVP to help run it. Full events waitlist automatically.",
+    body: "Students say they're in. Other volunteers pitch in to help run it. Full gatherings waitlist automatically.",
   },
   {
     icon: UsersThree,
-    title: "Find a mentor",
-    body: "Students browse a mentor directory and send a connection request — contact info is shared only once a mentor accepts.",
+    title: "Find a friend",
+    body: "Students browse a friend directory and reach out — contact info is shared only once a friend accepts.",
   },
 ];
 
 const STEPS = [
   { number: "01", title: "Start or join a church", body: "Create your church's space in a minute, or join an existing one with a 6-character code." },
-  { number: "02", title: "Post or browse events", body: "Volunteers post dinners and meetups. Students browse and RSVP in a couple of taps." },
-  { number: "03", title: "Connect one-on-one", body: "Students find mentors by language and interest, and message only after a mentor accepts." },
+  { number: "02", title: "Share or browse gatherings", body: "Volunteers share dinners and meetups. Students browse and RSVP in a couple of taps." },
+  { number: "03", title: "Connect one-on-one", body: "Students find friends by language and interest, and message only after a friend accepts." },
 ];
 
 export default function LandingPage() {
@@ -71,9 +71,9 @@ export default function LandingPage() {
             <span className="text-brand-600">gathered in one place</span>.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">
-            Volunteers schedule dinners, coffee chats, and mentorship meetups.
-            Other volunteers join in to help. International students RSVP and
-            find a mentor — all in one place, per church.
+            Volunteers plan dinners, coffee chats, and friend meetups. Other
+            volunteers join in to help. International students RSVP and find
+            a friend — all in one place, per church.
           </p>
           <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <LinkButton href="/signup" size="lg">
@@ -104,7 +104,7 @@ export default function LandingPage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-extrabold text-ink">How it works</h2>
-            <p className="mt-2 text-ink-muted">Three steps from signup to your first connection.</p>
+            <p className="mt-2 text-ink-muted">Three steps from signup to your first friend.</p>
           </div>
           <div className="grid gap-8 sm:grid-cols-3">
             {STEPS.map((step) => (
@@ -123,12 +123,12 @@ export default function LandingPage() {
           <ChatCircleDots weight="fill" className="size-6" />
         </span>
         <h2 className="mt-5 text-2xl font-extrabold text-ink sm:text-3xl">
-          Contact info stays private until a mentor says yes.
+          Contact info stays private until a friend says yes.
         </h2>
         <p className="mx-auto mt-3 max-w-xl text-ink-soft">
-          Every connection request goes through an accept step first — no
-          student or volunteer&apos;s email is ever shown before both sides
-          have agreed to connect.
+          Every reach-out goes through an accept step first — no student or
+          volunteer&apos;s email is ever shown before both sides have agreed
+          to connect.
         </p>
       </section>
 

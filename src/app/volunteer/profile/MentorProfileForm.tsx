@@ -17,7 +17,7 @@ export function MentorProfileForm({
       <FormError message={state && "error" in state ? state.error : undefined} />
       <div className="rounded-xl border border-line bg-paper/60 p-3.5">
         <CheckboxField
-          label="I'm open to being matched as a mentor"
+          label="I'm open to being a friend to a student"
           name="openToMentor"
           defaultChecked={initial.openToMentor}
         />
@@ -34,7 +34,7 @@ export function MentorProfileForm({
         defaultValue={initial.interests}
         placeholder="Career advice, homework help, just being a friend…"
       />
-      <SubmitButton pendingText="Saving…">Save mentor profile</SubmitButton>
+      <SubmitButton pendingText="Saving…">Save my profile</SubmitButton>
     </form>
   );
 }

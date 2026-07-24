@@ -42,7 +42,7 @@ test("a capped event waitlists the second helper and promotes them when the firs
     password: "password123",
   });
   await vol1Page.goto(eventUrl);
-  await vol1Page.getByRole("button", { name: "RSVP to help" }).click();
+  await vol1Page.getByRole("button", { name: "I'm in to help!" }).click();
   await expect(vol1Page.getByText(/confirmed as a helper/i)).toBeVisible();
 
   // Second helper RSVPs — the spot is taken, so they're waitlisted, not confirmed.
@@ -56,12 +56,12 @@ test("a capped event waitlists the second helper and promotes them when the firs
     password: "password123",
   });
   await vol2Page.goto(eventUrl);
-  await vol2Page.getByRole("button", { name: "RSVP to help" }).click();
+  await vol2Page.getByRole("button", { name: "I'm in to help!" }).click();
   await expect(vol2Page.getByText(/waitlist/i)).toBeVisible();
 
   // First helper cancels — the second helper should be auto-promoted.
   await vol1Page.getByRole("button", { name: "Cancel my RSVP" }).click();
-  await expect(vol1Page.getByRole("button", { name: "RSVP to help" })).toBeVisible();
+  await expect(vol1Page.getByRole("button", { name: "I'm in to help!" })).toBeVisible();
 
   await vol2Page.reload();
   await expect(vol2Page.getByText(/confirmed as a helper/i)).toBeVisible();

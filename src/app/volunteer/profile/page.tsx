@@ -27,9 +27,9 @@ export default async function VolunteerProfilePage() {
               <UsersThree weight="fill" className="size-5" />
             </span>
             <div>
-              <h2 className="font-bold text-ink">Mentor profile</h2>
+              <h2 className="font-bold text-ink">Friend profile</h2>
               <p className="text-sm text-ink-muted">
-                Appear in the mentor directory for international students.
+                Appear in the friend directory for international students.
               </p>
             </div>
           </div>

@@ -27,7 +27,7 @@ export default async function StudentDashboardPage() {
           <p className="mt-1 text-sm text-ink-muted">{user.activeMembership?.church.name}</p>
         </div>
         <LinkButton href="/student/mentors">
-          <UsersThree weight="bold" className="size-4" /> Find a mentor
+          <UsersThree weight="bold" className="size-4" /> Find a friend
         </LinkButton>
       </div>
 

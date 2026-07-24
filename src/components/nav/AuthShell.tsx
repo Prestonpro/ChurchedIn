@@ -27,7 +27,7 @@ function navLinksForRole(role: string): NavLink[] {
   return [
     { href: "/student/dashboard", label: "Dashboard", iconKey: "dashboard" },
     events,
-    { href: "/student/mentors", label: "Mentors", iconKey: "mentors" },
+    { href: "/student/mentors", label: "Friends", iconKey: "mentors" },
     { href: "/student/profile", label: "My profile", iconKey: "profile" },
   ];
 }

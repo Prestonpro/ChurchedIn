@@ -180,4 +180,37 @@ If a session loses track partway through: start a new session and say "Read rede
 
 _(Updated as phases complete — check here first when resuming.)_
 
-- Not yet started.
+- **Phase 1: DONE** (commit `c164b32`, pushed). Renamed to ChurchedIn everywhere
+  (metadata, manifest, email templates, README/PLAN/DEPLOYMENT.md, .env.example,
+  package.json name). Removed the working-name trademark disclaimer. Regenerated
+  PWA icons as a circular teal "gathering badge" instead of rounded-square.
+  New palette in globals.css @theme: brand = warm sage-teal (hue ~170°, full
+  50-900 scale), accent = warm gold/amber (full 50-900 scale), paper = warm
+  cream #faf8f4, ink = warm neutral (not blue-black), 8 re-tuned event-category
+  colors (terracotta/brown/rose/olive/plum/mustard/wine/neutral). Since almost
+  everything used semantic Tailwind classes already, most components needed
+  zero changes — only 3 files had hardcoded hex needing fixes: global-error.tsx,
+  emailTemplates.ts (2 mailto link colors). New hero tagline: "Your church
+  community, gathered in one place." Note: the live Vercel domain
+  (church-linkedin.vercel.app) was deliberately NOT renamed — that's a separate
+  infra decision, documented in README.
+- **Phase 2: DONE** (pushed). Full mentor→friend language shift across every
+  user-facing string: nav label ("Friends"), friend/guide directory page,
+  friend-profile toggle + save button, connection-request form ("Say hi"),
+  volunteer/admin/student dashboards, landing page (FEATURES/STEPS arrays,
+  hero paragraph, "Contact info stays private" section), all 6 connection
+  lifecycle emails in emailTemplates.ts, AuthPageLayout defaults, login/join
+  page panel copy, all user-facing error strings in connections.ts/mentors.ts/
+  events.ts, and the MENTORSHIP event-category display label ("Friend chat").
+  "Host events"→"Plan a gathering" everywhere; "RSVP to help/attend" buttons→
+  "I'm in to help!"/"I'm in!"; "Church admin"→"Church leader" in user-facing
+  error strings. Left "Volunteer" as the join-flow role-picker label (an
+  identity choice, not an action) since "Helper" is already well-integrated
+  in RSVP contexts (CapacityBar "Helping", "confirmed as a helper", the new
+  "I'm in to help!" button). Deliberately did NOT rename Prisma models, enum
+  keys, internal variable/function names, or the `/student/mentors` URL path
+  — those are schema/internal-identifier scope, out of bounds per the brief.
+  Updated 3 e2e test files (block-enforcement, mentor-connection,
+  rsvp-waitlist specs) to match new button/label text — all 4 e2e specs +
+  24 unit tests pass. **Not yet done:** dashboard summary cards, card-based
+  event feed, animations (Phase 3); everything else in Phases 3-10.

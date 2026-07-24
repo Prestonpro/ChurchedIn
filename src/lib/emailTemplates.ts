@@ -82,14 +82,14 @@ export function connectionRequestedEmail(opts: {
   message?: string | null;
 }): EmailContent {
   const subject = `${opts.studentName} wants to connect`;
-  const text = `${opts.studentName} sent you a mentorship connection request${
+  const text = `${opts.studentName} sent you a request to connect as a friend${
     opts.message ? `:\n\n"${opts.message}"` : "."
   }\n\nReview it from your dashboard.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: `${opts.studentName} wants to connect`,
     bodyHtml: [
-      paragraph(`<strong>${escapeHtml(opts.studentName)}</strong> sent you a mentorship connection request.`),
+      paragraph(`<strong>${escapeHtml(opts.studentName)}</strong> sent you a request to connect as a friend.`),
       opts.message
         ? `<p style="margin:0 0 12px 0; padding: 12px 16px; background-color:#f1f8f7; border-radius:8px; font-style:italic;">"${escapeHtml(opts.message)}"</p>`
         : "",
@@ -104,14 +104,14 @@ export function connectionAcceptedForStudentEmail(opts: {
   mentorEmail: string;
 }): EmailContent {
   const subject = `${opts.mentorName} accepted your request`;
-  const text = `${opts.mentorName} accepted your mentorship request. You can reach them at ${opts.mentorEmail}.`;
+  const text = `${opts.mentorName} accepted your request to connect. You can reach them at ${opts.mentorEmail}.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "You're connected!",
     bodyHtml: paragraph(
-      `<strong>${escapeHtml(opts.mentorName)}</strong> accepted your mentorship request. You can reach them at <a href="mailto:${escapeHtml(opts.mentorEmail)}" style="color:#409688;">${escapeHtml(opts.mentorEmail)}</a>.`,
+      `<strong>${escapeHtml(opts.mentorName)}</strong> accepted your request to connect. You can reach them at <a href="mailto:${escapeHtml(opts.mentorEmail)}" style="color:#409688;">${escapeHtml(opts.mentorEmail)}</a>.`,
     ),
-    cta: { label: "View your mentors", url: appUrl("/student/mentors") },
+    cta: { label: "View your friends", url: appUrl("/student/mentors") },
   });
   return { subject, text, html };
 }
@@ -134,7 +134,7 @@ export function connectionAcceptedForMentorEmail(opts: {
 }
 
 export function connectionDeclinedEmail(opts: { mentorName: string }): EmailContent {
-  const subject = "Update on your mentor request";
+  const subject = "Update on your request";
   const text = `${opts.mentorName} isn't able to connect right now.`;
   const html = renderEmailLayout({
     preheader: text,
@@ -142,18 +142,18 @@ export function connectionDeclinedEmail(opts: { mentorName: string }): EmailCont
     bodyHtml: paragraph(
       `<strong>${escapeHtml(opts.mentorName)}</strong> isn't able to connect right now.`,
     ),
-    cta: { label: "Browse other mentors", url: appUrl("/student/mentors") },
+    cta: { label: "Browse other friends", url: appUrl("/student/mentors") },
   });
   return { subject, text, html };
 }
 
 export function connectionEndedEmail(opts: { otherName: string }): EmailContent {
   const subject = "A connection was ended";
-  const text = `${opts.otherName} ended your mentorship connection.`;
+  const text = `${opts.otherName} ended your connection.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "A connection was ended",
-    bodyHtml: paragraph(`<strong>${escapeHtml(opts.otherName)}</strong> ended your mentorship connection.`),
+    bodyHtml: paragraph(`<strong>${escapeHtml(opts.otherName)}</strong> ended your connection.`),
   });
   return { subject, text, html };
 }

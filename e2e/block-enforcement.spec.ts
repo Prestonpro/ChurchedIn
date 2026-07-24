@@ -26,8 +26,8 @@ test("blocking a mentor removes them from the student's directory (and any futur
     password: "password123",
   });
   await mentorPage.goto("/volunteer/profile");
-  await mentorPage.getByLabel("I'm open to being matched as a mentor").check();
-  await mentorPage.getByRole("button", { name: "Save mentor profile" }).click();
+  await mentorPage.getByLabel("I'm open to being a friend to a student").check();
+  await mentorPage.getByRole("button", { name: "Save my profile" }).click();
 
   const studentEmail = uniqueEmail("student-block");
   const studentPage = await (await browser.newContext()).newPage();
