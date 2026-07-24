@@ -10,7 +10,13 @@ export function listEventsForChurch(churchId: string) {
     orderBy: { startsAt: "asc" },
     include: {
       createdBy: { select: { id: true, name: true } },
-      rsvps: { where: { status: { not: RSVP_STATUS.CANCELLED } } },
+      // `user` selected (name only) so the feed can show a handful of
+      // avatar circles for "who's going" — a plain count doesn't give
+      // that same at-a-glance social-proof read.
+      rsvps: {
+        where: { status: { not: RSVP_STATUS.CANCELLED } },
+        include: { user: { select: { name: true } } },
+      },
     },
   });
 }
