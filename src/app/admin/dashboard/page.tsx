@@ -8,36 +8,9 @@ import { Badge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { ROLES, type EventCategory } from "@/lib/constants";
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  tone,
-  interactive,
-}: {
-  icon: typeof UsersThree;
-  label: string;
-  value: number;
-  tone: string;
-  interactive?: boolean;
-}) {
-  return (
-    <Card interactive={interactive}>
-      <div className="flex items-center gap-3">
-        <span className={`flex size-10 items-center justify-center rounded-xl ${tone}`}>
-          <Icon weight="fill" className="size-5" />
-        </span>
-        <div>
-          <p className="text-xs font-medium text-ink-muted">{label}</p>
-          <p className="text-2xl font-extrabold text-ink">{value}</p>
-        </div>
-      </div>
-    </Card>
-  );
-}
 
 export default async function AdminDashboardPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
@@ -54,6 +27,9 @@ export default async function AdminDashboardPage() {
       include: { createdBy: { select: { name: true } } },
     }),
   ]);
+  const nextEvent = events
+    .filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED")
+    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
 
   return (
     <AuthShell user={user}>
@@ -68,17 +44,29 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="mb-6 grid gap-4 sm:grid-cols-3">
-        <StatCard icon={UsersThree} label="Members" value={memberCount} tone="bg-brand-50 text-brand-600" />
-        <StatCard icon={CalendarBlank} label="Events" value={events.length} tone="bg-cat-study-soft text-cat-study" />
-        <Link href="/admin/reports">
-          <StatCard
-            icon={Flag}
-            label="Open reports"
-            value={openReportCount}
-            tone="bg-warning-soft text-warning"
-            interactive
-          />
-        </Link>
+        <StatCard
+          icon={UsersThree}
+          label="Members"
+          value={memberCount}
+          tone="bg-brand-50 text-brand-600"
+          accent="border-l-brand-500"
+        />
+        <StatCard
+          icon={CalendarBlank}
+          label="Events"
+          value={events.length}
+          sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
+          tone="bg-cat-study-soft text-cat-study"
+          accent="border-l-cat-study"
+        />
+        <StatCard
+          icon={Flag}
+          label="Open reports"
+          value={openReportCount}
+          tone="bg-warning-soft text-warning"
+          accent="border-l-warning"
+          href="/admin/reports"
+        />
       </div>
 
       <Card className="mb-6">

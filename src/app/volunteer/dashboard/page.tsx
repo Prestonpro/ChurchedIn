@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listConnectionsAsMentor } from "@/lib/queries";
@@ -9,22 +9,29 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { RespondToConnectionButtons, EndConnectionButton } from "@/components/ConnectionActions";
 import { CONNECTION_STATUS, ROLES, type EventCategory } from "@/lib/constants";
 
 export default async function VolunteerDashboardPage() {
   const user = await requireRole(ROLES.VOLUNTEER);
+  const churchId = user.activeMembership!.churchId;
 
-  const myEvents = await prisma.event.findMany({
-    where: { createdById: user.id },
-    orderBy: { startsAt: "desc" },
-    take: 10,
-  });
+  const [myEvents, memberCount] = await Promise.all([
+    prisma.event.findMany({
+      where: { createdById: user.id },
+      orderBy: { startsAt: "desc" },
+      take: 10,
+    }),
+    prisma.membership.count({ where: { churchId } }),
+  ]);
 
   const connections = await listConnectionsAsMentor(user.id);
   const pending = connections.filter((c) => c.status === CONNECTION_STATUS.PENDING);
   const active = connections.filter((c) => c.status === CONNECTION_STATUS.ACCEPTED);
+  const upcoming = myEvents.filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED");
+  const nextEvent = [...upcoming].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
 
   return (
     <AuthShell user={user}>
@@ -36,6 +43,31 @@ export default async function VolunteerDashboardPage() {
         <LinkButton href="/volunteer/events/new">
           <Plus weight="bold" className="size-4" /> Plan a gathering
         </LinkButton>
+      </div>
+
+      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+        <StatCard
+          icon={CalendarBlank}
+          label="Upcoming gatherings"
+          value={upcoming.length}
+          sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
+          tone="bg-cat-study-soft text-cat-study"
+          accent="border-l-cat-study"
+        />
+        <StatCard
+          icon={HandHeart}
+          label="Friend requests waiting"
+          value={pending.length}
+          tone="bg-accent-100 text-accent-700"
+          accent="border-l-accent-500"
+        />
+        <StatCard
+          icon={UsersThree}
+          label="People in your church"
+          value={memberCount}
+          tone="bg-brand-50 text-brand-600"
+          accent="border-l-brand-500"
+        />
       </div>
 
       {pending.length > 0 && (
