@@ -73,7 +73,7 @@ any test data first.)
      Resend gives you (a few TXT/CNAME records at your domain registrar).
      Usually propagates within a few minutes, sometimes up to a few hours.
    - Update `EMAIL_FROM` to use that domain, e.g.
-     `EMAIL_FROM="Church LinkedIn <hello@yourdomain.org>"`.
+     `EMAIL_FROM="ChurchedIn <hello@yourdomain.org>"`.
    - Until you do this, `EMAIL_FROM` must stay on `onboarding@resend.dev` or
      Resend rejects the send outright.
 

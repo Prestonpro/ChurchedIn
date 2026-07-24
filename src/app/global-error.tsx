@@ -20,8 +20,8 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             justifyContent: "center",
             textAlign: "center",
             padding: "0 1.5rem",
-            background: "#f6f7fc",
-            color: "#1a1a2e",
+            background: "#faf8f4",
+            color: "#2b2420",
           }}
         >
           <h1 style={{ fontSize: "1.25rem", fontWeight: 800 }}>Something went wrong</h1>
@@ -35,7 +35,7 @@ export default function GlobalError({ reset }: { reset: () => void }) {
               padding: "0.625rem 1.25rem",
               borderRadius: "0.75rem",
               border: "none",
-              background: "#3243ab",
+              background: "#409688",
               color: "white",
               fontWeight: 600,
               cursor: "pointer",

@@ -16,14 +16,14 @@ export function escapeHtml(value: string): string {
     .replace(/'/g, "&#39;");
 }
 
-const BRAND_NAME = "Church LinkedIn";
-const COLOR_BRAND = "#3243ab"; // --color-brand-600
-const COLOR_BRAND_DARK = "#28368a"; // --color-brand-700
-const COLOR_BG = "#eef0fc"; // --color-brand-50
-const COLOR_INK = "#191a2b";
-const COLOR_INK_SOFT = "#3f4166";
-const COLOR_INK_FAINT = "#8c8fb3";
-const COLOR_BORDER = "#e4e6f7";
+const BRAND_NAME = "ChurchedIn";
+const COLOR_BRAND = "#409688"; // --color-brand-600
+const COLOR_BRAND_DARK = "#327b6f"; // --color-brand-700
+const COLOR_BG = "#f1f8f7"; // --color-brand-50
+const COLOR_INK = "#2b2420";
+const COLOR_INK_SOFT = "#5c5248";
+const COLOR_INK_FAINT = "#a99e90";
+const COLOR_BORDER = "#e8e2d9";
 
 const FONT_STACK =
   "'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";

@@ -1,79 +1,86 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------ */
-/*  Church LinkedIn (working name) — design tokens                     */
-/*  A calm, professional-but-warm system: deep indigo brand color on a  */
-/*  soft neutral paper, distinct from both stark "LinkedIn blue" and    */
-/*  the terracotta warmth of the sibling launch-kit app.                */
+/*  ChurchedIn — design tokens                                          */
+/*  A warm, communal system: sage-teal brand color + warm gold accent on */
+/*  a cream paper, meant to feel like a coffee-shop community board, not */
+/*  a corporate SaaS dashboard. Deliberately avoids anything reading as  */
+/*  LinkedIn/Facebook blue or clinical/medical.                          */
 /* ------------------------------------------------------------------ */
 
 @theme {
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
 
-  --color-paper: #f6f7fc;
+  --color-paper: #faf8f4;
   --color-surface: #ffffff;
-  --color-line: #e4e7f2;
-  --color-line-strong: #c7ccdf;
+  --color-line: #e8e2d9;
+  --color-line-strong: #d8cfc0;
 
-  --color-ink: #14172a;
-  --color-ink-soft: #3a3f5c;
-  --color-ink-muted: #6b7094;
-  --color-ink-faint: #9298b8;
+  --color-ink: #2b2420;
+  --color-ink-soft: #5c5248;
+  --color-ink-muted: #83786c;
+  --color-ink-faint: #a99e90;
 
-  /* Brand — deep indigo */
-  --color-brand-50: #eef0fc;
-  --color-brand-100: #dde1f8;
-  --color-brand-200: #b7bfef;
-  --color-brand-300: #8f9ce4;
-  --color-brand-400: #6273d8;
-  --color-brand-500: #4055c9;
-  --color-brand-600: #3243ab;
-  --color-brand-700: #28368a;
-  --color-brand-800: #202b6d;
-  --color-brand-900: #1a234f;
+  /* Brand — warm sage/teal, hue ~170° (welcoming front door, not corporate dashboard) */
+  --color-brand-50: #f1f8f7;
+  --color-brand-100: #dff1ee;
+  --color-brand-200: #c0e2dd;
+  --color-brand-300: #95d0c6;
+  --color-brand-400: #63bbac;
+  --color-brand-500: #49ab9b;
+  --color-brand-600: #409688;
+  --color-brand-700: #327b6f;
+  --color-brand-800: #256056;
+  --color-brand-900: #173f39;
 
-  /* Accent — warm coral, for mentor/connection surfaces + CTA highlight */
-  --color-accent-50: #fdf1ed;
-  --color-accent-100: #fbdfd4;
-  --color-accent-300: #ef9d85;
-  --color-accent-500: #de6640;
-  --color-accent-600: #bf4b2a;
-  --color-accent-700: #983b21;
+  /* Accent — warm gold/amber, for CTAs and highlights */
+  --color-accent-50: #fcf7ee;
+  --color-accent-100: #f9eed8;
+  --color-accent-200: #f3dcaf;
+  --color-accent-300: #edc87e;
+  --color-accent-400: #e6b451;
+  --color-accent-500: #e3ab3b;
+  --color-accent-600: #e0a329;
+  --color-accent-700: #c88819;
+  --color-accent-800: #a56a12;
+  --color-accent-900: #79490c;
 
-  --color-success: #157a4c;
-  --color-success-soft: #e2f4ea;
-  --color-warning: #9c6408;
-  --color-warning-soft: #fbf0d9;
-  --color-danger: #b13527;
-  --color-danger-soft: #fbe6e2;
+  --color-success: #4d7c3f;
+  --color-success-soft: #e9f0e2;
+  --color-warning: #96731a;
+  --color-warning-soft: #f6e8c8;
+  --color-danger: #a1442f;
+  --color-danger-soft: #f7e3dc;
 
-  /* Event category family — distinct hues at matched lightness/chroma so
-     they read as one coherent set rather than random accents. */
-  --color-cat-dinner: #b45309;
-  --color-cat-dinner-soft: #fdf1e0;
-  --color-cat-mentorship: #bf4b2a;
-  --color-cat-mentorship-soft: #fdf1ed;
-  --color-cat-coffee: #78350f;
-  --color-cat-coffee-soft: #fbf0e6;
-  --color-cat-study: #1d4ed8;
-  --color-cat-study-soft: #e9eefd;
-  --color-cat-cultural: #7e22ce;
-  --color-cat-cultural-soft: #f5ecfd;
-  --color-cat-airport: #475569;
-  --color-cat-airport-soft: #edeff3;
-  --color-cat-holiday: #be185d;
-  --color-cat-holiday-soft: #fde7f0;
-  --color-cat-other: #4b5065;
-  --color-cat-other-soft: #eceef4;
+  /* Event category family — 8 distinct warm hue families (terracotta,
+     brown, rose, olive, plum, mustard, wine, neutral) so they stay
+     distinguishable at a glance without any of them reading as cold or
+     corporate-blue. */
+  --color-cat-dinner: #b5562a;
+  --color-cat-dinner-soft: #fbe6da;
+  --color-cat-mentorship: #a34b5c;
+  --color-cat-mentorship-soft: #f7e2e4;
+  --color-cat-coffee: #8b5e34;
+  --color-cat-coffee-soft: #f3e3d0;
+  --color-cat-study: #5c6b2e;
+  --color-cat-study-soft: #e9edd9;
+  --color-cat-cultural: #7a4a8c;
+  --color-cat-cultural-soft: #efe1f0;
+  --color-cat-airport: #96731a;
+  --color-cat-airport-soft: #f6e8c8;
+  --color-cat-holiday: #96355f;
+  --color-cat-holiday-soft: #f1dce6;
+  --color-cat-other: #6b6153;
+  --color-cat-other-soft: #ece6dd;
 
   --radius-lg: 0.625rem;
   --radius-xl: 0.875rem;
   --radius-2xl: 1.25rem;
 
-  --shadow-soft: 0 1px 2px rgba(20, 23, 42, 0.05);
-  --shadow-card: 0 1px 2px rgba(20, 23, 42, 0.04), 0 8px 24px rgba(20, 23, 42, 0.06);
-  --shadow-lifted: 0 16px 40px rgba(20, 23, 42, 0.16);
-  --shadow-brand-glow: 0 8px 28px rgba(64, 85, 201, 0.28);
+  --shadow-soft: 0 1px 2px rgba(43, 36, 32, 0.06);
+  --shadow-card: 0 1px 2px rgba(43, 36, 32, 0.05), 0 8px 24px rgba(43, 36, 32, 0.07);
+  --shadow-lifted: 0 16px 40px rgba(43, 36, 32, 0.18);
+  --shadow-brand-glow: 0 8px 28px rgba(64, 150, 136, 0.32);
 }
 
 @layer base {

@@ -91,7 +91,7 @@ export function connectionRequestedEmail(opts: {
     bodyHtml: [
       paragraph(`<strong>${escapeHtml(opts.studentName)}</strong> sent you a mentorship connection request.`),
       opts.message
-        ? `<p style="margin:0 0 12px 0; padding: 12px 16px; background-color:#f6f7fd; border-radius:8px; font-style:italic;">"${escapeHtml(opts.message)}"</p>`
+        ? `<p style="margin:0 0 12px 0; padding: 12px 16px; background-color:#f1f8f7; border-radius:8px; font-style:italic;">"${escapeHtml(opts.message)}"</p>`
         : "",
     ].join(""),
     cta: { label: "Review request", url: appUrl("/volunteer/dashboard") },
@@ -109,7 +109,7 @@ export function connectionAcceptedForStudentEmail(opts: {
     preheader: text,
     heading: "You're connected!",
     bodyHtml: paragraph(
-      `<strong>${escapeHtml(opts.mentorName)}</strong> accepted your mentorship request. You can reach them at <a href="mailto:${escapeHtml(opts.mentorEmail)}" style="color:#3243ab;">${escapeHtml(opts.mentorEmail)}</a>.`,
+      `<strong>${escapeHtml(opts.mentorName)}</strong> accepted your mentorship request. You can reach them at <a href="mailto:${escapeHtml(opts.mentorEmail)}" style="color:#409688;">${escapeHtml(opts.mentorEmail)}</a>.`,
     ),
     cta: { label: "View your mentors", url: appUrl("/student/mentors") },
   });
@@ -126,7 +126,7 @@ export function connectionAcceptedForMentorEmail(opts: {
     preheader: text,
     heading: "You're connected!",
     bodyHtml: paragraph(
-      `You accepted <strong>${escapeHtml(opts.studentName)}</strong>'s request. You can reach them at <a href="mailto:${escapeHtml(opts.studentEmail)}" style="color:#3243ab;">${escapeHtml(opts.studentEmail)}</a>.`,
+      `You accepted <strong>${escapeHtml(opts.studentName)}</strong>'s request. You can reach them at <a href="mailto:${escapeHtml(opts.studentEmail)}" style="color:#409688;">${escapeHtml(opts.studentEmail)}</a>.`,
     ),
     cta: { label: "View your dashboard", url: appUrl("/volunteer/dashboard") },
   });

@@ -41,10 +41,10 @@ export default function LandingPage() {
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <span className="flex items-center gap-2 text-base font-bold text-brand-700">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-600 text-white">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
               <UsersThree weight="fill" className="size-4.5" />
             </span>
-            <span className="hidden sm:inline">Church LinkedIn</span>
+            <span className="hidden sm:inline">ChurchedIn</span>
           </span>
           <nav className="flex items-center gap-1 text-sm sm:gap-2">
             <Link
@@ -67,8 +67,8 @@ export default function LandingPage() {
             Built for church-based international student ministry
           </span>
           <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl md:text-6xl">
-            Where your church organizes events, volunteers,{" "}
-            <span className="text-brand-600">and mentors</span>.
+            Your church community,{" "}
+            <span className="text-brand-600">gathered in one place</span>.
           </h1>
           <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">
             Volunteers schedule dinners, coffee chats, and mentorship meetups.
@@ -134,7 +134,7 @@ export default function LandingPage() {
 
       <footer className="border-t border-line px-6 py-10 text-center text-sm text-ink-muted">
         <span className="inline-flex items-center gap-1.5">
-          <ForkKnife weight="fill" className="size-4" /> Made for churches serving international students.
+          <ForkKnife weight="fill" className="size-4" /> Made with love for church communities welcoming students far from home.
         </span>
       </footer>
     </div>

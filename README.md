@@ -1,18 +1,14 @@
-# Church LinkedIn (working name)
+# ChurchedIn
 
-A LinkedIn-style networking and scheduling platform connecting three groups
-around church-based international student ministry: volunteers who host
-events (dinners, mentorship meetups, coffee chats, study groups, cultural
+A warm, communal networking and scheduling platform connecting three groups
+around church-based international student ministry: volunteers who plan
+gatherings (dinners, friend/guide chats, coffee chats, study groups, cultural
 outings, airport pickups, holiday celebrations), other volunteers who join in
-to help run them, and international students who RSVP to events and
-independently search a mentor directory to request an ongoing one-on-one
-connection. Multi-tenant — any church can create its own space with a join
-code, scoped separately from every other church on the platform.
-
-**Naming note**: ship and test under this working codename, but don't publish
-it publicly without picking a different brand name — "LinkedIn" is a
-registered trademark, and pairing it with another product name in public
-branding invites a takedown/legal request regardless of intent.
+to help run them, and international students who RSVP to gatherings and
+independently browse a directory of friends/guides to reach out for an
+ongoing one-on-one connection. Multi-tenant — any church can create its own
+space with a join code, scoped separately from every other church on the
+platform.
 
 See [PLAN.md](./PLAN.md) for the full build plan, the roles/permissions model,
 the complete data model with rationale, and what was deliberately left out of
@@ -90,7 +86,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | `SESSION_SECRET` | Random secret used to sign session cookies (`openssl rand -hex 32`) |
 | `APP_URL` | Base URL used to build links in emails and the Google OAuth redirect URI |
 | `RESEND_API_KEY` | Optional — set this to switch `src/lib/email.ts` from console logging to real Resend delivery |
-| `EMAIL_FROM` | Optional — the "from" address Resend sends as, e.g. `Church LinkedIn <onboarding@resend.dev>` (see Email setup below) |
+| `EMAIL_FROM` | Optional — the "from" address Resend sends as, e.g. `ChurchedIn <onboarding@resend.dev>` (see Email setup below) |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Optional — set both to enable "Continue with Google". Without them, the button redirects back to login with a generic error (fails closed, doesn't crash). See DEPLOYMENT.md step 3. |
 
 ### Database
@@ -137,15 +133,17 @@ real users to receive real emails, you need to:
    the DNS records Resend gives you (a few TXT/CNAME records at your domain
    registrar). This usually takes a few minutes to propagate.
 6. **Update `EMAIL_FROM`** in `.env` to use that domain, e.g.
-   `EMAIL_FROM="Church LinkedIn <hello@yourdomain.org>"`.
+   `EMAIL_FROM="ChurchedIn <hello@yourdomain.org>"`.
 
 Until then, `EMAIL_FROM` must stay on `onboarding@resend.dev` or Resend will
 reject the send entirely.
 
 ## Deployment
 
-Live at **https://church-linkedin.vercel.app**, deployed on Vercel via its
-GitHub integration (auto-deploys on every push to `master`). See
+Live at **https://church-linkedin.vercel.app** (the Vercel project/domain
+name predates the ChurchedIn rebrand and hasn't been changed — a domain
+rename is a separate infra decision, not a code change), deployed on Vercel
+via its GitHub integration (auto-deploys on every push to `master`). See
 [DEPLOYMENT.md](./DEPLOYMENT.md) for the full step-by-step: provisioning
 Neon Postgres, Resend, Google OAuth, importing the project into Vercel,
 required environment variables, a post-deploy verification checklist, custom

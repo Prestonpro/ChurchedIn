@@ -1,11 +1,11 @@
 {
-  "name": "Church LinkedIn",
-  "short_name": "Church LI",
-  "description": "Schedule events, find volunteers, and connect international students with mentors — church by church.",
+  "name": "ChurchedIn",
+  "short_name": "ChurchedIn",
+  "description": "Your church community, gathered in one place — plan gatherings, welcome new friends, and connect students with guides.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f6f7fc",
-  "theme_color": "#3243ab",
+  "background_color": "#faf8f4",
+  "theme_color": "#409688",
   "icons": [
     {
       "src": "/icon-192.png",

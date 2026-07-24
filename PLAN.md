@@ -1,10 +1,4 @@
-# Church LinkedIn — Build Plan
-
-**Working codename: "Church LinkedIn."** Ship and test under this name, but do not
-publish it publicly without picking a different brand name first — "LinkedIn" is a
-registered trademark and pairing it with another product name in public branding
-invites a takedown/legal request, regardless of intent. Everything below refers to
-"the app" or "Church LinkedIn (working name)" for that reason.
+# ChurchedIn — Build Plan
 
 ## Revision note
 
@@ -34,7 +28,7 @@ open signup and a student's contact info being reachable.
 
 ## 1. What this is
 
-A LinkedIn-style networking and scheduling platform connecting three groups around
+A warm, communal networking and scheduling platform connecting three groups around
 church-based international student ministry:
 
 - **Volunteers** — church members who host events (dinners, mentorship meetups,

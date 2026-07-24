@@ -48,10 +48,10 @@ export function AuthShell({
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-5">
             <Link href="/events" className="flex items-center gap-2 text-base font-bold text-brand-700">
-              <span className="flex size-8 items-center justify-center rounded-lg bg-brand-600 text-white">
+              <span className="flex size-8 items-center justify-center rounded-full bg-brand-600 text-white">
                 <UsersThree weight="fill" className="size-4.5" />
               </span>
-              <span className="hidden lg:inline">Church LinkedIn</span>
+              <span className="hidden lg:inline">ChurchedIn</span>
             </Link>
             <div className="hidden lg:block">
               <NavLinks links={links} />

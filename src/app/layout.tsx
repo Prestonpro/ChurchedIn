@@ -9,13 +9,13 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const description =
-  "Schedule events, find volunteers, and connect international students with mentors — church by church.";
+  "Your church community, gathered in one place — plan gatherings, welcome new friends, and connect students with guides.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: {
-    default: "Church LinkedIn (working name)",
-    template: "%s | Church LinkedIn",
+    default: "ChurchedIn",
+    template: "%s | ChurchedIn",
   },
   description,
   manifest: "/manifest.json",
@@ -29,25 +29,25 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Church LinkedIn",
+    title: "ChurchedIn",
   },
   openGraph: {
     type: "website",
-    siteName: "Church LinkedIn",
-    title: "Church LinkedIn (working name)",
+    siteName: "ChurchedIn",
+    title: "ChurchedIn",
     description,
     images: [{ url: "/icon-512.png", width: 512, height: 512 }],
   },
   twitter: {
     card: "summary",
-    title: "Church LinkedIn (working name)",
+    title: "ChurchedIn",
     description,
     images: ["/icon-512.png"],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#3243ab",
+  themeColor: "#409688",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
