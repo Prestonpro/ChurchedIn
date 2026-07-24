@@ -4,8 +4,15 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
-import { eventCancelledEmail } from "@/lib/emailTemplates";
-import { ROLES, EVENT_STATUS, RSVP_STATUS } from "@/lib/constants";
+import { eventCancelledEmail, newEventNotificationEmail } from "@/lib/emailTemplates";
+import {
+  ROLES,
+  EVENT_STATUS,
+  RSVP_STATUS,
+  EVENT_CATEGORY_LABELS,
+  MAX_EVENT_NOTIFICATIONS_PER_DAY,
+  type EventCategory,
+} from "@/lib/constants";
 import { eventSchema, firstIssueMessage } from "@/lib/validation";
 
 export type ActionResult = { error: string } | { ok: true; eventId: string } | void;
@@ -66,10 +73,62 @@ export async function createEventAction(
       churchId: user.activeMembership.churchId,
       createdById: user.id,
     },
+    include: { church: { select: { name: true } } },
   });
 
   revalidatePath("/events");
+  await notifyChurchOfNewEvent(event);
   return { ok: true, eventId: event.id };
+}
+
+/**
+ * Emails every member of the church about a newly published event —
+ * "something's happening!" — rate-limited per church per rolling 24h
+ * window (MAX_EVENT_NOTIFICATIONS_PER_DAY) so one volunteer creating a
+ * string of events in a row doesn't spam every member's inbox. Counts
+ * *other* events created in the window, not notification records, since
+ * there's a 1:1 mapping between "event created" and "notification batch
+ * sent" and that avoids a dedicated tracking table for an MVP feature.
+ */
+async function notifyChurchOfNewEvent(event: {
+  id: string;
+  title: string;
+  description: string;
+  category: string;
+  startsAt: Date;
+  churchId: string;
+  church: { name: string };
+}): Promise<void> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const priorEventCount = await prisma.event.count({
+    where: { churchId: event.churchId, createdAt: { gte: since }, id: { not: event.id } },
+  });
+  if (priorEventCount > MAX_EVENT_NOTIFICATIONS_PER_DAY) {
+    return;
+  }
+
+  const memberships = await prisma.membership.findMany({
+    where: { churchId: event.churchId },
+    include: { user: { select: { email: true } } },
+  });
+  const notification = newEventNotificationEmail({
+    churchName: event.church.name,
+    eventTitle: event.title,
+    eventId: event.id,
+    categoryLabel: EVENT_CATEGORY_LABELS[event.category as EventCategory],
+    startsAt: event.startsAt,
+    description: event.description,
+  });
+  await Promise.all(
+    memberships.map((m) =>
+      sendEmail({
+        to: m.user.email,
+        subject: notification.subject,
+        body: notification.text,
+        html: notification.html,
+      }),
+    ),
+  );
 }
 
 /**

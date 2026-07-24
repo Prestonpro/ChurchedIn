@@ -309,3 +309,21 @@ _(Updated as phases complete — check here first when resuming.)_
   "Run this again" → correctly prefilled form). All 4 e2e specs + 24 unit
   tests pass.
   **Not yet done:** Phases 8-10 + final gates.
+
+- **Phase 8: DONE** (pushed). New `newEventNotificationEmail` template
+  ("Something's happening!" / "New gathering at [Church]: [Title]", with
+  category, date/time, a truncated description preview, and a link).
+  `createEventAction` emails every church member after publishing, via a
+  new `notifyChurchOfNewEvent` helper. Rate limit: counts *other* events
+  created by the church in the last 24h (excluding the just-created one) —
+  if that count is already > `MAX_EVENT_NOTIFICATIONS_PER_DAY` (3), skips
+  sending. No new tracking table — reuses Event.createdAt since there's a
+  1:1 mapping between "event created" and "notification batch". Skipped
+  the explicitly-marked stretch goal (in-app nav badge for unseen events)
+  to prioritize the remaining phases and final gates. All 4 e2e specs
+  (notification email correctly fires, only rejected by Resend's
+  test-domain restriction like every other test email) + 24 unit tests
+  pass. The rate-limit logic and email-recipient-leak question are
+  earmarked for the final security review pass rather than re-litigated
+  here.
+  **Not yet done:** Phases 9-10 + final gates.

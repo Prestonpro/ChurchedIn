@@ -90,3 +90,9 @@ export function dashboardPathForRole(role: Role): string {
 // enforced in src/lib/actions/connections.ts by counting recent
 // MentorConnection.lastRequestedAt values, not by an external rate limiter.
 export const MAX_CONNECTION_REQUESTS_PER_DAY = 5;
+
+// Caps "new event" notification emails per church per rolling 24h window,
+// so one eager volunteer creating a string of events doesn't spam every
+// member's inbox. Enforced in src/lib/actions/events.ts by counting recent
+// Event.createdAt values for the church, not an external rate limiter.
+export const MAX_EVENT_NOTIFICATIONS_PER_DAY = 3;

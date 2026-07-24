@@ -73,6 +73,32 @@ export function eventCancelledEmail(opts: { eventTitle: string; startsAt: Date }
   return { subject, text, html };
 }
 
+export function newEventNotificationEmail(opts: {
+  churchName: string;
+  eventTitle: string;
+  eventId: string;
+  categoryLabel: string;
+  startsAt: Date;
+  description: string;
+}): EmailContent {
+  const when = opts.startsAt.toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
+  const preview = opts.description.length > 160 ? `${opts.description.slice(0, 160)}…` : opts.description;
+  const subject = `New gathering at ${opts.churchName}: ${opts.eventTitle}`;
+  const text = `${opts.eventTitle} (${opts.categoryLabel}) on ${when}.\n\n${preview}\n\n${appUrl(`/events/${opts.eventId}`)}`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Something's happening!",
+    bodyHtml: [
+      paragraph(
+        `<strong>${escapeHtml(opts.eventTitle)}</strong> (${escapeHtml(opts.categoryLabel)}) — ${escapeHtml(when)}.`,
+      ),
+      paragraph(escapeHtml(preview)),
+    ].join(""),
+    cta: { label: "View details", url: appUrl(`/events/${opts.eventId}`) },
+  });
+  return { subject, text, html };
+}
+
 // ---------------------------------------------------------------------------
 // Mentor connections
 // ---------------------------------------------------------------------------
