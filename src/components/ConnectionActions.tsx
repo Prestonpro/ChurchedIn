@@ -13,8 +13,8 @@ export function RespondToConnectionButtons({ connectionId }: { connectionId: str
         size="sm"
         disabled={pending}
         onClick={() =>
-          startTransition(() => {
-            void respondToConnectionAction(connectionId, "ACCEPT");
+          startTransition(async () => {
+            await respondToConnectionAction(connectionId, "ACCEPT");
           })
         }
       >
@@ -25,8 +25,8 @@ export function RespondToConnectionButtons({ connectionId }: { connectionId: str
         size="sm"
         disabled={pending}
         onClick={() =>
-          startTransition(() => {
-            void respondToConnectionAction(connectionId, "DECLINE");
+          startTransition(async () => {
+            await respondToConnectionAction(connectionId, "DECLINE");
           })
         }
       >
@@ -46,8 +46,8 @@ export function EndConnectionButton({ connectionId }: { connectionId: string }) 
       disabled={pending}
       onClick={() => {
         if (confirm("End this connection?")) {
-          startTransition(() => {
-            void endConnectionAction(connectionId);
+          startTransition(async () => {
+            await endConnectionAction(connectionId);
           });
         }
       }}

@@ -14,8 +14,8 @@ export function ReportStatusButtons({ reportId }: { reportId: string }) {
         size="sm"
         disabled={pending}
         onClick={() =>
-          startTransition(() => {
-            void updateReportStatusAction(reportId, "REVIEWED");
+          startTransition(async () => {
+            await updateReportStatusAction(reportId, "REVIEWED");
           })
         }
       >
@@ -26,8 +26,8 @@ export function ReportStatusButtons({ reportId }: { reportId: string }) {
         size="sm"
         disabled={pending}
         onClick={() =>
-          startTransition(() => {
-            void updateReportStatusAction(reportId, "DISMISSED");
+          startTransition(async () => {
+            await updateReportStatusAction(reportId, "DISMISSED");
           })
         }
       >

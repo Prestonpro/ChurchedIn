@@ -16,8 +16,8 @@ export function BlockButton({ userId }: { userId: string }) {
       title="Block this person"
       onClick={() => {
         if (confirm("Block this person? They won't be able to RSVP to your events or contact you.")) {
-          startTransition(() => {
-            void blockUserAction(userId);
+          startTransition(async () => {
+            await blockUserAction(userId);
           });
         }
       }}

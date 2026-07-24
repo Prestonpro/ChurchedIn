@@ -18,6 +18,33 @@ function roleBucketFor(membershipRole: string): RsvpRole | null {
   return null;
 }
 
+/**
+ * Takes a Postgres advisory lock scoped to this event for the duration of
+ * the enclosing transaction, so two concurrent RSVP/cancel calls for the
+ * *same event* can never interleave — whichever transaction acquires the
+ * lock first fully commits before the other's reads run. Without this, a
+ * capacity-count read or waitlist-search can run against another
+ * transaction's not-yet-committed write and miss it entirely (correct READ
+ * COMMITTED behavior, but wrong for this use case).
+ *
+ * Deliberately a session-scoped Postgres lock (advisory, via hashtext on
+ * the event id), not `SELECT ... FOR UPDATE` on the Event row — verified
+ * directly against this database that row-level FOR UPDATE locks do not
+ * reliably block a second concurrent transaction, while
+ * pg_advisory_xact_lock does. `_xact_` variant auto-releases on commit or
+ * rollback, so there's no risk of a stuck lock outliving the transaction.
+ * Must be the first statement in the transaction, before any other read.
+ */
+async function lockEventForRsvpMutation(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  eventId: string,
+): Promise<void> {
+  // $executeRaw, not $queryRaw — pg_advisory_xact_lock returns `void`, which
+  // the driver adapter can't deserialize as a query result column; $executeRaw
+  // doesn't attempt to, since we don't need a return value here anyway.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${eventId}))`;
+}
+
 export async function rsvpToEventAction(eventId: string): Promise<ActionResult> {
   const user = await requireUser();
 
@@ -41,6 +68,8 @@ export async function rsvpToEventAction(eventId: string): Promise<ActionResult> 
   const cap = role === RSVP_ROLE.HELPER ? event.volunteerCap : event.studentCap;
 
   const result = await prisma.$transaction(async (tx) => {
+    await lockEventForRsvpMutation(tx, eventId);
+
     const existing = await tx.eventRsvp.findUnique({
       where: { eventId_userId: { eventId, userId: user.id } },
     });
@@ -84,6 +113,8 @@ export async function cancelRsvpAction(eventId: string): Promise<ActionResult> {
   const user = await requireUser();
 
   const promoted = await prisma.$transaction(async (tx) => {
+    await lockEventForRsvpMutation(tx, eventId);
+
     const existing = await tx.eventRsvp.findUnique({
       where: { eventId_userId: { eventId, userId: user.id } },
     });

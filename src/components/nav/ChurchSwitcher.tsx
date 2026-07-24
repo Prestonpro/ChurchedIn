@@ -26,7 +26,7 @@ export function ChurchSwitcher({
       <select
         value={activeChurchId}
         disabled={pending}
-        onChange={(e) => startTransition(() => { void switchChurchAction(e.target.value); })}
+        onChange={(e) => startTransition(async () => { await switchChurchAction(e.target.value); })}
         className="cursor-pointer appearance-none rounded-lg border border-line-strong bg-white py-1.5 pl-3 pr-8 text-sm font-medium text-ink transition-brand hover:border-brand-300 focus:outline-none focus:ring-4 focus:ring-brand-100"
       >
         {memberships.map((m) => (

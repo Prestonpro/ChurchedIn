@@ -53,6 +53,12 @@ test("student can request a mentor connection; contact info is revealed only aft
   await mentorPage.goto("/volunteer/dashboard");
   await expect(mentorPage.getByText("Student Person")).toBeVisible();
   await mentorPage.getByRole("button", { name: "Accept" }).click();
+  // Wait for the mentor's own page to reflect the acceptance (the student
+  // moves from "requests waiting on you" into "active connections", which
+  // only renders once the server action's revalidated data confirms
+  // ACCEPTED) before touching the student's page — mirrors the same
+  // synchronization pattern rsvp-waitlist.spec.ts uses.
+  await expect(mentorPage.getByText(studentEmail)).toBeVisible();
 
   await studentPage.goto("/student/mentors");
   await expect(studentPage.getByText("Connected")).toBeVisible();
