@@ -24,10 +24,12 @@ const PRESETS: { category: EventCategory; label: string; title: string; descript
   { category: "MENTORSHIP", label: "Friend chat", title: "Friend chat", description: "One-on-one time to get to know each other." },
 ];
 
-export function EventForm() {
+export function EventForm({ churchName }: { churchName: string }) {
   const router = useRouter();
   const [state, formAction] = useActionState(createEventAction, undefined);
   const [picked, setPicked] = useState<{ category: EventCategory; title: string } | null>(null);
+  const [atChurch, setAtChurch] = useState(false);
+  const [location, setLocation] = useState("");
 
   useEffect(() => {
     if (state && "ok" in state && state.ok) {
@@ -117,6 +119,17 @@ export function EventForm() {
         icon={MapPin}
         required
         placeholder="Church fellowship hall, or a video link"
+        value={location}
+        onChange={(e) => setLocation(e.target.value)}
+      />
+      <CheckboxField
+        label="Host this at our church building"
+        name="atChurch"
+        checked={atChurch}
+        onChange={(e) => {
+          setAtChurch(e.target.checked);
+          if (e.target.checked) setLocation(churchName);
+        }}
       />
       <CheckboxField label="This is a virtual event" name="isVirtual" />
 

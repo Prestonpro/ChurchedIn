@@ -19,7 +19,7 @@ export default async function NewEventPage() {
           Share it and your church family will see it right away.
         </p>
         <Card>
-          <EventForm />
+          <EventForm churchName={user.activeMembership.church.name} />
         </Card>
       </div>
     </AuthShell>

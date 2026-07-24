@@ -30,6 +30,7 @@ export async function createEventAction(
     endsAt: formData.get("endsAt"),
     location: formData.get("location"),
     isVirtual: formData.get("isVirtual") === "on",
+    atChurch: formData.get("atChurch") === "on",
     volunteerCap: formData.get("volunteerCap")
       ? Number(formData.get("volunteerCap"))
       : null,
@@ -59,6 +60,7 @@ export async function createEventAction(
       endsAt,
       location: data.location,
       isVirtual: data.isVirtual,
+      atChurch: data.atChurch,
       volunteerCap: data.volunteerCap,
       studentCap: data.studentCap,
       churchId: user.activeMembership.churchId,

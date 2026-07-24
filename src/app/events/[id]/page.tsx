@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour } from "@phosphor-icons/react/dist/ssr";
+import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getEventById, listCohostCandidates } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
@@ -79,6 +79,11 @@ export default async function EventDetailPage({
                   <MapPin weight="bold" className="size-4 shrink-0 text-ink-faint" />
                 )}
                 {event.location}
+                {event.atChurch && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-semibold text-brand-700">
+                    <Buildings weight="bold" className="size-3" /> at church
+                  </span>
+                )}
               </p>
             </div>
 

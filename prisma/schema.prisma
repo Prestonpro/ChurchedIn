@@ -156,6 +156,10 @@ model Event {
   endsAt       DateTime
   location     String
   isVirtual    Boolean       @default(false)
+  // Signals the host wants to use the church building (their home isn't
+  // big enough, etc.) — a flag for the church leader to notice, not an
+  // actual booking/reservation system.
+  atChurch     Boolean       @default(false)
   volunteerCap Int?
   studentCap   Int?
   status       EventStatus   @default(PUBLISHED)

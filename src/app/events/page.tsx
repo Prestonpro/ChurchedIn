@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, Sparkle, Buildings } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { listEventsForChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
@@ -104,7 +104,14 @@ export default async function EventsPage() {
                           <StyledBadge icon={Icon} className={style.chipClass}>
                             {style.label}
                           </StyledBadge>
-                          <h3 className="mt-2 text-lg font-bold text-ink">{event.title}</h3>
+                          <h3 className="mt-2 text-lg font-bold text-ink">
+                            {event.title}
+                            {event.atChurch && (
+                              <span className="ml-1.5 inline-flex items-center gap-1 align-middle text-xs font-semibold text-brand-600">
+                                <Buildings weight="bold" className="size-3.5" /> at church
+                              </span>
+                            )}
+                          </h3>
                           <p className="mt-1 text-sm text-ink-muted">
                             {event.startsAt.toLocaleString(undefined, {
                               weekday: "long",
@@ -146,7 +153,14 @@ export default async function EventsPage() {
                         <StyledBadge icon={Icon} className={style.chipClass}>
                           {style.label}
                         </StyledBadge>
-                        <h3 className="mt-2 text-lg font-bold text-ink">{event.title}</h3>
+                        <h3 className="mt-2 text-lg font-bold text-ink">
+                          {event.title}
+                          {event.atChurch && (
+                            <span className="ml-1.5 inline-flex items-center gap-1 align-middle text-xs font-semibold text-brand-600">
+                              <Buildings weight="bold" className="size-3.5" /> at church
+                            </span>
+                          )}
+                        </h3>
                         <p className="mt-2.5 flex-1 text-sm leading-relaxed text-ink-soft line-clamp-2">
                           {event.description}
                         </p>

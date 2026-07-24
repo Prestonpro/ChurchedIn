@@ -282,3 +282,15 @@ _(Updated as phases complete — check here first when resuming.)_
   atChurch code path. Get the production direct connection string from the
   user if it's not already in hand (never hardcode/guess it).
   **Not yet done:** Phases 6-10 + final gates.
+
+- **Phase 6: DONE** (pushed). `atChurch Boolean @default(false)` added to
+  Event (migration `20260724232601_add_event_at_church`, applied to dev —
+  still owes production, see above). EventForm gained a "Host this at our
+  church building" checkbox; checking it auto-fills the (now controlled,
+  was uncontrolled) Location field with the church's name via a
+  `churchName` prop threaded from the page down. "(at church)" badge shown
+  on event-feed cards (both spotlight and regular grid) and the event
+  detail page's location line. No booking/reservation system, per the
+  brief — just a visible signal. All 4 e2e specs + 24 unit tests pass;
+  visually verified the auto-fill.
+  **Not yet done:** Phases 7-10 + final gates.
