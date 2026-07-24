@@ -4,6 +4,13 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import {
+  connectionRequestedEmail,
+  connectionAcceptedForStudentEmail,
+  connectionAcceptedForMentorEmail,
+  connectionDeclinedEmail,
+  connectionEndedEmail,
+} from "@/lib/emailTemplates";
 import { isBlockedPair } from "@/lib/queries";
 import {
   nextConnectionStatus,
@@ -100,12 +107,12 @@ export async function requestConnectionAction(
     });
   }
 
+  const requestEmail = connectionRequestedEmail({ studentName: user.name, message });
   await sendEmail({
     to: mentorProfile.user.email,
-    subject: `${user.name} wants to connect`,
-    body: `${user.name} sent you a mentorship connection request${
-      message ? `:\n\n"${message}"` : "."
-    }\n\nReview it from your dashboard.`,
+    subject: requestEmail.subject,
+    body: requestEmail.text,
+    html: requestEmail.html,
   });
 
   revalidatePath("/student/mentors");
@@ -157,23 +164,35 @@ export async function respondToConnectionAction(
   if (action === "ACCEPT") {
     // Contact info reveal happens only here — see the non-negotiable safety
     // rule in PLAN.md section 8. Do not surface either email anywhere else.
+    const forStudent = connectionAcceptedForStudentEmail({
+      mentorName: connection.mentor.name,
+      mentorEmail: connection.mentor.email,
+    });
+    const forMentor = connectionAcceptedForMentorEmail({
+      studentName: connection.student.name,
+      studentEmail: connection.student.email,
+    });
     await Promise.all([
       sendEmail({
         to: connection.student.email,
-        subject: `${connection.mentor.name} accepted your request`,
-        body: `${connection.mentor.name} accepted your mentorship request. You can reach them at ${connection.mentor.email}.`,
+        subject: forStudent.subject,
+        body: forStudent.text,
+        html: forStudent.html,
       }),
       sendEmail({
         to: connection.mentor.email,
-        subject: `You're connected with ${connection.student.name}`,
-        body: `You accepted ${connection.student.name}'s request. You can reach them at ${connection.student.email}.`,
+        subject: forMentor.subject,
+        body: forMentor.text,
+        html: forMentor.html,
       }),
     ]);
   } else {
+    const declinedEmail = connectionDeclinedEmail({ mentorName: connection.mentor.name });
     await sendEmail({
       to: connection.student.email,
-      subject: `Update on your mentor request`,
-      body: `${connection.mentor.name} isn't able to connect right now.`,
+      subject: declinedEmail.subject,
+      body: declinedEmail.text,
+      html: declinedEmail.html,
     });
   }
 
@@ -200,11 +219,8 @@ export async function endConnectionAction(connectionId: string): Promise<ActionR
   });
 
   const other = connection.studentId === user.id ? connection.mentor : connection.student;
-  await sendEmail({
-    to: other.email,
-    subject: "A connection was ended",
-    body: `${user.name} ended your mentorship connection.`,
-  });
+  const endedEmail = connectionEndedEmail({ otherName: user.name });
+  await sendEmail({ to: other.email, subject: endedEmail.subject, body: endedEmail.text, html: endedEmail.html });
 
   revalidatePath("/volunteer/dashboard");
   revalidatePath("/student/mentors");

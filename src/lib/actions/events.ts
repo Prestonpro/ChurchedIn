@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { eventCancelledEmail } from "@/lib/emailTemplates";
 import { ROLES, EVENT_STATUS, RSVP_STATUS } from "@/lib/constants";
 import { eventSchema, firstIssueMessage } from "@/lib/validation";
 
@@ -92,12 +93,14 @@ export async function cancelEventAction(eventId: string): Promise<ActionResult> 
     data: { status: EVENT_STATUS.CANCELLED },
   });
 
+  const cancelledEmail = eventCancelledEmail({ eventTitle: event.title, startsAt: event.startsAt });
   await Promise.all(
     event.rsvps.map((rsvp) =>
       sendEmail({
         to: rsvp.user.email,
-        subject: `Cancelled: ${event.title}`,
-        body: `${event.title} on ${event.startsAt.toLocaleString()} has been cancelled by the organizer.`,
+        subject: cancelledEmail.subject,
+        body: cancelledEmail.text,
+        html: cancelledEmail.html,
       }),
     ),
   );

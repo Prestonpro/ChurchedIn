@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
+import { rsvpConfirmedEmail, rsvpWaitlistedEmail, waitlistPromotedEmail } from "@/lib/emailTemplates";
 import { isBlockedPair } from "@/lib/queries";
 import { decideRsvpStatus, pickPromotionCandidate } from "@/lib/rsvp";
 import { ROLES, RSVP_ROLE, RSVP_STATUS, EVENT_STATUS, type RsvpRole } from "@/lib/constants";
@@ -94,17 +95,11 @@ export async function rsvpToEventAction(eventId: string): Promise<ActionResult> 
     return { error: result.error };
   }
 
-  await sendEmail({
-    to: user.email,
-    subject:
-      result.status === RSVP_STATUS.CONFIRMED
-        ? `You're confirmed: ${event.title}`
-        : `You're on the waitlist: ${event.title}`,
-    body:
-      result.status === RSVP_STATUS.CONFIRMED
-        ? `You're confirmed for ${event.title} on ${event.startsAt.toLocaleString()}.`
-        : `${event.title} is currently full. You're on the waitlist and will be notified automatically if a spot opens up.`,
-  });
+  const emailContent =
+    result.status === RSVP_STATUS.CONFIRMED
+      ? rsvpConfirmedEmail({ eventTitle: event.title, eventId, startsAt: event.startsAt })
+      : rsvpWaitlistedEmail({ eventTitle: event.title, eventId });
+  await sendEmail({ to: user.email, subject: emailContent.subject, body: emailContent.text, html: emailContent.html });
 
   revalidatePath(`/events/${eventId}`);
 }
@@ -144,12 +139,12 @@ export async function cancelRsvpAction(eventId: string): Promise<ActionResult> {
 
   if (promoted) {
     const event = await prisma.event.findUnique({ where: { id: eventId } });
+    const emailContent = waitlistPromotedEmail({ eventTitle: event?.title ?? "your event", eventId });
     await sendEmail({
       to: promoted.user.email,
-      subject: `A spot opened up: ${event?.title ?? "your event"}`,
-      body: `A spot just opened up and you've been moved from the waitlist to confirmed for ${
-        event?.title ?? "the event"
-      }.`,
+      subject: emailContent.subject,
+      body: emailContent.text,
+      html: emailContent.html,
     });
   }
 

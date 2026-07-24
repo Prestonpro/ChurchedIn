@@ -94,6 +94,22 @@ model User {
   reportsReceived      Report[]           @relation("ReportsReceived")
   blocksInitiated      Block[]            @relation("BlocksInitiated")
   blocksReceived       Block[]            @relation("BlocksReceived")
+  passwordResetTokens  PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  // SHA-256 hash of the token, never the raw value — same principle as
+  // password hashing: if this table ever leaks, the hashes alone can't be
+  // used to reset anyone's password. The raw token only ever exists in the
+  // emailed link and in memory for the single request that validates it.
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model Membership {
