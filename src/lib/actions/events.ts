@@ -70,6 +70,58 @@ export async function createEventAction(
   return { ok: true, eventId: event.id };
 }
 
+/**
+ * Adds a volunteer as a co-host, immediately — no accept/decline step (MVP
+ * scope per the redesign brief). Only the event's original creator can
+ * invite co-hosts; the invitee must be a VOLUNTEER in the same church the
+ * event belongs to, same trust boundary as who can create events at all.
+ */
+export async function inviteCohostAction(eventId: string, userId: string): Promise<ActionResult> {
+  const user = await requireUser();
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) {
+    return { error: "Event not found." };
+  }
+  if (event.createdById !== user.id) {
+    return { error: "Only the event's creator can invite a co-host." };
+  }
+
+  const invitee = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { memberships: { where: { churchId: event.churchId } } },
+  });
+  const membership = invitee?.memberships[0];
+  if (!invitee || !membership || membership.role !== ROLES.VOLUNTEER) {
+    return { error: "That person isn't a volunteer at this church." };
+  }
+  if (userId === user.id) {
+    return { error: "You're already the host." };
+  }
+
+  await prisma.eventCohost.upsert({
+    where: { eventId_userId: { eventId, userId } },
+    create: { eventId, userId },
+    update: {},
+  });
+
+  revalidatePath(`/events/${eventId}`);
+}
+
+/** Removes a co-host — creator-only, same as inviting one. */
+export async function removeCohostAction(eventId: string, userId: string): Promise<ActionResult> {
+  const user = await requireUser();
+  const event = await prisma.event.findUnique({ where: { id: eventId } });
+  if (!event) {
+    return { error: "Event not found." };
+  }
+  if (event.createdById !== user.id) {
+    return { error: "Only the event's creator can remove a co-host." };
+  }
+
+  await prisma.eventCohost.deleteMany({ where: { eventId, userId } });
+  revalidatePath(`/events/${eventId}`);
+}
+
 export async function cancelEventAction(eventId: string): Promise<ActionResult> {
   const user = await requireUser();
   const event = await prisma.event.findUnique({

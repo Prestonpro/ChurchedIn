@@ -261,4 +261,24 @@ _(Updated as phases complete — check here first when resuming.)_
   existing `getByRole("button", {name: "Dinner"})` still matches "Host a
   dinner" unmodified (Playwright's default string matching is substring +
   case-insensitive). All 4 e2e specs + 24 unit tests pass.
-  **Not yet done:** Phases 5-10 + final gates.
+
+- **Phase 5: DONE** (pushed). New `EventCohost` model (migration
+  `20260724222655_add_event_cohost`, additive-only, applied to dev DB — see
+  below re: production). `inviteCohostAction`/`removeCohostAction` in
+  events.ts: creator-only, invitee must be a VOLUNTEER in the same church,
+  immediate add (upsert, no accept/decline). New `CohostManager` client
+  component (search-filter over a pre-fetched candidate list + add/remove
+  buttons) shown on the event detail page, creator-only. "Hosted by X with
+  Y, Z" line added under the event title. `getEventById` now includes
+  cohosts; new `listCohostCandidates` query excludes the creator and
+  existing cohosts. All 4 e2e specs (migration applied cleanly to the e2e_test
+  schema too) + 24 unit tests pass; visually verified end-to-end (invite,
+  persisted after reload, remove button present).
+  **IMPORTANT — production migration debt:** this migration (and Phase 6's)
+  have only been applied to the dev database, NOT the separate production
+  Neon database from Section 5. Before/at final verification, run
+  `DATABASE_URL="<production DIRECT connection string>" npx prisma migrate
+  deploy` against production, or the live site will error on any co-host or
+  atChurch code path. Get the production direct connection string from the
+  user if it's not already in hand (never hardcode/guess it).
+  **Not yet done:** Phases 6-10 + final gates.

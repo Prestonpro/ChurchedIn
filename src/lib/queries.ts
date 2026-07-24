@@ -1,7 +1,7 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-import { RSVP_STATUS, EVENT_STATUS } from "@/lib/constants";
+import { RSVP_STATUS, EVENT_STATUS, ROLES } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
 
 export function listEventsForChurch(churchId: string) {
@@ -32,7 +32,25 @@ export function getEventById(eventId: string) {
         include: { user: { select: { id: true, name: true } } },
         orderBy: { createdAt: "asc" },
       },
+      cohosts: {
+        include: { user: { select: { id: true, name: true } } },
+        orderBy: { createdAt: "asc" },
+      },
     },
+  });
+}
+
+/** Volunteers at a church who could be invited as a co-host — excludes the
+ * event creator (already the host) and anyone already co-hosting. */
+export function listCohostCandidates(churchId: string, eventId: string) {
+  return prisma.user.findMany({
+    where: {
+      memberships: { some: { churchId, role: ROLES.VOLUNTEER } },
+      eventsCreated: { none: { id: eventId } },
+      cohostedEvents: { none: { eventId } },
+    },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
   });
 }
 

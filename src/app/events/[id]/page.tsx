@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, VideoCamera, UsersThree, HandHeart } from "@phosphor-icons/react/dist/ssr";
+import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
-import { getEventById } from "@/lib/queries";
+import { getEventById, listCohostCandidates } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -9,6 +9,7 @@ import { Badge, StyledBadge } from "@/components/ui/Badge";
 import { CapacityBar } from "@/components/ui/CapacityBar";
 import { RsvpControls } from "./RsvpControls";
 import { CancelEventButton } from "./CancelEventButton";
+import { CohostManager } from "./CohostManager";
 import {
   EVENT_STATUS,
   ROLES,
@@ -45,6 +46,7 @@ export default async function EventDetailPage({
   const style = categoryStyle(event.category as EventCategory);
   const CategoryIcon = style.icon;
   const isCancelled = event.status === EVENT_STATUS.CANCELLED;
+  const cohostCandidates = isCreator ? await listCohostCandidates(event.churchId, event.id) : [];
 
   return (
     <AuthShell user={user}>
@@ -58,6 +60,10 @@ export default async function EventDetailPage({
               {isCancelled && <Badge tone="danger">Cancelled</Badge>}
             </div>
             <h1 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">{event.title}</h1>
+            <p className="mt-1 text-sm text-ink-muted">
+              Hosted by {event.createdBy.name}
+              {event.cohosts.length > 0 && <> with {event.cohosts.map((c) => c.user.name).join(", ")}</>}
+            </p>
 
             <div className="mt-4 space-y-2 text-sm text-ink-soft">
               <p className="flex items-center gap-2">
@@ -132,6 +138,19 @@ export default async function EventDetailPage({
               ))}
             </ul>
           </Card>
+
+          {isCreator && !isCancelled && (
+            <Card>
+              <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-ink">
+                <UsersFour weight="bold" className="size-4 text-brand-600" /> Co-hosts
+              </h2>
+              <CohostManager
+                eventId={event.id}
+                cohosts={event.cohosts.map((c) => c.user)}
+                candidates={cohostCandidates}
+              />
+            </Card>
+          )}
         </div>
       </div>
     </AuthShell>
