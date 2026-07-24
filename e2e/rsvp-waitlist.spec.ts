@@ -16,6 +16,7 @@ test("a capped event waitlists the second helper and promotes them when the firs
   const joinCode = await getJoinCode(adminPage);
 
   await adminPage.goto("/volunteer/events/new");
+  await adminPage.getByRole("button", { name: "Coffee chat" }).click();
   await adminPage.getByLabel("Title").fill("Capacity Test Event");
   await adminPage.getByLabel("Description").fill("Testing waitlist promotion end to end.");
   const start = new Date(Date.now() + 24 * 60 * 60 * 1000);

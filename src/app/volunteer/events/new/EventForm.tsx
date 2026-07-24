@@ -2,17 +2,32 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, HandHeart, GraduationCap } from "@phosphor-icons/react/dist/ssr";
+import { MapPin, HandHeart, GraduationCap, ArrowLeft, PlusCircle } from "@phosphor-icons/react/dist/ssr";
 import { createEventAction } from "@/lib/actions/events";
 import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
-import { categoryStyle, ALL_CATEGORIES } from "@/lib/eventCategoryStyle";
+import { categoryStyle } from "@/lib/eventCategoryStyle";
 import type { EventCategory } from "@/lib/constants";
+
+/** Presets shown as tappable cards before the full form — a blank category
+ * grid plus a dozen date/location fields is a cold start for a first-time
+ * host. Each preset just pre-fills category + a starting title; every field
+ * stays fully editable afterward. "Create your own" is the escape hatch for
+ * anything that doesn't fit one of these, mapped to the OTHER category. */
+const PRESETS: { category: EventCategory; label: string; title: string; description: string }[] = [
+  { category: "DINNER", label: "Host a dinner", title: "Friday night welcome dinner", description: "Share a meal and good conversation." },
+  { category: "COFFEE_CHAT", label: "Coffee chat", title: "Coffee chat", description: "A relaxed one-on-one or small group chat." },
+  { category: "STUDY_GROUP", label: "Study group", title: "Study group", description: "Get together to study or do homework." },
+  { category: "AIRPORT_PICKUP", label: "Airport pickup", title: "Airport pickup", description: "Help a student get settled when they arrive." },
+  { category: "CULTURAL_OUTING", label: "Cultural outing", title: "Cultural outing", description: "Explore something new together as a group." },
+  { category: "HOLIDAY_CELEBRATION", label: "Holiday celebration", title: "Holiday celebration", description: "Celebrate a holiday together, away from home." },
+  { category: "MENTORSHIP", label: "Friend chat", title: "Friend chat", description: "One-on-one time to get to know each other." },
+];
 
 export function EventForm() {
   const router = useRouter();
   const [state, formAction] = useActionState(createEventAction, undefined);
-  const [category, setCategory] = useState<EventCategory>("DINNER");
+  const [picked, setPicked] = useState<{ category: EventCategory; title: string } | null>(null);
 
   useEffect(() => {
     if (state && "ok" in state && state.ok) {
@@ -20,38 +35,75 @@ export function EventForm() {
     }
   }, [state, router]);
 
+  if (!picked) {
+    return (
+      <div>
+        <span className="text-sm font-semibold text-ink-soft">What are you planning?</span>
+        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {PRESETS.map((preset, i) => {
+            const style = categoryStyle(preset.category);
+            const Icon = style.icon;
+            return (
+              <button
+                key={preset.category}
+                type="button"
+                onClick={() => setPicked({ category: preset.category, title: preset.title })}
+                className="flex animate-fade-up flex-col items-center gap-2 rounded-xl border border-line-strong p-4 text-center transition-brand hover:border-brand-300 hover:bg-paper"
+                style={{ animationDelay: `${i * 40}ms` }}
+              >
+                <span className={`flex size-11 items-center justify-center rounded-xl ${style.bg} ${style.text}`}>
+                  <Icon weight="fill" className="size-5.5" />
+                </span>
+                <span className="text-sm font-bold text-ink">{preset.label}</span>
+                <span className="text-xs leading-snug text-ink-muted">{preset.description}</span>
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setPicked({ category: "OTHER", title: "" })}
+            className="flex animate-fade-up flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong p-4 text-center transition-brand hover:border-brand-300 hover:bg-paper"
+            style={{ animationDelay: `${PRESETS.length * 40}ms` }}
+          >
+            <span className="flex size-11 items-center justify-center rounded-xl bg-paper text-ink-faint">
+              <PlusCircle weight="bold" className="size-5.5" />
+            </span>
+            <span className="text-sm font-bold text-ink">Create your own</span>
+            <span className="text-xs leading-snug text-ink-muted">Something else? Set it up your way.</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const pickedStyle = categoryStyle(picked.category);
+
   return (
     <form action={formAction} className="space-y-5">
       <FormError message={state && "error" in state ? state.error : undefined} />
 
-      <div>
-        <span className="text-sm font-semibold text-ink-soft">Category</span>
-        <input type="hidden" name="category" value={category} />
-        <div className="mt-2 grid grid-cols-4 gap-2">
-          {ALL_CATEGORIES.map((cat) => {
-            const style = categoryStyle(cat);
-            const Icon = style.icon;
-            const active = category === cat;
-            return (
-              <button
-                key={cat}
-                type="button"
-                onClick={() => setCategory(cat)}
-                className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-brand ${
-                  active
-                    ? `border-transparent ${style.bg} ${style.text}`
-                    : "border-line-strong text-ink-muted hover:border-brand-300"
-                }`}
-              >
-                <Icon weight={active ? "fill" : "regular"} className="size-5" />
-                <span className="text-[11px] font-semibold leading-tight">{style.label}</span>
-              </button>
-            );
-          })}
-        </div>
+      <button
+        type="button"
+        onClick={() => setPicked(null)}
+        className="flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-brand hover:text-ink"
+      >
+        <ArrowLeft weight="bold" className="size-3.5" /> Change type
+      </button>
+
+      <input type="hidden" name="category" value={picked.category} />
+      <div className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm font-semibold ${pickedStyle.bg} ${pickedStyle.text}`}>
+        <pickedStyle.icon weight="fill" className="size-4.5" />
+        {pickedStyle.label}
       </div>
 
-      <Field label="Title" name="title" required placeholder="Friday night welcome dinner" />
+      <Field
+        key={picked.category}
+        label="Title"
+        name="title"
+        required
+        defaultValue={picked.title}
+        placeholder="Friday night welcome dinner"
+      />
       <TextAreaField label="Description" name="description" required />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

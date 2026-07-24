@@ -214,3 +214,51 @@ _(Updated as phases complete — check here first when resuming.)_
   rsvp-waitlist specs) to match new button/label text — all 4 e2e specs +
   24 unit tests pass. **Not yet done:** dashboard summary cards, card-based
   event feed, animations (Phase 3); everything else in Phases 3-10.
+
+- **Phase 3: DONE** (4 commits, pushed: `3e9aa3e` animations, `ab63fe7`
+  dashboard cards, `5c94372` event feed, `f9c378a` friend directory).
+  - Animation infra: 3 keyframes in globals.css (fade-up, fade-in,
+    pulse-gentle) + utility classes, all respecting prefers-reduced-motion.
+    Hero text staggers in on the landing page; AuthShell's main content
+    fades in on navigation; EmptyState icons pulse gently.
+  - New shared `StatCard` component (icon chip + number + optional sublabel
+    + colored left-border accent). All three dashboards now show 3 summary
+    cards at top: admin (Members/Events/Open reports), volunteer (Upcoming
+    gatherings/Friend requests waiting/People in your church), student
+    (Upcoming events/Friends/People in your church).
+  - Event feed (`src/app/events/page.tsx`) redesigned Facebook-Events-style:
+    "Happening soon" spotlight (next 2 events, larger cards) + regular grid
+    below. New `DateBadge` (month/day box) and `AttendeeAvatars` (overlapping
+    circles + "N going") components. `listEventsForChurch` now selects RSVP
+    user names for the avatars. Cards stagger in via fade-up.
+  - Friend directory (`src/app/student/mentors/page.tsx`): languages/interests
+    now render as individual pill tags (not one line of comma-joined text),
+    cards got the hover-lift they were missing, staggered entrance.
+  - Found and fixed a real bug along the way: mixing `weekday` with
+    `timeStyle` in `toLocaleString` throws (Intl.DateTimeFormat doesn't allow
+    it) — only surfaced because Section 6's error boundary caught it cleanly
+    instead of an unhandled crash. Fixed with explicit hour/minute options.
+  - Full verification after every sub-commit: tsc, lint, build, 24 unit
+    tests, all 4 e2e specs — all green throughout.
+  - Did NOT add scroll-triggered stagger to the landing page's below-fold
+    FEATURES grid (would need an IntersectionObserver since CSS-only
+    animations fire on mount, invisible by the time a user scrolls to it) —
+    judged not worth the complexity for a marketing section; stagger was
+    applied to the actual list contexts (events, friends) instead.
+  **Not yet done:** Phases 4-10 + final gates.
+
+- **Phase 4: DONE** (pushed). Event creation form now opens with a preset
+  picker: 7 category cards (Host a dinner/Coffee chat/Study group/Airport
+  pickup/Cultural outing/Holiday celebration/Friend chat — added Friend chat
+  for MENTORSHIP since the brief's example list didn't include it but the
+  category still needs to be reachable) + a dashed "Create your own" card
+  (→ OTHER category, blank title). Picking one pre-fills category + a
+  starting title (via key={category} remount trick since Field is an
+  uncontrolled input) and reveals the full form below; a "Change type" link
+  goes back. EventCategory enum and createEventAction untouched — UI-only.
+  Updated rsvp-waitlist.spec.ts (previously skipped the preset step
+  entirely) to click "Coffee chat" first. signup-and-host-event.spec.ts's
+  existing `getByRole("button", {name: "Dinner"})` still matches "Host a
+  dinner" unmodified (Playwright's default string matching is substring +
+  case-insensitive). All 4 e2e specs + 24 unit tests pass.
+  **Not yet done:** Phases 5-10 + final gates.
