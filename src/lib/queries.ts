@@ -1,6 +1,8 @@
 import "server-only";
+import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { RSVP_STATUS, EVENT_STATUS } from "@/lib/constants";
+import { contactInfoVisible } from "@/lib/connectionState";
 
 export function listEventsForChurch(churchId: string) {
   return prisma.event.findMany({
@@ -61,25 +63,41 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
   return mentors.filter((m) => !excluded.has(m.userId));
 }
 
-export function listConnectionsAsStudent(studentId: string) {
-  return prisma.mentorConnection.findMany({
+// Both listConnections* functions strip the other party's email from
+// anything not ACCEPTED before returning, rather than trusting every future
+// caller to only render `.email` inside the right status branch — pushing
+// the one non-negotiable safety rule (PLAN.md section 8) down into the
+// query layer so it can't be bypassed by a page that forgets.
+export async function listConnectionsAsStudent(studentId: string) {
+  const connections = await prisma.mentorConnection.findMany({
     where: { studentId },
     include: { mentor: { select: { id: true, name: true, email: true, bio: true } } },
     orderBy: { lastRequestedAt: "desc" },
   });
+  return connections.map((c) => ({
+    ...c,
+    mentor: { ...c.mentor, email: contactInfoVisible(c.status) ? c.mentor.email : null },
+  }));
 }
 
-export function listConnectionsAsMentor(mentorId: string) {
-  return prisma.mentorConnection.findMany({
+export async function listConnectionsAsMentor(mentorId: string) {
+  const connections = await prisma.mentorConnection.findMany({
     where: { mentorId },
     include: { student: { select: { id: true, name: true, email: true, bio: true } } },
     orderBy: { lastRequestedAt: "desc" },
   });
+  return connections.map((c) => ({
+    ...c,
+    student: { ...c.student, email: contactInfoVisible(c.status) ? c.student.email : null },
+  }));
 }
 
-export function getChurchByJoinCode(joinCode: string) {
+// Wrapped in React's cache() so generateMetadata and the page component can
+// both call this for the same request without double-querying — React
+// dedupes calls with the same arguments within a single render pass.
+export const getChurchByJoinCode = cache((joinCode: string) => {
   return prisma.church.findUnique({ where: { joinCode: joinCode.toUpperCase() } });
-}
+});
 
 export function listReportsForChurch(churchId: string) {
   return prisma.report.findMany({

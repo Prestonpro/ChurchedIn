@@ -16,6 +16,30 @@ function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
 
+/** Invalidates any previous live token, issues a new one, and emails the
+ * reset link. Deliberately not awaited by the caller — see the note on
+ * requestPasswordResetAction for why. */
+async function issueResetTokenAndEmail(userId: string, email: string): Promise<void> {
+  const token = randomBytes(32).toString("base64url");
+  const tokenHash = hashToken(token);
+  const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
+
+  await prisma.$transaction([
+    // Invalidate any previously-issued, still-usable tokens for this user
+    // — only one live reset link should ever exist at a time.
+    prisma.passwordResetToken.updateMany({
+      where: { userId, usedAt: null },
+      data: { usedAt: new Date() },
+    }),
+    prisma.passwordResetToken.create({
+      data: { userId, tokenHash, expiresAt },
+    }),
+  ]);
+
+  const resetEmail = passwordResetEmail({ resetUrl: appUrl(`/reset-password/${token}`) });
+  await sendEmail({ to: email, subject: resetEmail.subject, body: resetEmail.text, html: resetEmail.html });
+}
+
 /**
  * Always resolves to the same generic success state regardless of whether
  * the email matches an account — this is the one place in the app that
@@ -23,6 +47,15 @@ function hashToken(token: string): string {
  * leave open elsewhere ("an account with that email already exists"),
  * because a password-reset endpoint is the highest-value place an attacker
  * would probe for valid emails, and closing it here costs nothing.
+ *
+ * Token issuance + email sending is deliberately fired without awaiting:
+ * if the "account exists" branch awaited a transaction and an email send
+ * while the "doesn't exist" branch returned immediately, the response time
+ * itself would be a timing side-channel an attacker could use to probe for
+ * valid emails — defeating the point of the generic response. Not awaiting
+ * makes both branches return equally fast; the errors it can still throw
+ * are logged, never surfaced to the caller (which is correct here — this
+ * background work has no result the caller could act on anyway).
  */
 export async function requestPasswordResetAction(
   _prev: ActionResult,
@@ -38,24 +71,9 @@ export async function requestPasswordResetAction(
   // Google-only accounts (no passwordHash) have no password to reset —
   // silently no-op rather than reveal that distinction to the caller.
   if (user && user.passwordHash) {
-    const token = randomBytes(32).toString("base64url");
-    const tokenHash = hashToken(token);
-    const expiresAt = new Date(Date.now() + RESET_TOKEN_TTL_MS);
-
-    await prisma.$transaction([
-      // Invalidate any previously-issued, still-usable tokens for this user
-      // — only one live reset link should ever exist at a time.
-      prisma.passwordResetToken.updateMany({
-        where: { userId: user.id, usedAt: null },
-        data: { usedAt: new Date() },
-      }),
-      prisma.passwordResetToken.create({
-        data: { userId: user.id, tokenHash, expiresAt },
-      }),
-    ]);
-
-    const resetEmail = passwordResetEmail({ resetUrl: appUrl(`/reset-password/${token}`) });
-    await sendEmail({ to: user.email, subject: resetEmail.subject, body: resetEmail.text, html: resetEmail.html });
+    void issueResetTokenAndEmail(user.id, user.email).catch((err: unknown) => {
+      console.error("[password reset] Failed to issue token / send email:", err);
+    });
   }
 
   return { ok: true };
