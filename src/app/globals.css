@@ -121,6 +121,48 @@
     transition-duration: 180ms;
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
+
+  /* Entrance animation for hero text and staggered card grids — pair with
+     an inline `animation-delay` (e.g. style={{ animationDelay: `${i * 60}ms` }})
+     for a cascading reveal instead of everything appearing at once.
+     animation-fill-mode: both holds the 0% (invisible) state until the
+     delay elapses, so staggered items don't flash visible early. */
+  .animate-fade-up {
+    animation: fade-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Subtle page-content transition on navigation — main wrapper only, not
+     the persistent header/nav around it. */
+  .animate-fade-in {
+    animation: fade-in 300ms ease both;
+  }
+
+  /* Gentle breathing motion to draw the eye to an empty state's icon,
+     never fast or bouncy enough to feel like an error/alert. */
+  .animate-pulse-gentle {
+    animation: pulse-gentle 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes pulse-gentle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.75; transform: scale(1.06); }
 }
 
 @media (prefers-reduced-motion: reduce) {

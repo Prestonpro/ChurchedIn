@@ -62,20 +62,32 @@ export default function LandingPage() {
 
       <section className="relative overflow-hidden bg-hero-mesh">
         <div className="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700">
+          <span
+            className="inline-flex animate-fade-up items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700"
+            style={{ animationDelay: "0ms" }}
+          >
             <ShieldCheck weight="fill" className="size-3.5" />
             Built for church-based international student ministry
           </span>
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-ink sm:text-5xl md:text-6xl">
+          <h1
+            className="mt-6 animate-fade-up text-4xl font-extrabold tracking-tight text-ink sm:text-5xl md:text-6xl"
+            style={{ animationDelay: "80ms" }}
+          >
             Your church community,{" "}
             <span className="text-brand-600">gathered in one place</span>.
           </h1>
-          <p className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-ink-soft">
+          <p
+            className="mx-auto mt-6 max-w-2xl animate-fade-up text-lg leading-relaxed text-ink-soft"
+            style={{ animationDelay: "160ms" }}
+          >
             Volunteers plan dinners, coffee chats, and friend meetups. Other
             volunteers join in to help. International students RSVP and find
             a friend — all in one place, per church.
           </p>
-          <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <div
+            className="mt-9 flex animate-fade-up flex-col items-center justify-center gap-3 sm:flex-row"
+            style={{ animationDelay: "240ms" }}
+          >
             <LinkButton href="/signup" size="lg">
               Start your church&apos;s space <ArrowRight weight="bold" className="size-4" />
             </LinkButton>

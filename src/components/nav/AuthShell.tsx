@@ -87,7 +87,7 @@ export function AuthShell({
           />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+      <main className="mx-auto max-w-6xl animate-fade-in px-6 py-8">{children}</main>
     </div>
   );
 }
