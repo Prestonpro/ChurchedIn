@@ -1,8 +1,19 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Buildings, XCircle } from "@phosphor-icons/react/dist/ssr";
 import { getChurchByJoinCode } from "@/lib/queries";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { JoinForm } from "./JoinForm";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ code: string }>;
+}): Promise<Metadata> {
+  const { code } = await params;
+  const church = await getChurchByJoinCode(code);
+  return { title: church ? `Join ${church.name}` : "Join a church" };
+}
 
 export default async function JoinWithCodePage({
   params,

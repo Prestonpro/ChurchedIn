@@ -8,10 +8,16 @@ const jakarta = Plus_Jakarta_Sans({
   weight: ["400", "500", "600", "700", "800"],
 });
 
+const description =
+  "Schedule events, find volunteers, and connect international students with mentors — church by church.";
+
 export const metadata: Metadata = {
-  title: "Church LinkedIn (working name)",
-  description:
-    "Schedule events, find volunteers, and connect international students with mentors — church by church.",
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  title: {
+    default: "Church LinkedIn (working name)",
+    template: "%s | Church LinkedIn",
+  },
+  description,
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -24,6 +30,19 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: "default",
     title: "Church LinkedIn",
+  },
+  openGraph: {
+    type: "website",
+    siteName: "Church LinkedIn",
+    title: "Church LinkedIn (working name)",
+    description,
+    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+  },
+  twitter: {
+    card: "summary",
+    title: "Church LinkedIn (working name)",
+    description,
+    images: ["/icon-512.png"],
   },
 };
 

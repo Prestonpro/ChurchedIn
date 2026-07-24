@@ -1,8 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { XCircle } from "@phosphor-icons/react/dist/ssr";
 import { checkResetToken } from "@/lib/actions/passwordReset";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { ResetPasswordForm } from "./ResetPasswordForm";
+
+export const metadata: Metadata = {
+  title: "Choose a new password",
+};
 
 export default async function ResetPasswordPage({
   params,

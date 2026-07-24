@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { Ticket } from "@phosphor-icons/react/dist/ssr";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { Field } from "@/components/ui/Field";
-import { Button } from "@/components/ui/Button";
+import { SubmitButton } from "@/components/ui/SubmitButton";
+
+export const metadata: Metadata = {
+  title: "Join a church",
+};
 
 async function goToCode(formData: FormData) {
   "use server";
@@ -32,9 +37,9 @@ export default function JoinEntryPage() {
           className="text-center text-lg font-bold uppercase tracking-[0.3em]"
           placeholder="ABC123"
         />
-        <Button type="submit" className="w-full">
+        <SubmitButton pendingText="Continuing…" className="w-full">
           Continue
-        </Button>
+        </SubmitButton>
       </form>
     </AuthPageLayout>
   );

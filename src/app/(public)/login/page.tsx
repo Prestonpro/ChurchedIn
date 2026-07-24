@@ -1,9 +1,14 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { GoogleButton, OrDivider } from "@/components/ui/GoogleButton";
 import { FormError } from "@/components/ui/Field";
 import { LoginForm } from "./LoginForm";
+
+export const metadata: Metadata = {
+  title: "Log in",
+};
 
 export default async function LoginPage({
   searchParams,

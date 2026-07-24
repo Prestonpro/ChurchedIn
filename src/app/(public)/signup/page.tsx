@@ -1,6 +1,11 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { SignupForm } from "./SignupForm";
+
+export const metadata: Metadata = {
+  title: "Start your church's space",
+};
 
 export default function SignupPage() {
   return (
