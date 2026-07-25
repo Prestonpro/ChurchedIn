@@ -111,7 +111,12 @@ export function MobileMenu({
                       active ? "bg-brand-50 text-brand-700" : "text-ink-soft hover:bg-paper hover:text-ink"
                     }`}
                   >
-                    <Icon weight={active ? "fill" : "regular"} className="size-5" />
+                    <span className="relative flex">
+                      <Icon weight={active ? "fill" : "regular"} className="size-5" />
+                      {link.hasBadge && (
+                        <span className="absolute -right-1 -top-1 size-1.5 rounded-full bg-accent-500" />
+                      )}
+                    </span>
                     {link.label}
                   </Link>
                 );

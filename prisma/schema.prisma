@@ -56,6 +56,11 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum PartnershipStatus {
+  PENDING
+  ACCEPTED
+}
+
 model Church {
   id        String   @id @default(cuid())
   name      String
@@ -67,6 +72,34 @@ model Church {
   events      Event[]
   reports     Report[]
   adminInvites ChurchAdminInvite[]
+  partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
+  partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
+}
+
+/**
+ * A cross-church collaboration link between two churches' admin teams —
+ * "Collaborate with another church" from the redesign brief. Once ACCEPTED,
+ * each side's members can browse (read-only) the other church's published
+ * events in a separate "from partner churches" section; RSVPs, the friend
+ * directory, and mentor connections stay strictly single-church (the
+ * platform's multi-tenancy non-negotiable isn't loosened for this). One
+ * admin sends a request by the other church's join code; either side's
+ * admin can decline a pending request or end an accepted partnership,
+ * which just deletes the row (no history kept — same MVP-simplicity spirit
+ * as the rest of this app).
+ */
+model ChurchPartnership {
+  id          String            @id @default(cuid())
+  status      PartnershipStatus @default(PENDING)
+  createdAt   DateTime          @default(now())
+  respondedAt DateTime?
+
+  requestingChurchId String
+  requestingChurch   Church @relation("PartnershipsRequested", fields: [requestingChurchId], references: [id])
+  partnerChurchId    String
+  partnerChurch      Church @relation("PartnershipsReceived", fields: [partnerChurchId], references: [id])
+
+  @@unique([requestingChurchId, partnerChurchId])
 }
 
 /**
@@ -139,6 +172,10 @@ model Membership {
   id        String   @id @default(cuid())
   role      Role
   createdAt DateTime @default(now())
+  // Stamped whenever this member visits /events — lets the nav show a
+  // small "something's new" dot on the Events link by comparing against
+  // Event.createdAt, without a dedicated read/unread tracking table.
+  lastSeenEventsAt DateTime?
 
   userId   String
   user     User   @relation(fields: [userId], references: [id])

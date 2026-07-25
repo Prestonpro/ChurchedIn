@@ -444,3 +444,58 @@ _(Updated as phases complete — check here first when resuming.)_
   section, and new "what's not done yet" entries for the two deliberately
   UI-only/skipped items (cross-church collab teaser, unseen-events nav
   badge stretch goal).
+
+- **Post-redesign follow-up: the two deliberately-skipped items, built.**
+  The user asked why these were skipped, then asked for both — clarified
+  that neither was a capability limit, just scope decisions (one an
+  explicit brief instruction to keep UI-only, one an explicit stretch
+  goal), and built both:
+  - **Unseen-events nav badge** (the Phase 8 stretch goal). Added
+    `lastSeenEventsAt DateTime?` to `Membership`. New `hasUnseenEvents`
+    query (any published event created after that timestamp, or any at all
+    if null). `AuthShell` is now an async server component that computes
+    this per-request and passes a `hasBadge` flag through the shared
+    `NavLink` type; `NavLinks`/`MobileMenu` render a small dot on the
+    Events icon. `/events` stamps `lastSeenEventsAt = now` on page view
+    (alongside its other reads, not gating render on it) — the badge
+    clears on the *next* navigation, same as most "mark as read" UIs, not
+    instantly on the same render.
+  - **Cross-church collaboration backend** (Phase 10's "Coming soon"
+    teaser, now real). New `ChurchPartnership` model (`PENDING`/`ACCEPTED`,
+    unique per church pair) + `src/lib/actions/churchPartnerships.ts`
+    (`requestPartnershipAction` by the other church's join code,
+    `respondToPartnershipAction`, `endPartnershipAction` — always deletes
+    on decline/end, no history kept). Deliberately scoped to **read-only
+    event visibility only** — RSVPs, the friend directory, and mentor
+    connections stay strictly single-church, since loosening
+    `rsvpToEventAction`'s same-church membership check would touch the
+    multi-tenancy non-negotiable more than this feature is worth. Once
+    ACCEPTED, `/events` shows a "From partner churches" section (via
+    `listAcceptedPartnerChurchIds` + `listEventsForChurches`), and the
+    event detail page's hard church-membership gate now also allows a
+    read-only view for an accepted partner church's members (RSVP/cancel/
+    cohost-manager/run-again all hidden in that view, gated on the same
+    `isPartnerView` flag the gate itself computes — no separate trust
+    decision to keep in sync). Replaced the admin dashboard's static
+    teaser card with a real `PartnershipManager` client component: a
+    join-code request form plus incoming/outgoing/accepted partnership
+    lists with Accept/Decline/End actions. No email notification for
+    partnership requests — visible in-app only, an explicit MVP scope
+    choice matching this feature's overall simplicity level.
+  - Migration `20260725002905_add_unseen_events_and_partnerships`,
+    additive-only, applied to dev. **Owes production** — same pattern as
+    Phases 5/6/9, needs `prisma migrate deploy` against the production
+    direct connection string before this is live. (Session note: the
+    production credential from the earlier Phase-5 fix wasn't recoverable
+    after a context compaction — no file/env had it — so it had to be
+    re-requested from the user rather than assumed lost/forgotten.)
+  - Verified with a dedicated Playwright smoke script covering both
+    features end-to-end (two churches, an event, a partnership
+    request/accept, badge-before/after-visit, partner event visible
+    read-only with RSVP hidden) — 3/3 clean runs. Two earlier runs
+    false-alarmed on the nav-badge check because of the same
+    loading.tsx-Suspense-race class of flakiness already diagnosed
+    elsewhere in this project; fixed the *test script* (wait for the real
+    nav link, not just networkidle), not the app.
+  - tsc/lint/build/unit tests (24/24) all green after both features. Full
+    e2e suite re-run pending as of this note.

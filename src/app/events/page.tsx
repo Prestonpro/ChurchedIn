@@ -1,7 +1,12 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, Sparkle, Buildings } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, Sparkle, Buildings, HandsClapping } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
-import { listEventsForChurch } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
+import {
+  listEventsForChurch,
+  listAcceptedPartnerChurchIds,
+  listEventsForChurches,
+} from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -41,7 +46,20 @@ export default async function EventsPage() {
     );
   }
 
-  const events = await listEventsForChurch(user.activeMembership.churchId);
+  const churchId = user.activeMembership.churchId;
+  // Stamping "seen" alongside the real reads (not blocking on it
+  // separately) — AuthShell's nav badge check on THIS render already read
+  // the pre-stamp value, so the dot only clears on the next navigation,
+  // same as most "mark as read" UIs.
+  const [events, partnerChurchIds] = await Promise.all([
+    listEventsForChurch(churchId),
+    listAcceptedPartnerChurchIds(churchId),
+    prisma.membership.update({
+      where: { id: user.activeMembership.id },
+      data: { lastSeenEventsAt: new Date() },
+    }),
+  ]);
+  const partnerEvents = await listEventsForChurches(partnerChurchIds);
   const now = new Date();
   const upcoming = events.filter((e) => e.startsAt >= now);
   const past = events.filter((e) => e.startsAt < now);
@@ -178,6 +196,42 @@ export default async function EventsPage() {
             </div>
           )}
         </>
+      )}
+
+      {partnerEvents.length > 0 && (
+        <div className="mb-10">
+          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-muted">
+            <HandsClapping weight="fill" className="size-4" /> From partner churches
+          </h2>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {partnerEvents.map((event) => {
+              const style = categoryStyle(event.category as EventCategory);
+              return (
+                <Link key={event.id} href={`/events/${event.id}`}>
+                  <Card interactive className="flex gap-3 border-l-4 border-l-line-strong">
+                    <DateBadge date={event.startsAt} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <StyledBadge icon={style.icon} className={style.chipClass}>
+                          {style.label}
+                        </StyledBadge>
+                        <span className="text-xs font-semibold text-ink-faint">via {event.church.name}</span>
+                      </div>
+                      <h3 className="mt-2 font-bold text-ink">{event.title}</h3>
+                      <p className="mt-1 text-sm text-ink-muted">
+                        {event.startsAt.toLocaleString(undefined, {
+                          weekday: "long",
+                          hour: "numeric",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
       )}
 
       {past.length > 0 && (

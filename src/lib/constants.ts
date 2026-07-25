@@ -73,6 +73,13 @@ export const REPORT_STATUS = {
 
 export type ReportStatus = (typeof REPORT_STATUS)[keyof typeof REPORT_STATUS];
 
+export const PARTNERSHIP_STATUS = {
+  PENDING: "PENDING",
+  ACCEPTED: "ACCEPTED",
+} as const;
+
+export type PartnershipStatus = (typeof PARTNERSHIP_STATUS)[keyof typeof PARTNERSHIP_STATUS];
+
 export function dashboardPathForRole(role: Role): string {
   switch (role) {
     case ROLES.CHURCH_ADMIN:

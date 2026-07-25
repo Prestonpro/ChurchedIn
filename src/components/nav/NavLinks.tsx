@@ -17,7 +17,7 @@ export const NAV_ICONS = {
 } as const;
 
 export type NavIconKey = keyof typeof NAV_ICONS;
-export type NavLink = { href: string; label: string; iconKey: NavIconKey };
+export type NavLink = { href: string; label: string; iconKey: NavIconKey; hasBadge?: boolean };
 
 export function NavLinks({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
@@ -37,7 +37,12 @@ export function NavLinks({ links }: { links: NavLink[] }) {
                 : "text-ink-soft hover:bg-paper hover:text-ink"
             }`}
           >
-            <Icon weight={active ? "fill" : "regular"} className="size-4" />
+            <span className="relative flex">
+              <Icon weight={active ? "fill" : "regular"} className="size-4" />
+              {link.hasBadge && (
+                <span className="absolute -right-1 -top-1 size-1.5 rounded-full bg-accent-500" />
+              )}
+            </span>
             <span className="hidden sm:inline">{link.label}</span>
           </Link>
         );

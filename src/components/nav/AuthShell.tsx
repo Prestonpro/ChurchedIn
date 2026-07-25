@@ -3,13 +3,14 @@ import { UsersThree, SignOut } from "@phosphor-icons/react/dist/ssr";
 import type { CurrentUser } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import { logoutAction } from "@/lib/actions/auth";
+import { hasUnseenEvents } from "@/lib/queries";
 import { Avatar } from "@/components/ui/Avatar";
 import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
 import { MobileMenu } from "./MobileMenu";
 
-function navLinksForRole(role: string): NavLink[] {
-  const events: NavLink = { href: "/events", label: "Events", iconKey: "events" };
+function navLinksForRole(role: string, unseenEvents: boolean): NavLink[] {
+  const events: NavLink = { href: "/events", label: "Events", iconKey: "events", hasBadge: unseenEvents };
   if (role === ROLES.CHURCH_ADMIN) {
     return [
       { href: "/admin/dashboard", label: "Dashboard", iconKey: "dashboard" },
@@ -32,7 +33,7 @@ function navLinksForRole(role: string): NavLink[] {
   ];
 }
 
-export function AuthShell({
+export async function AuthShell({
   user,
   children,
 }: {
@@ -40,7 +41,10 @@ export function AuthShell({
   children: React.ReactNode;
 }) {
   const role = user.activeMembership?.role ?? ROLES.STUDENT;
-  const links = navLinksForRole(role);
+  const unseenEvents = user.activeMembership
+    ? await hasUnseenEvents(user.activeMembership.churchId, user.activeMembership.lastSeenEventsAt)
+    : false;
+  const links = navLinksForRole(role, unseenEvents);
 
   return (
     <div className="min-h-screen bg-paper">

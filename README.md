@@ -48,6 +48,16 @@ this pass (see "What's not done yet" below before assuming something exists).
   email right after creating their church (`/admin/welcome`), via the same
   hash-at-rest/single-use/expiring token pattern as password reset
   (`ChurchAdminInvite`, `src/lib/actions/churchInvites.ts`).
+- **Cross-church collaboration**: an admin can request a partnership with
+  another church by its join code (`ChurchPartnership`, `src/lib/actions/
+  churchPartnerships.ts`); once accepted, `/events` shows a read-only "From
+  partner churches" section and the event detail page allows a read-only
+  view for the partner church's members. RSVPs, the friend directory, and
+  mentor connections all stay strictly single-church — this feature only
+  ever loosens read access to already-published event data.
+- **Unseen-events nav badge**: `Membership.lastSeenEventsAt` + a small dot
+  on the Events nav link when the church has events created since the
+  member's last visit — clears the next time they visit `/events`.
 - **Auth**: custom session cookies (httpOnly JWT via `jose`) + `bcryptjs`
   password hashing, plus a hand-rolled Google OAuth flow (no NextAuth — see
   `PLAN.md` for the reasoning) — `src/lib/googleOAuth.ts`,
@@ -252,7 +262,7 @@ src/
     admin/               church admin dashboard, welcome (co-leader invite prompt), reports
     volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost invite)
     student/              dashboard, profile, mentors (directory)
-    events/                shared event feed + detail page (RSVP, co-hosts, run-again)
+    events/                shared event feed (own + partner-church) + detail page (RSVP, co-hosts, run-again)
     api/auth/               Google OAuth start + callback routes
     error.tsx, global-error.tsx, not-found.tsx    error/404 boundaries
     robots.ts, sitemap.ts                          SEO metadata routes
@@ -260,14 +270,14 @@ src/
     ui/                   hand-built primitives (Button, Card, Field, Badge, Avatar,
                            CapacityBar, EmptyState, CopyButton, SubmitButton, PageLoading,
                            GoogleButton, StatCard, DateBadge, AttendeeAvatars, ...)
-    nav/                    AuthShell (authenticated layout + top nav), MobileMenu
-                            (hamburger/drawer below lg), AuthPageLayout (split-panel auth
-                            screens), NavLinks, ChurchSwitcher
+    nav/                    AuthShell (authenticated layout + top nav — async, computes the
+                            unseen-events nav badge), MobileMenu (hamburger/drawer below lg),
+                            AuthPageLayout (split-panel auth screens), NavLinks, ChurchSwitcher
     ConnectionActions.tsx    accept/decline/end buttons for mentor connections
     BlockButton.tsx
   lib/
     actions/               server actions (auth, events, rsvps, mentors, connections, reports,
-                           blocks, passwordReset, churchInvites)
+                           blocks, passwordReset, churchInvites, churchPartnerships)
     auth.ts                 session + role/membership guards
     session.ts                JWT cookie signing/verification
     password.ts                bcrypt hashing
@@ -317,10 +327,14 @@ Called out explicitly so a future session doesn't assume these exist:
   scale (single-church-per-deploy, no public signup discovery), worth adding
   before wider rollout.
 - **From the ChurchedIn redesign** (see PLAN.md's redesign update note for
-  full details): the in-app nav badge for unseen events was an explicitly
-  optional stretch goal and was skipped; "Collaborate with another church" is
-  a UI-only "Coming soon" teaser card on the admin dashboard with no backend
-  behind it; scroll-triggered stagger animation on the landing page's
+  full details): scroll-triggered stagger animation on the landing page's
   below-fold features grid was skipped (a CSS-only animate-on-mount would
   have already finished before a user scrolls to it, and IntersectionObserver
-  felt like scope creep past the "no JS animation library" instruction).
+  felt like scope creep past the "no JS animation library" instruction). The
+  in-app nav badge for unseen events and real cross-church collaboration
+  backend were originally skipped/UI-only in that pass but have since been
+  built (see below).
+- Cross-church partnership requests don't send an email notification — only
+  visible in-app on the receiving church's admin dashboard. An explicit MVP
+  scope choice; add one (reusing `emailTemplates.ts`'s pattern) if partner
+  churches need to be notified without checking the dashboard.

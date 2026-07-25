@@ -202,6 +202,33 @@ model Church {
   memberships Membership[]
   events      Event[]
   reports     Report[]
+  adminInvites ChurchAdminInvite[]
+  partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
+  partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
+}
+
+// Added post-redesign: cross-church collaboration ("Collaborate with
+// another church" — see PLAN.md's redesign update note, which originally
+// shipped this as a UI-only teaser; this is the backend). One admin
+// requests by the other church's join code; either side's admin can
+// decline a pending request or end an accepted one, which just deletes the
+// row (no history table — same MVP-simplicity spirit as the rest of the
+// app). Once ACCEPTED, each church's members can browse (read-only) the
+// other's published events; RSVPs, the friend directory, and mentor
+// connections stay strictly single-church — the multi-tenancy
+// non-negotiable in section 8 isn't loosened for this feature.
+model ChurchPartnership {
+  id          String            @id @default(cuid())
+  status      PartnershipStatus @default(PENDING) // PENDING | ACCEPTED
+  createdAt   DateTime          @default(now())
+  respondedAt DateTime?
+
+  requestingChurchId String
+  requestingChurch   Church @relation("PartnershipsRequested", fields: [requestingChurchId], references: [id])
+  partnerChurchId    String
+  partnerChurch      Church @relation("PartnershipsReceived", fields: [partnerChurchId], references: [id])
+
+  @@unique([requestingChurchId, partnerChurchId])
 }
 
 model User {
@@ -230,6 +257,10 @@ model Membership {
   id        String   @id @default(cuid())
   role      Role
   createdAt DateTime @default(now())
+  // Added post-redesign: stamped whenever this member visits /events, so
+  // the nav can show a small "something's new" dot on the Events link by
+  // comparing against Event.createdAt — no separate read/unread table.
+  lastSeenEventsAt DateTime?
 
   userId   String
   user     User   @relation(fields: [userId], references: [id])
@@ -455,17 +486,17 @@ church-linkedin/
   src/
     app/
       (public)/        landing, signup, login, join/[code], join-as-admin/[token]
-      admin/            church admin dashboard, welcome (co-leader invite), events, reports
+      admin/            church admin dashboard (partnerships), welcome (co-leader invite), events, reports
       volunteer/         dashboard, profile, events (create/manage, cohost invite), mentor toggle
       student/            dashboard, profile, mentors (directory), connections
-      events/             shared event feed + detail page (cohosts, atChurch, run-again)
+      events/             shared event feed (own + partner-church) + detail page (cohosts, atChurch, run-again)
     components/
       ui/                hand-built primitives (Button, Card, Field, Badge, StatCard,
                          DateBadge, AttendeeAvatars, ...)
-      nav/
+      nav/                 AuthShell (async — computes the unseen-events nav badge), NavLinks, MobileMenu, ...
     lib/
       actions/           server actions (auth, events, rsvps, mentors, connections,
-                         reports, blocks, churchInvites)
+                         reports, blocks, churchInvites, churchPartnerships)
       auth.ts             session + role/membership guards
       session.ts           JWT cookie signing/verification
       password.ts           bcrypt hashing
@@ -521,12 +552,29 @@ flow (`ChurchAdminInvite` model — see section 6) surfaced right after church
 creation via `/admin/welcome`. Full details and phase-by-phase decisions are
 in `redesign_prompt.md`'s Progress Log.
 
+**Update — post-redesign follow-up** (migration
+`20260725002905_add_unseen_events_and_partnerships`): the two items below
+that were deliberately skipped during the redesign were subsequently built.
+- The **unseen-events nav badge**: `Membership.lastSeenEventsAt` +
+  `hasUnseenEvents` query; `AuthShell` (now an async server component)
+  computes it per request and threads a `hasBadge` flag through `NavLink`
+  to `NavLinks`/`MobileMenu`. `/events` stamps the timestamp on view.
+- **Cross-church collaboration**, for real this time: new
+  `ChurchPartnership` model (section 6) + `src/lib/actions/
+  churchPartnerships.ts` (request by join code, accept/decline, end).
+  Deliberately scoped to **read-only shared events only** — RSVPs, the
+  friend directory, and mentor connections all stay single-church, since
+  loosening RSVP's same-church check would cut into the multi-tenancy
+  non-negotiable more than this feature is worth. The admin dashboard's
+  static teaser card was replaced with a real `PartnershipManager`.
+
+Full details in `redesign_prompt.md`'s Progress Log (the entry right after
+"Final: docs updated").
+
 **Still not done** (call these out explicitly if picking this up later, don't
 assume they're covered): the cross-church connection restriction (implemented
-in `requestConnectionAction`) isn't yet covered by an automated test; the
-Phase 8 stretch goal of an in-app nav badge for unseen events was
-deliberately skipped (marked optional in the brief); "Collaborate with
-another church" is a UI-only "Coming soon" teaser on the admin dashboard with
-no backend; scroll-triggered stagger animation on the landing page's
-below-fold features grid was skipped as out-of-scope for a CSS-only,
-no-animation-library constraint.
+in `requestConnectionAction`) isn't yet covered by an automated test;
+cross-church partnerships don't send an email notification when requested —
+visible in-app only, an explicit MVP scope choice; scroll-triggered stagger
+animation on the landing page's below-fold features grid was skipped as
+out-of-scope for a CSS-only, no-animation-library constraint.

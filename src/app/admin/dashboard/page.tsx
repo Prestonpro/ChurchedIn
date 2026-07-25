@@ -11,7 +11,9 @@ import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
+import { listPartnershipsForChurch } from "@/lib/queries";
 import { ROLES, type EventCategory, type Role } from "@/lib/constants";
+import { PartnershipManager } from "./PartnershipManager";
 
 const ROLE_META: Record<Role, { label: string; icon: typeof Star }> = {
   CHURCH_ADMIN: { label: "Church leader", icon: Star },
@@ -23,24 +25,26 @@ export default async function AdminDashboardPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
   const churchId = user.activeMembership!.churchId;
 
-  const [church, memberCount, openReportCount, events, roleCounts, recentJoins] = await Promise.all([
-    prisma.church.findUnique({ where: { id: churchId } }),
-    prisma.membership.count({ where: { churchId } }),
-    prisma.report.count({ where: { churchId, status: "OPEN" } }),
-    prisma.event.findMany({
-      where: { churchId },
-      orderBy: { startsAt: "desc" },
-      take: 20,
-      include: { createdBy: { select: { name: true } } },
-    }),
-    prisma.membership.groupBy({ by: ["role"], where: { churchId }, _count: true }),
-    prisma.membership.findMany({
-      where: { churchId },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: { user: { select: { name: true } } },
-    }),
-  ]);
+  const [church, memberCount, openReportCount, events, roleCounts, recentJoins, partnerships] =
+    await Promise.all([
+      prisma.church.findUnique({ where: { id: churchId } }),
+      prisma.membership.count({ where: { churchId } }),
+      prisma.report.count({ where: { churchId, status: "OPEN" } }),
+      prisma.event.findMany({
+        where: { churchId },
+        orderBy: { startsAt: "desc" },
+        take: 20,
+        include: { createdBy: { select: { name: true } } },
+      }),
+      prisma.membership.groupBy({ by: ["role"], where: { churchId }, _count: true }),
+      prisma.membership.findMany({
+        where: { churchId },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+        include: { user: { select: { name: true } } },
+      }),
+      listPartnershipsForChurch(churchId),
+    ]);
   const nextEvent = events
     .filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED")
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
@@ -139,21 +143,20 @@ export default async function AdminDashboardPage() {
         )}
       </Card>
 
-      <Card className="mb-6 border-dashed">
-        <div className="flex items-center gap-3">
-          <span className="flex size-10 items-center justify-center rounded-xl bg-paper text-ink-faint">
+      <Card className="mb-6">
+        <div className="mb-4 flex items-center gap-3">
+          <span className="flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
             <HandsClapping weight="fill" className="size-5" />
           </span>
           <div>
-            <h2 className="flex items-center gap-2 font-bold text-ink">
-              Collaborate with another church
-              <Badge tone="brand">Coming soon</Badge>
-            </h2>
+            <h2 className="font-bold text-ink">Collaborate with another church</h2>
             <p className="text-sm text-ink-muted">
-              Share events and combine friend directories with a nearby church doing the same work.
+              Partner with a nearby church to browse each other&apos;s gatherings. RSVPs, reports, and
+              the friend directory stay separate.
             </p>
           </div>
         </div>
+        <PartnershipManager partnerships={partnerships} />
       </Card>
 
       <Card>

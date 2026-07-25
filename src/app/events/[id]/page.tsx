@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings, ArrowClockwise } from "@phosphor-icons/react/dist/ssr";
+import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings, ArrowClockwise, HandsClapping } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
-import { getEventById, listCohostCandidates } from "@/lib/queries";
+import { getEventById, listCohostCandidates, isAcceptedPartnerChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -28,12 +28,27 @@ export default async function EventDetailPage({
   const user = await requireUser();
   const event = await getEventById(id);
 
-  if (!event || !user.memberships.some((m) => m.churchId === event.churchId)) {
+  if (!event) {
     notFound();
   }
 
-  const membership = user.memberships.find((m) => m.churchId === event.churchId)!;
-  const isStudent = membership.role === ROLES.STUDENT;
+  const membership = user.memberships.find((m) => m.churchId === event.churchId);
+  // Not a member of this event's church — allow a read-only view if the
+  // viewer's own church has an accepted partnership with it (cross-church
+  // collaboration), otherwise this event isn't reachable at all. Either
+  // way, RSVP/cancel/co-host/run-again stay member-only below.
+  let isPartnerView = false;
+  if (!membership) {
+    const checks = await Promise.all(
+      user.memberships.map((m) => isAcceptedPartnerChurch(m.churchId, event.churchId)),
+    );
+    isPartnerView = checks.some(Boolean);
+    if (!isPartnerView) {
+      notFound();
+    }
+  }
+
+  const isStudent = membership?.role === ROLES.STUDENT;
   const roleBucket = isStudent ? RSVP_ROLE.ATTENDEE : RSVP_ROLE.HELPER;
 
   const myRsvp = event.rsvps.find((r) => r.userId === user.id);
@@ -44,7 +59,7 @@ export default async function EventDetailPage({
 
   const isCreator = event.createdById === user.id;
   const isCohost = event.cohosts.some((c) => c.userId === user.id);
-  const isAdmin = membership.role === ROLES.CHURCH_ADMIN;
+  const isAdmin = membership?.role === ROLES.CHURCH_ADMIN;
   const style = categoryStyle(event.category as EventCategory);
   const CategoryIcon = style.icon;
   const isCancelled = event.status === EVENT_STATUS.CANCELLED;
@@ -57,9 +72,16 @@ export default async function EventDetailPage({
         <div className="lg:col-span-2">
           <Card>
             <div className="flex items-start justify-between gap-4">
-              <StyledBadge icon={CategoryIcon} className={style.chipClass}>
-                {style.label}
-              </StyledBadge>
+              <div className="flex items-center gap-2">
+                <StyledBadge icon={CategoryIcon} className={style.chipClass}>
+                  {style.label}
+                </StyledBadge>
+                {isPartnerView && (
+                  <span className="flex items-center gap-1 text-xs font-semibold text-ink-faint">
+                    <HandsClapping weight="fill" className="size-3.5" /> via {event.church.name}
+                  </span>
+                )}
+              </div>
               {isCancelled && <Badge tone="danger">Cancelled</Badge>}
             </div>
             <h1 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">{event.title}</h1>
@@ -94,29 +116,37 @@ export default async function EventDetailPage({
               {event.description}
             </p>
 
-            {!isCancelled && (
-              <div className="mt-6 border-t border-line pt-6">
-                <RsvpControls
-                  eventId={event.id}
-                  currentStatus={(myRsvp?.status as typeof RSVP_STATUS[keyof typeof RSVP_STATUS]) ?? null}
-                  roleLabel={roleBucket === RSVP_ROLE.HELPER ? "helper" : "attendee"}
-                  cap={roleBucket === RSVP_ROLE.HELPER ? event.volunteerCap : event.studentCap}
-                />
-              </div>
-            )}
+            {isPartnerView ? (
+              <p className="mt-6 rounded-xl bg-paper px-4 py-3 text-sm text-ink-muted">
+                This gathering is hosted by a partner church — visit their church to RSVP.
+              </p>
+            ) : (
+              <>
+                {!isCancelled && (
+                  <div className="mt-6 border-t border-line pt-6">
+                    <RsvpControls
+                      eventId={event.id}
+                      currentStatus={(myRsvp?.status as typeof RSVP_STATUS[keyof typeof RSVP_STATUS]) ?? null}
+                      roleLabel={roleBucket === RSVP_ROLE.HELPER ? "helper" : "attendee"}
+                      cap={roleBucket === RSVP_ROLE.HELPER ? event.volunteerCap : event.studentCap}
+                    />
+                  </div>
+                )}
 
-            {(isCreator || isAdmin) && !isCancelled && (
-              <div className="mt-4">
-                <CancelEventButton eventId={event.id} />
-              </div>
-            )}
+                {(isCreator || isAdmin) && !isCancelled && (
+                  <div className="mt-4">
+                    <CancelEventButton eventId={event.id} />
+                  </div>
+                )}
 
-            {(isCreator || isCohost) && (isCancelled || isPast) && (
-              <div className="mt-4">
-                <LinkButton href={`/volunteer/events/new?from=${event.id}`} variant="secondary" size="sm">
-                  <ArrowClockwise weight="bold" className="size-4" /> Run this again
-                </LinkButton>
-              </div>
+                {(isCreator || isCohost) && (isCancelled || isPast) && (
+                  <div className="mt-4">
+                    <LinkButton href={`/volunteer/events/new?from=${event.id}`} variant="secondary" size="sm">
+                      <ArrowClockwise weight="bold" className="size-4" /> Run this again
+                    </LinkButton>
+                  </div>
+                )}
+              </>
             )}
           </Card>
         </div>
