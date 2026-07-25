@@ -304,6 +304,14 @@ model Event {
   // use the church building instead of a personal home. Just a flag for the
   // church leader to notice — no booking/reservation system behind it.
   atChurch     Boolean       @default(false)
+  // Added for the interactive event map (/events/map) and the detail
+  // page's mini-map. Optional and independent of `location` above — an
+  // event can have a `location` string with no map pin, but a pin always
+  // comes with an `address` (all three set together via the creation
+  // form's LocationPicker, or all left null).
+  locationLat Float?
+  locationLng Float?
+  address     String?
   volunteerCap Int?
   studentCap   Int?
   status       EventStatus   @default(PUBLISHED)
@@ -513,20 +521,24 @@ church-linkedin/
     app/
       (public)/        landing, signup, login, join/[code], join-as-admin/[token]
       admin/            church admin dashboard (partnerships), welcome (co-leader invite), events, reports
-      volunteer/         dashboard, profile, events (create/manage, cohost invite), mentor toggle,
-                        rides (rides board)
+      volunteer/         dashboard, profile, events (create/manage, cohost invite, location picker),
+                        mentor toggle, rides (rides board)
       student/            dashboard, profile, mentors (directory), connections, rides (request a ride)
       events/             shared event feed (own + partner-church) + detail page (cohosts, atChurch,
-                          run-again) + calendar (monthly grid view, /events/calendar)
+                          run-again, mini-map) + calendar (monthly grid, /events/calendar) + map
+                          (interactive full-screen map, /events/map)
     components/
       ui/                hand-built primitives (Button, Card, Field, Badge, StatCard,
                          DateBadge, AttendeeAvatars, ...)
-      nav/                 AuthShell (async — computes the unseen-events nav badge), NavLinks, MobileMenu, ...
+      nav/                 AuthShell (async — computes the unseen-events nav badge, `fullBleed`
+                          prop for the map page), NavLinks, MobileMenu, ...
       RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
     lib/
       actions/           server actions (auth, events, rsvps, mentors, connections,
                          reports, blocks, churchInvites, churchPartnerships, rides)
       rideState.ts             pure ride-request state machine + contact-visibility rule (unit tested)
+      eventMapStatus.ts         pure pin-color/status logic for the event map (unit tested)
+      leafletPin.ts             shared colored-circle divIcon helper (map page + both mini-maps)
       auth.ts             session + role/membership guards
       session.ts           JWT cookie signing/verification
       password.ts           bcrypt hashing
@@ -623,6 +635,46 @@ a rides board and a semester calendar view, added after the above.
   links with query params. A toggle link connects it with the existing
   list view (`/events`) in both directions.
 
+**Update — Interactive Event Map** (migration `20260725172529_add_event_geolocation`):
+a full interactive map experience, added after the above. New dependency:
+`leaflet` + `react-leaflet` (v5, React 19-compatible), free CartoDB/OSM
+tiles — no API key.
+- **Standalone map** (`/events/map`): dark CartoDB tiles, `AuthShell`'s new
+  `fullBleed` prop for an edge-to-edge full-viewport layout (a `fixed`
+  layer positioned below the sticky header, not the usual max-w-6xl
+  content column). Pins are colored divIcons (`eventPinStatus()` in
+  `src/lib/eventMapStatus.ts`, unit tested) — blue if the viewer RSVP'd
+  (checked first, overriding capacity), else green/yellow/red by capacity
+  fullness (a cap of 0 — "not accepting this role" — is excluded from the
+  fullness calculation rather than treated as "always full"). Glassmorphism
+  popup cards (`EventPopupCard.tsx`) with capacity bars and a real RSVP
+  button wired to the existing `rsvpToEventAction`, refreshing via
+  `router.refresh()` on success. A collapsible sidebar lists events sorted
+  by date with category/"my RSVPs"/"has spots" filters (client-side state,
+  not URL params, unlike the calendar view — the map already needs heavy
+  client JS, so there's no "no-JS" constraint to preserve here) and
+  fly-to-on-click (`useMap().flyTo`). Reciprocal toggle links connect all
+  three event views (list/calendar/map).
+- **Event detail mini-map**: a small, lightly-interactive preview
+  (`EventMiniMap.tsx`, scroll-zoom off so it doesn't hijack page scroll,
+  drag/zoom-buttons still on) plus a "Get directions" link
+  (`https://www.google.com/maps/dir/?api=1&destination={lat},{lng}`,
+  opens in a new tab) — shown only when the event has coordinates; falls
+  back to plain address text (or nothing at all) otherwise.
+- **Location picker** (event creation form): an optional add-on block
+  (`LocationPicker.tsx`) below the required `location` field — a "map
+  address" text input plus a click-to-drop-pin map (`PinDropMap.tsx`)
+  that fills hidden `locationLat`/`locationLng` inputs. No geocoding (out
+  of scope for a no-API-key feature) — the address text and the pin are
+  independent, both optional, both carried forward through "Run this
+  again" prefill.
+- All three Leaflet-using components are dynamically imported with
+  `ssr: false` from a thin "use client" wrapper, since `page.tsx` files
+  stay Server Components. `leafletPin()` in `src/lib/leafletPin.ts` is
+  the one shared colored-circle-marker helper used by all three map
+  surfaces — sidesteps Leaflet's classic "default marker icon 404s under
+  a bundler" problem entirely (no image assets to resolve).
+
 **Still not done** (call these out explicitly if picking this up later, don't
 assume they're covered): the cross-church connection restriction (implemented
 in `requestConnectionAction`) isn't yet covered by an automated test;
@@ -630,5 +682,8 @@ cross-church partnerships don't send an email notification when requested —
 visible in-app only, an explicit MVP scope choice; scroll-triggered stagger
 animation on the landing page's below-fold features grid was skipped as
 out-of-scope for a CSS-only, no-animation-library constraint; the rides
-board and calendar view aren't yet covered by the Playwright e2e suite
-(verified via ad hoc smoke scripts instead — see redesign_prompt.md).
+board, calendar view, and interactive map aren't yet covered by the
+Playwright e2e suite (verified via ad hoc smoke scripts instead — see
+redesign_prompt.md); the location picker has no geocoding, so an address
+typed in without dropping a pin never gets coordinates (and vice versa) —
+both are independently optional by design, not validated against each other.

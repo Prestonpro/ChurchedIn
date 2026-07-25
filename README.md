@@ -66,6 +66,15 @@ this pass (see "What's not done yet" below before assuming something exists).
 - **Semester calendar**: `/events/calendar`, a CSS-grid monthly view (no
   calendar library) with category and "my RSVP'd events" filters, linked to
   and from the existing event feed (`/events`).
+- **Interactive event map**: `/events/map` — a full-screen Leaflet map
+  (`leaflet` + `react-leaflet`, free CartoDB/OSM tiles, no API key) with
+  color-coded pins (blue = you RSVP'd, green/yellow/red by capacity), a
+  filterable sidebar, and glassmorphism popups with a working RSVP button.
+  The event detail page shows a small mini-map + "Get directions" link when
+  an event has coordinates, and the creation form has an optional
+  click-to-drop-a-pin location picker. See `src/lib/eventMapStatus.ts` for
+  the pin-color logic and `src/lib/leafletPin.ts` for the shared marker
+  helper.
 - **Auth**: custom session cookies (httpOnly JWT via `jose`) + `bcryptjs`
   password hashing, plus a hand-rolled Google OAuth flow (no NextAuth — see
   `PLAN.md` for the reasoning) — `src/lib/googleOAuth.ts`,
@@ -268,11 +277,12 @@ src/
     (public)/          landing, signup, login, join, join/[code], join-as-admin/[token],
                         forgot-password, reset-password/[token]
     admin/               church admin dashboard, welcome (co-leader invite prompt), reports
-    volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost invite),
-                        rides (rides board)
+    volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost
+                        invite + location picker), rides (rides board)
     student/              dashboard, profile, mentors (directory), rides (request a ride)
     events/                shared event feed (own + partner-church) + detail page (RSVP, co-hosts,
-                          run-again) + calendar (monthly grid view)
+                          run-again, mini-map) + calendar (monthly grid) + map (full-screen
+                          interactive map, /events/map)
     api/auth/               Google OAuth start + callback routes
     error.tsx, global-error.tsx, not-found.tsx    error/404 boundaries
     robots.ts, sitemap.ts                          SEO metadata routes
@@ -281,8 +291,9 @@ src/
                            CapacityBar, EmptyState, CopyButton, SubmitButton, PageLoading,
                            GoogleButton, StatCard, DateBadge, AttendeeAvatars, ...)
     nav/                    AuthShell (authenticated layout + top nav — async, computes the
-                            unseen-events nav badge), MobileMenu (hamburger/drawer below lg),
-                            AuthPageLayout (split-panel auth screens), NavLinks, ChurchSwitcher
+                            unseen-events nav badge; `fullBleed` prop for the map page),
+                            MobileMenu (hamburger/drawer below lg), AuthPageLayout (split-panel
+                            auth screens), NavLinks, ChurchSwitcher
     ConnectionActions.tsx    accept/decline/end buttons for mentor connections
     RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
     BlockButton.tsx
@@ -299,12 +310,14 @@ src/
                                         notification, co-admin invite, ride claimed)
     prisma.ts                     Prisma client singleton (Postgres via @prisma/adapter-pg)
     queries.ts                     shared read helpers (events, mentors, connections, reports,
-                                    cohost candidates, ride requests)
+                                    cohost candidates, ride requests, mapped events)
     rsvp.ts                         pure capacity/waitlist decision logic (unit tested)
     connectionState.ts               pure connection state machine (unit tested)
     rideState.ts                      pure ride-request state machine (unit tested)
-    eventCategoryStyle.tsx            category → icon/color mapping
-    validation.ts                     zod schemas
+    eventMapStatus.ts                 pure pin-color/status logic for the event map (unit tested)
+    leafletPin.ts                      shared colored-circle marker helper (all 3 map surfaces)
+    eventCategoryStyle.tsx              category → icon/color mapping
+    validation.ts                        zod schemas
   generated/prisma/                    Prisma client output
 proxy.ts                                route protection middleware
 ```
@@ -313,11 +326,17 @@ proxy.ts                                route protection middleware
 
 Called out explicitly so a future session doesn't assume these exist:
 
-- The rides board and calendar view (see "Community Needs" in PLAN.md's
+- The rides board, calendar view, and interactive event map (see PLAN.md's
   build-phases section) aren't yet covered by the Playwright e2e suite —
   verified with ad hoc smoke scripts during development instead. Add
   proper e2e specs before relying on the suite alone to catch a regression
-  in either.
+  in any of them.
+- The location picker doesn't geocode — typing an address and dropping a
+  pin are independent actions. An event can end up with an address but no
+  coordinates (no map pin at all) or coordinates but no address text. This
+  is by design (no geocoding API, per the map feature's "no API key"
+  constraint), not a bug, but worth knowing if a future change wants to
+  enforce the two together.
 - The Google OAuth consent screen is in Google Cloud Console's "Testing"
   publish status, which caps sign-in to test users explicitly added there —
   switch it to "Production" publish status when you're ready for anyone to

@@ -572,3 +572,120 @@ branch is `master`, confirmed by every prior push in this project.
   only by the ad hoc smoke scripts run during development (not committed,
   since they're throwaway verification scripts, not permanent test specs).
   Documented in README.md's "What's not done yet".
+
+---
+
+## "Interactive Event Map" phase (another new brief, separate from the
+above two): a full interactive Leaflet map — a standalone `/events/map`
+page, a mini-map on the event detail page, and a location picker on event
+creation. Four commits, each verified (tsc/lint/unit tests/build, plus a
+manual Playwright smoke script, plus the full e2e suite) and pushed
+individually, matching the brief's own git-workflow instructions. Same two
+factual corrections applied as the previous phase, for the same reasons:
+`npx prisma db push` → `prisma migrate dev`/`deploy` (Postgres, not SQLite;
+migration-history workflow already established); `git push origin main` →
+`git push origin master` (this repo's actual default branch).
+
+- **Schema (commit `d4d4580`)**: `Event.locationLat`/`locationLng`/
+  `address`, all optional, migration `20260725172529_add_event_geolocation`.
+  Applied to production proactively, before any code referencing them was
+  pushed — same discipline as the rides-board phase. `address` is
+  deliberately a separate field from the existing required `location`
+  string — `location` stays the plain "where this is" text shown
+  everywhere; `address` is specifically the human-readable string paired
+  with a map pin, only ever set together with the lat/lng via the new
+  LocationPicker.
+
+- **Standalone map (commit `bb36e66`)**: installed `leaflet@1.9.4` +
+  `react-leaflet@5.0.0` (the v5 line targets React 19 exactly, matching
+  this project's React 19.2.4 — confirmed via `npm view` before installing,
+  not guessed) + `@types/leaflet`. Zero new `npm audit` findings — the 16
+  vulnerabilities audit reports post-install are the same pre-existing
+  eslint/next/prisma/postcss/sharp chains already documented in README, not
+  anything from the new packages.
+  - `src/lib/eventMapStatus.ts`: pure, unit-tested `eventPinStatus()` —
+    blue ("rsvped") wins outright if the viewer has RSVP'd, otherwise
+    green/yellow/red (available/almost-full ≥80%/full ≥100%) from the
+    *more* constrained of the two RSVP-role capacity fractions. A cap of
+    `0` ("not accepting this role" — pre-existing convention from the
+    EventForm hints) is excluded from the fullness math entirely rather
+    than treated as "always full," so an event merely closed to helpers
+    doesn't read as globally full when students can still freely RSVP.
+  - `listMappedEventsForChurch` in queries.ts: upcoming published events
+    with both lat/lng set.
+  - `/events/map/page.tsx` (Server Component: auth, query, computes
+    `pinStatus` server-side since it needs `user.id`) →
+    `EventMapClient.tsx` ("use client": filters, sidebar, selected-event
+    state) → dynamically-imported (`ssr:false`) `LeafletMap.tsx` (the
+    actual `MapContainer`/`Marker`/`Popup`, fly-to via a `useMap()` child
+    component reacting to the selected event) → `EventPopupCard.tsx`
+    (glassmorphism card: category badge, pin-status label, capacity bars,
+    View Event + RSVP buttons — RSVP calls the existing
+    `rsvpToEventAction` then `router.refresh()`).
+  - Dark CartoDB "dark_all" tiles for the standalone map (brief's "modern,
+    premium" ask); `AuthShell` gained a `fullBleed` prop (a `fixed`
+    full-viewport layer positioned below the sticky header via
+    `h-[calc(100dvh-65px)]`, not the usual max-w-6xl padded column) so the
+    map can genuinely fill the screen rather than sit in a content column.
+  - Added global CSS overrides in `globals.css` stripping Leaflet's
+    default white popup chrome (`.leaflet-popup-content-wrapper` etc., all
+    scoped under `.leaflet-container`) so `EventPopupCard`'s own
+    glassmorphism (bg-ink/85 + backdrop-blur) shows through instead of
+    sitting inside a second, clashing white box.
+  - Reciprocal "List view"/"Calendar view"/"Map view" toggle links added
+    across all three event views (`/events`, `/events/calendar`,
+    `/events/map`'s sidebar header) so each is discoverable from the
+    others — no new top-level nav item, same "nav stays at 3-4 items,
+    discoverable within sections" rule as the rides board.
+  - Verified with a Playwright smoke script (since the location picker
+    didn't exist yet at this point in the build order, coordinates were
+    set directly via raw `pg` — the generated Prisma client is TS-source
+    only with no plain-Node-requireable entry point, so a throwaway
+    verification script can't import it the way the app does): pin
+    renders, sidebar lists the event, clicking opens the popup with
+    correct data, RSVP button present and working (pin turns blue after
+    RSVP), category filter hides non-matching events from both sidebar
+    and map. A screenshot confirmed the dark tiles/glassmorphism/pin
+    styling all render as intended.
+
+- **Event detail mini-map (commit `d271b79`)**: `EventMiniMap.tsx` (light
+  CartoDB tiles — the "premium/dark" instruction was specifically for the
+  standalone map's own framing, not this smaller preview) — scroll-wheel
+  zoom off (doesn't hijack the page's own scroll) but dragging/zoom-buttons
+  still on, matching the brief's "non-interactive (or lightly interactive)"
+  wording. `leafletPin()` factored out to `src/lib/leafletPin.ts` so the
+  standalone map, this mini-map, and the location picker's pin-drop map all
+  share one colored-circle-marker implementation instead of three copies.
+  A new "Location" card on the event detail page's sidebar column: renders
+  the mini-map + "Get directions" link only when the event has coordinates
+  (link uses the brief's exact URL shape, opens in a new tab); falls back
+  to plain address text when only `address` is set without coordinates;
+  renders nothing at all when neither is set (no redundant empty card).
+  Verified both branches with a Playwright smoke script — an event with
+  coordinates shows the map + correct directions href + address text; an
+  event without them shows neither the map nor the directions link.
+
+- **Location picker (commit `789f07f`)**: `eventSchema` gained optional
+  `address`/`locationLat`/`locationLng`; `createEventAction` persists them.
+  `LocationPicker.tsx` (address text `Field` + click-to-drop-a-pin
+  `PinDropMap.tsx`, hidden `locationLat`/`locationLng` inputs picked up by
+  the surrounding form's native submit) inserted into `EventForm.tsx` right
+  after the existing required Location field, framed as a distinct
+  "Add to the event map (optional)" block so it doesn't read as a
+  duplicate of the field above it. `PinDropMap` centers on the continental
+  US at zoom 4 for a brand-new event, or on the existing pin at zoom 14 for
+  a "Run this again" prefill (which now carries address/lat/lng forward
+  too, alongside everything else it already prefilled). No geocoding
+  either direction — the address text and the pin are independently
+  optional, exactly as the brief specified ("a text input for the address"
+  + "a small interactive map... auto-fills locationLat and locationLng" as
+  two separate mechanisms, not one feeding the other). Verified end-to-end
+  with a Playwright smoke script: picker map renders in the creation form,
+  clicking it drops a pin and populates the hidden inputs, the published
+  event's detail page shows the picked address, and the event shows up as
+  a pin on `/events/map` — closing the loop across all three phases of
+  this brief with one real, non-manually-seeded event.
+
+- tsc/lint/unit tests (47 total, 7 new for `eventMapStatus`)/build all
+  green after every commit; full e2e suite (4/4) re-confirmed passing
+  after each of the four phases, not just once at the end.
