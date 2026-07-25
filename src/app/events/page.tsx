@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, Sparkle, Buildings, HandsClapping } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, Sparkle, Buildings, HandsClapping, CalendarDots } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -76,11 +76,19 @@ export default async function EventsPage() {
             {upcoming.length} upcoming at {user.activeMembership.church.name}
           </p>
         </div>
-        {canHost && (
-          <LinkButton href="/volunteer/events/new">
-            <Plus weight="bold" className="size-4" /> Plan a gathering
-          </LinkButton>
-        )}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/events/calendar"
+            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+          >
+            <CalendarDots weight="bold" className="size-4" /> Calendar view
+          </Link>
+          {canHost && (
+            <LinkButton href="/volunteer/events/new">
+              <Plus weight="bold" className="size-4" /> Plan a gathering
+            </LinkButton>
+          )}
+        </div>
       </div>
 
       {upcoming.length === 0 ? (
