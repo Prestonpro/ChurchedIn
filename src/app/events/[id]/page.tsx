@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings, ArrowClockwise, HandsClapping } from "@phosphor-icons/react/dist/ssr";
+import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings, ArrowClockwise, HandsClapping, NavigationArrow } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getEventById, listCohostCandidates, isAcceptedPartnerChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
@@ -11,6 +11,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { RsvpControls } from "./RsvpControls";
 import { CancelEventButton } from "./CancelEventButton";
 import { CohostManager } from "./CohostManager";
+import { EventMiniMapLoader } from "./EventMiniMapLoader";
 import {
   EVENT_STATUS,
   ROLES,
@@ -195,6 +196,30 @@ export default async function EventDetailPage({
                 cohosts={event.cohosts.map((c) => c.user)}
                 candidates={cohostCandidates}
               />
+            </Card>
+          )}
+
+          {(event.address || (event.locationLat !== null && event.locationLng !== null)) && (
+            <Card>
+              <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold text-ink">
+                <MapPin weight="bold" className="size-4 text-brand-600" /> Location
+              </h2>
+              {event.locationLat !== null && event.locationLng !== null && (
+                <div className="mb-3 overflow-hidden rounded-xl">
+                  <EventMiniMapLoader lat={event.locationLat} lng={event.locationLng} />
+                </div>
+              )}
+              <p className="text-sm text-ink-soft">{event.address || event.location}</p>
+              {event.locationLat !== null && event.locationLng !== null && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${event.locationLat},${event.locationLng}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 transition-brand hover:underline"
+                >
+                  <NavigationArrow weight="bold" className="size-4" /> Get directions
+                </a>
+              )}
             </Card>
           )}
         </div>
