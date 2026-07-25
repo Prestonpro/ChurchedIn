@@ -229,6 +229,15 @@ model Event {
   // big enough, etc.) — a flag for the church leader to notice, not an
   // actual booking/reservation system.
   atChurch     Boolean       @default(false)
+  // Optional geolocation for the interactive event map (/events/map) and
+  // the event detail page's mini-map. Distinct from `location` above
+  // (which stays the required free-text description shown everywhere
+  // else) — `address` is specifically the human-readable string paired
+  // with the lat/lng pin, filled in only when a creator uses the map
+  // location picker. All three are null together or set together.
+  locationLat Float?
+  locationLng Float?
+  address     String?
   volunteerCap Int?
   studentCap   Int?
   status       EventStatus   @default(PUBLISHED)
