@@ -116,8 +116,8 @@ export default function LandingPage() {
       <section className="border-y border-line bg-surface">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
-            <h2 className="text-3xl font-extrabold text-ink">How it works</h2>
-            <p className="mt-2 text-ink-muted">Three steps from signup to your first friend.</p>
+            <h2 className="text-3xl font-extrabold text-ink">People, doing this together</h2>
+            <p className="mt-2 text-ink-muted">Not a program to manage — just your church family, showing up for each other.</p>
           </div>
           <div className="grid gap-8 sm:grid-cols-3">
             {STEPS.map((step) => (

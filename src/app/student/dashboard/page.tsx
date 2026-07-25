@@ -34,7 +34,9 @@ export default async function StudentDashboardPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-ink">Welcome, {user.name.split(" ")[0]}</h1>
-          <p className="mt-1 text-sm text-ink-muted">{user.activeMembership?.church.name}</p>
+          <p className="mt-1 text-sm text-ink-muted">
+            {user.activeMembership?.church.name}, {memberCount} {memberCount === 1 ? "member" : "members"}
+          </p>
         </div>
         <LinkButton href="/student/mentors">
           <UsersThree weight="bold" className="size-4" /> Find a friend

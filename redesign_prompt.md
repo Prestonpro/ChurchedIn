@@ -350,3 +350,18 @@ _(Updated as phases complete — check here first when resuming.)_
   specs + 24 unit tests still pass after the fix. Visually verified the
   welcome page, invite form, and dashboard teaser card.
   **Not yet done:** Phase 10 + final gates.
+
+- **Phase 10: DONE** (pushed). Student/volunteer/admin dashboard subtitles
+  now read "{church name}, N members" (student/volunteer) or "N members —
+  church leader overview" (admin) instead of just the bare church name.
+  Admin dashboard gained a new "Your community" card: role-breakdown pills
+  (church leaders / volunteers / students, via `prisma.membership.groupBy`)
+  and a "Recently joined" list (last 6 memberships, avatar + name + role
+  badge) — a living snapshot rather than just a settings page. Landing
+  page's "How it works" section retitled to "People, doing this together"
+  with people-first framing instead of a numbered-steps/program feel.
+  Visually verified end-to-end with a 3-person church (admin + volunteer +
+  student) showing correct counts and the recently-joined list. All 4 e2e
+  specs + 24 unit tests pass.
+  **Not yet done:** final gates (security review, code review, docs update,
+  verify) — this is the last content phase.

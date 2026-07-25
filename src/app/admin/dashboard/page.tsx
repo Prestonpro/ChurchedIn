@@ -1,22 +1,29 @@
 import Link from "next/link";
-import { UsersThree, CalendarBlank, Flag, Plus, Buildings, HandsClapping } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, CalendarBlank, Flag, Plus, Buildings, HandsClapping, HandHeart, GraduationCap, Star } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { Avatar } from "@/components/ui/Avatar";
 import { LinkButton } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/CopyButton";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { ROLES, type EventCategory } from "@/lib/constants";
+import { ROLES, type EventCategory, type Role } from "@/lib/constants";
+
+const ROLE_META: Record<Role, { label: string; icon: typeof Star }> = {
+  CHURCH_ADMIN: { label: "Church leader", icon: Star },
+  VOLUNTEER: { label: "Volunteer", icon: HandHeart },
+  STUDENT: { label: "Student", icon: GraduationCap },
+};
 
 export default async function AdminDashboardPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
   const churchId = user.activeMembership!.churchId;
 
-  const [church, memberCount, openReportCount, events] = await Promise.all([
+  const [church, memberCount, openReportCount, events, roleCounts, recentJoins] = await Promise.all([
     prisma.church.findUnique({ where: { id: churchId } }),
     prisma.membership.count({ where: { churchId } }),
     prisma.report.count({ where: { churchId, status: "OPEN" } }),
@@ -26,17 +33,27 @@ export default async function AdminDashboardPage() {
       take: 20,
       include: { createdBy: { select: { name: true } } },
     }),
+    prisma.membership.groupBy({ by: ["role"], where: { churchId }, _count: true }),
+    prisma.membership.findMany({
+      where: { churchId },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+      include: { user: { select: { name: true } } },
+    }),
   ]);
   const nextEvent = events
     .filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED")
     .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+  const countByRole = Object.fromEntries(roleCounts.map((r) => [r.role, r._count])) as Partial<Record<Role, number>>;
 
   return (
     <AuthShell user={user}>
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-ink">{church?.name}</h1>
-          <p className="mt-1 text-sm text-ink-muted">Church leader overview</p>
+          <p className="mt-1 text-sm text-ink-muted">
+            {memberCount} {memberCount === 1 ? "member" : "members"} — church leader overview
+          </p>
         </div>
         <LinkButton href="/volunteer/events/new">
           <Plus weight="bold" className="size-4" /> Plan a gathering
@@ -87,6 +104,39 @@ export default async function AdminDashboardPage() {
           </code>
           <CopyButton text={church?.joinCode ?? ""} label="Copy code" />
         </div>
+      </Card>
+
+      <Card className="mb-6">
+        <h2 className="mb-4 font-bold text-ink">Your community</h2>
+        <div className="mb-5 flex flex-wrap gap-4">
+          {(Object.keys(ROLE_META) as Role[]).map((role) => {
+            const meta = ROLE_META[role];
+            const Icon = meta.icon;
+            return (
+              <div key={role} className="flex items-center gap-2 rounded-xl bg-paper px-3.5 py-2.5">
+                <Icon weight="fill" className="size-4 text-brand-600" />
+                <span className="text-sm font-bold text-ink">{countByRole[role] ?? 0}</span>
+                <span className="text-xs text-ink-muted">{meta.label}{(countByRole[role] ?? 0) !== 1 ? "s" : ""}</span>
+              </div>
+            );
+          })}
+        </div>
+        {recentJoins.length > 0 && (
+          <>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink-faint">
+              Recently joined
+            </h3>
+            <ul className="space-y-2">
+              {recentJoins.map((m) => (
+                <li key={m.id} className="flex items-center gap-2.5">
+                  <Avatar name={m.user.name} size="xs" />
+                  <span className="text-sm text-ink">{m.user.name}</span>
+                  <Badge tone="neutral">{ROLE_META[m.role as Role].label}</Badge>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </Card>
 
       <Card className="mb-6 border-dashed">
