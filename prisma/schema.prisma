@@ -61,6 +61,13 @@ enum PartnershipStatus {
   ACCEPTED
 }
 
+enum RideStatus {
+  OPEN
+  CLAIMED
+  COMPLETED
+  CANCELLED
+}
+
 model Church {
   id        String   @id @default(cuid())
   name      String
@@ -74,6 +81,7 @@ model Church {
   adminInvites ChurchAdminInvite[]
   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
+  rideRequests RideRequest[]
 }
 
 /**
@@ -151,6 +159,8 @@ model User {
   blocksReceived       Block[]            @relation("BlocksReceived")
   passwordResetTokens  PasswordResetToken[]
   cohostedEvents       EventCohost[]
+  rideRequestsAsStudent   RideRequest[] @relation("RideRequestsAsStudent")
+  rideRequestsAsVolunteer RideRequest[] @relation("RideRequestsAsVolunteer")
 }
 
 model PasswordResetToken {
@@ -281,6 +291,33 @@ model MentorConnection {
   mentor    User   @relation("ConnectionsAsMentor", fields: [mentorId], references: [id])
 
   @@unique([studentId, mentorId])
+}
+
+/**
+ * A student's ask for a ride (airport pickup, store run, etc.) that any
+ * volunteer at the same church can claim. Modeled after MentorConnection's
+ * shape (a studentId/volunteerId pair with a status enum) but simpler —
+ * there's no decline/re-request dance, just OPEN until a volunteer claims
+ * it. Same contact-info safety rule as mentor connections: the student's
+ * and volunteer's contact info is only shown to each other once claimed —
+ * see rideContactVisible() in src/lib/rideState.ts, enforced at the query
+ * layer the same way connectionState.ts's contactInfoVisible() is.
+ */
+model RideRequest {
+  id          String     @id @default(cuid())
+  destination String
+  date        DateTime
+  time        String
+  notes       String?
+  status      RideStatus @default(OPEN)
+  createdAt   DateTime   @default(now())
+
+  studentId String
+  student   User   @relation("RideRequestsAsStudent", fields: [studentId], references: [id])
+  volunteerId String?
+  volunteer   User?   @relation("RideRequestsAsVolunteer", fields: [volunteerId], references: [id])
+  churchId  String
+  church    Church @relation(fields: [churchId], references: [id])
 }
 
 model Block {
