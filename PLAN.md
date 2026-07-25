@@ -269,6 +269,10 @@ model Event {
   endsAt       DateTime
   location     String
   isVirtual    Boolean       @default(false)
+  // Added in the ChurchedIn redesign (Phase 6): signals the host wants to
+  // use the church building instead of a personal home. Just a flag for the
+  // church leader to notice — no booking/reservation system behind it.
+  atChurch     Boolean       @default(false)
   volunteerCap Int?
   studentCap   Int?
   status       EventStatus   @default(PUBLISHED)
@@ -279,7 +283,8 @@ model Event {
   createdById String
   createdBy   User   @relation("EventsCreated", fields: [createdById], references: [id])
 
-  rsvps EventRsvp[]
+  rsvps   EventRsvp[]
+  cohosts EventCohost[]
 }
 
 model EventRsvp {
@@ -294,6 +299,53 @@ model EventRsvp {
   user    User   @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+}
+
+// Added in the ChurchedIn redesign (Phase 5). A volunteer invited by the
+// event's original creator to co-host: same read visibility as the
+// creator, but never cancel/delete rights (creator-only, checked in
+// cancelEventAction). Adding one is immediate — no accept/decline step,
+// deliberately, for MVP simplicity.
+model EventCohost {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
+// Added in the ChurchedIn redesign (Phase 9) — invites someone by email to
+// become a second CHURCH_ADMIN. Same hash-at-rest / single-use / expiring
+// pattern as PasswordResetToken (below), which itself predates this redesign
+// but was never backfilled into this doc — noted here for completeness.
+model ChurchAdminInvite {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  email     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  churchId String
+  church   Church @relation(fields: [churchId], references: [id])
+}
+
+// Predates the ChurchedIn redesign (added during the earlier Postgres/auth
+// hardening pass) but was likewise never backfilled here. Same shape as
+// ChurchAdminInvite above — hash-at-rest, single-use, expiring.
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 }
 
 model MentorConnection {
@@ -402,20 +454,23 @@ church-linkedin/
     schema.prisma
   src/
     app/
-      (public)/        landing, signup, login, join/[code]
-      admin/            church admin dashboard, events, reports
-      volunteer/         dashboard, profile, events (create/manage), mentor toggle
+      (public)/        landing, signup, login, join/[code], join-as-admin/[token]
+      admin/            church admin dashboard, welcome (co-leader invite), events, reports
+      volunteer/         dashboard, profile, events (create/manage, cohost invite), mentor toggle
       student/            dashboard, profile, mentors (directory), connections
-      events/             shared event feed + detail page
+      events/             shared event feed + detail page (cohosts, atChurch, run-again)
     components/
-      ui/                hand-built primitives (Button, Card, Field, Badge, ...)
+      ui/                hand-built primitives (Button, Card, Field, Badge, StatCard,
+                         DateBadge, AttendeeAvatars, ...)
       nav/
     lib/
-      actions/           server actions (auth, events, rsvps, mentors, connections, reports, blocks)
+      actions/           server actions (auth, events, rsvps, mentors, connections,
+                         reports, blocks, churchInvites)
       auth.ts             session + role/membership guards
       session.ts           JWT cookie signing/verification
       password.ts           bcrypt hashing
       email.ts               dev-log transport, swappable for Resend
+      emailTemplates.ts        notification + invite email bodies
       prisma.ts               Prisma client singleton
       validation.ts            zod schemas
     generated/prisma/          Prisma client output
@@ -444,10 +499,34 @@ church-linkedin/
 **Update**: Playwright e2e tests were added after this plan was first written —
 see `e2e/` and the README's Testing section. Connection-request rate limiting
 is also implemented (DB-backed count against `MentorConnection.lastRequestedAt`,
-no external store needed).
+no external store needed). A dedicated security-review pass, Vercel
+production deployment, and Resend (real API key) were all completed in a
+later hardening pass, along with `error.tsx`/`global-error.tsx` boundaries
+and `PasswordResetToken`-backed forgot-password flow.
+
+**Update — ChurchedIn redesign** (10-phase visual/UX/feature pass, done after
+the above): rebrand from "Church LinkedIn" (kept only as internal Prisma
+model names like `MentorProfile`/`MentorConnection` — every user-facing label
+now reads "friend"), new sage-teal/gold palette, CSS-only landing entrance
+animation and dashboard micro-animations, `StatCard`-based dashboard
+summaries, Facebook-Events-style card feed with date badges and attendee
+avatars, visual event-preset picker, event co-hosting (`EventCohost` model —
+see section 6), a church-building venue toggle (`atChurch` on `Event`),
+rate-limited new-event email notifications to the whole church
+(`notifyChurchOfNewEvent` in `src/lib/actions/events.ts`, capped at
+`MAX_EVENT_NOTIFICATIONS_PER_DAY` per church per rolling 24h, serialized with
+a Postgres advisory lock to close a TOCTOU race a security review flagged),
+a "Run this again" duplicate-event convenience action, and a co-admin invite
+flow (`ChurchAdminInvite` model — see section 6) surfaced right after church
+creation via `/admin/welcome`. Full details and phase-by-phase decisions are
+in `redesign_prompt.md`'s Progress Log.
 
 **Still not done** (call these out explicitly if picking this up later, don't
-assume they're covered): a dedicated security-review pass by a second
-reviewer, Vercel/production deployment config, Resend wired to a real API
-key, and the cross-church connection restriction (implemented in
-`requestConnectionAction`) isn't yet covered by an automated test.
+assume they're covered): the cross-church connection restriction (implemented
+in `requestConnectionAction`) isn't yet covered by an automated test; the
+Phase 8 stretch goal of an in-app nav badge for unseen events was
+deliberately skipped (marked optional in the brief); "Collaborate with
+another church" is a UI-only "Coming soon" teaser on the admin dashboard with
+no backend; scroll-triggered stagger animation on the landing page's
+below-fold features grid was skipped as out-of-scope for a CSS-only,
+no-animation-library constraint.

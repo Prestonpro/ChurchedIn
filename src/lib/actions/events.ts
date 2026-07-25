@@ -97,18 +97,27 @@ async function notifyChurchOfNewEvent(event: {
   category: string;
   startsAt: Date;
   churchId: string;
+  createdById: string;
   church: { name: string };
 }): Promise<void> {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const priorEventCount = await prisma.event.count({
-    where: { churchId: event.churchId, createdAt: { gte: since }, id: { not: event.id } },
+  // pg_advisory_xact_lock serializes this count-then-decide per church so
+  // concurrent event creations can't each see a stale (too-low) count and
+  // all slip past the cap at once — the lock is held for the transaction's
+  // lifetime and released automatically on commit.
+  const shouldSend = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${event.churchId}))`;
+    const priorEventCount = await tx.event.count({
+      where: { churchId: event.churchId, createdAt: { gte: since }, id: { not: event.id } },
+    });
+    return priorEventCount < MAX_EVENT_NOTIFICATIONS_PER_DAY;
   });
-  if (priorEventCount > MAX_EVENT_NOTIFICATIONS_PER_DAY) {
+  if (!shouldSend) {
     return;
   }
 
   const memberships = await prisma.membership.findMany({
-    where: { churchId: event.churchId },
+    where: { churchId: event.churchId, userId: { not: event.createdById } },
     include: { user: { select: { email: true } } },
   });
   const notification = newEventNotificationEmail({

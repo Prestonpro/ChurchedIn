@@ -14,13 +14,12 @@ import { AttendeeAvatars } from "@/components/ui/AttendeeAvatars";
 import { ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
 
 function attendeeInfo(event: { rsvps: { role: string; status: string; user: { name: string } }[] }) {
-  const helpers = event.rsvps.filter(
-    (r) => r.role === RSVP_ROLE.HELPER && r.status === RSVP_STATUS.CONFIRMED,
-  ).length;
-  const confirmedAttendees = event.rsvps.filter(
-    (r) => r.role === RSVP_ROLE.ATTENDEE && r.status === RSVP_STATUS.CONFIRMED,
-  );
-  return { helpers, attendees: confirmedAttendees.length, attendeeNames: confirmedAttendees.map((r) => r.user.name) };
+  const confirmed = event.rsvps.filter((r) => r.status === RSVP_STATUS.CONFIRMED);
+  const helpers = confirmed.filter((r) => r.role === RSVP_ROLE.HELPER).length;
+  const attendees = confirmed.filter((r) => r.role === RSVP_ROLE.ATTENDEE).length;
+  // Names cover both roles so the list's length always matches totalCount —
+  // otherwise a helper-only RSVP would show "0 + N more going".
+  return { helpers, attendees, attendeeNames: confirmed.map((r) => r.user.name) };
 }
 
 export default async function EventsPage() {

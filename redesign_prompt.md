@@ -365,3 +365,82 @@ _(Updated as phases complete — check here first when resuming.)_
   specs + 24 unit tests pass.
   **Not yet done:** final gates (security review, code review, docs update,
   verify) — this is the last content phase.
+
+- **Production migration debt resolved.** Every push since Phase 5 had
+  auto-deployed code referencing `EventCohost`/`atChurch`/`ChurchAdminInvite`
+  to Vercel without those migrations ever being applied to the production
+  database — `prisma migrate dev` had only ever been run against dev. Caught
+  this myself (not user-reported) before final gates. Ran `prisma migrate
+  deploy` against production with the direct connection string and verified
+  via a live Playwright smoke test (signup → `/admin/welcome` → create an
+  `atChurch` event → detail page renders with the badge and Co-hosts section,
+  no crash).
+
+- **Final: security review — DONE, no CRITICAL/HIGH.** Reviewed the 5 areas
+  called out in the brief: (1) contact-info reveal rule still gated
+  correctly by `contactInfoVisible()`/`ACCEPTED` at both the action and
+  query layer, no new leak in any Phase 3/10 surface; (2) co-host
+  permissions confirmed creator-only for invite/remove, `cancelEventAction`
+  correctly still excludes co-hosts, invitee role re-validated server-side
+  independent of the client-supplied candidate list; (3) event-notification
+  rate limiter had two real findings — an off-by-one (`>` should have been
+  `>=`/`<`, actual cap was 4/day not 3) and a TOCTOU race (concurrent event
+  creation could each see a stale low count and all slip past the cap since
+  the count-then-decide wasn't serialized) — both fixed by wrapping the
+  count+decision in a `prisma.$transaction` holding a
+  `pg_advisory_xact_lock(hashtext(churchId))` for the transaction's
+  lifetime; (4) `ChurchAdminInvite` flow confirmed correctly scoped
+  (invite-side and accept-side both re-check church/email), same
+  hash-at-rest/single-use/expiring pattern as password reset; (5)
+  `/admin/welcome` and `/join-as-admin/[token]` confirmed properly gated,
+  the "account already exists" reveal on the invite-acceptance page judged
+  acceptable since it requires possession of a random 32-byte token (not an
+  open enumeration oracle like the password-reset case).
+
+- **Final: code review — DONE, 0 CRITICAL, 2 HIGH (fixed), 3 MEDIUM, 2 LOW.**
+  Reviewed the full diff from before Phase 1 through Phase 10.
+  - Fixed (HIGH): `EventForm` had no `key` tied to its prefill source, so
+    Next.js could reuse the same client component instance across two
+    different "Run this again" navigations (e.g. via back/forward) and
+    silently keep showing the first source event's data. Fixed by adding
+    `key={from ?? "blank"}` on `<EventForm>` in `new/page.tsx`.
+  - Fixed (HIGH): `CohostManager` discarded `inviteCohostAction`/
+    `removeCohostAction`'s return value, so a rejected add/remove (e.g.
+    "That person isn't a volunteer at this church") looked identical to
+    success — no error ever surfaced. Fixed by capturing the result and
+    rendering it via the existing `FormError` component, matching the
+    pattern already used in `RsvpControls`.
+  - Fixed (MEDIUM): `AttendeeAvatars` could show "0 + N more going" when an
+    event had confirmed helpers but zero attendees, since `attendeeInfo`
+    only collected attendee names but passed a combined attendee+helper
+    count as `totalCount`. Fixed by collecting names from both confirmed
+    roles so the list length always matches the count.
+  - Fixed (LOW): `notifyChurchOfNewEvent` emailed the event's own creator
+    about their own new event. Fixed by excluding `event.createdById` from
+    the recipient query.
+  - Deliberately NOT fixed, judged acceptable for this pass: (MEDIUM)
+    `createEventAction` awaits the notification send before returning,
+    which can add latency on a slow Resend call or a large church —
+    considered making this fire-and-forget, but on Vercel's serverless
+    runtime an un-awaited promise can be killed before it completes once
+    the response is sent (no `waitUntil`/`@vercel/functions` dependency in
+    this project), so awaiting it is the more reliable trade-off for an
+    MVP; (MEDIUM) the three dashboards (`admin`, `volunteer`, `student`)
+    each duplicate a ~15-line "next upcoming event" row and sort/filter
+    logic — a real dedup opportunity but a refactor-only, no-bug-risk
+    cleanup, left for a future pass rather than expanding this redesign's
+    diff further.
+
+- **Final: docs updated.** `PLAN.md` section 6 gained `EventCohost` and
+  `ChurchAdminInvite` model blocks plus `atChurch` on the documented `Event`
+  model (and, as a bonus fix, backfilled the never-documented
+  `PasswordResetToken` model from an earlier session); section 9's project
+  structure and section 10's build-phases/status were updated, including
+  correcting the stale "Still not done" list (it still listed security
+  review/Vercel/Resend as outstanding from *before* this redesign even
+  started). `README.md` picked up the same: tech-stack bullets for
+  co-hosting/atChurch/notifications/co-admin-invite, project-structure
+  additions, a friend-language pass on the roles table and safety-rule
+  section, and new "what's not done yet" entries for the two deliberately
+  UI-only/skipped items (cross-church collab teaser, unseen-events nav
+  badge stretch goal).

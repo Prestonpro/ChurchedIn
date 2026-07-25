@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { MagnifyingGlass, UserPlus, X } from "@phosphor-icons/react/dist/ssr";
 import { inviteCohostAction, removeCohostAction } from "@/lib/actions/events";
 import { Avatar } from "@/components/ui/Avatar";
+import { FormError } from "@/components/ui/Field";
 
 type Person = { id: string; name: string };
 
@@ -22,6 +23,7 @@ export function CohostManager({
   const [query, setQuery] = useState("");
   const [pending, startTransition] = useTransition();
   const [pendingId, setPendingId] = useState<string | null>(null);
+  const [error, setError] = useState<string | undefined>(undefined);
 
   const filtered = query.trim()
     ? candidates.filter((c) => c.name.toLowerCase().includes(query.trim().toLowerCase()))
@@ -29,23 +31,33 @@ export function CohostManager({
 
   function add(userId: string) {
     setPendingId(userId);
+    setError(undefined);
     startTransition(async () => {
-      await inviteCohostAction(eventId, userId);
+      const result = await inviteCohostAction(eventId, userId);
       setPendingId(null);
-      setQuery("");
+      if (result && "error" in result) {
+        setError(result.error);
+      } else {
+        setQuery("");
+      }
     });
   }
 
   function remove(userId: string) {
     setPendingId(userId);
+    setError(undefined);
     startTransition(async () => {
-      await removeCohostAction(eventId, userId);
+      const result = await removeCohostAction(eventId, userId);
       setPendingId(null);
+      if (result && "error" in result) {
+        setError(result.error);
+      }
     });
   }
 
   return (
     <div className="space-y-3">
+      <FormError message={error} />
       {cohosts.length > 0 && (
         <ul className="space-y-2">
           {cohosts.map((c) => (

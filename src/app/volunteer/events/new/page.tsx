@@ -48,7 +48,11 @@ export default async function NewEventPage({
             : "Share it and your church family will see it right away."}
         </p>
         <Card>
-          <EventForm churchName={user.activeMembership.church.name} prefill={prefill} />
+          <EventForm
+            key={from ?? "blank"}
+            churchName={user.activeMembership.church.name}
+            prefill={prefill}
+          />
         </Card>
       </div>
     </AuthShell>

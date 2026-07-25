@@ -30,7 +30,24 @@ this pass (see "What's not done yet" below before assuming something exists).
   MobileMenu.tsx`) and PWA support (`public/manifest.json`, app icons).
 - **Prisma 7** with the new `prisma-client` (query-compiler) generator,
   Postgres via `@prisma/adapter-pg`. See [DEPLOYMENT.md](./DEPLOYMENT.md) for
-  provisioning a database (Neon recommended).
+  provisioning a database (Neon recommended). Model names predate the
+  ChurchedIn rebrand and stay as-is internally (`MentorProfile`,
+  `MentorConnection`) even though every user-facing label now reads "friend"
+  — see PLAN.md's redesign update note.
+- **Event co-hosting & venue toggle**: the event creator can add other
+  volunteers as co-hosts (`EventCohost`, immediate add, no accept step —
+  `src/lib/actions/events.ts`), who get full RSVP visibility and edit rights
+  but never cancel rights. Events can also be flagged `atChurch` to show an
+  "(at church)" badge — a signal for the church leader, not a booking system.
+- **New-event email notifications**: publishing an event emails every other
+  church member ("New gathering at ..."), rate-limited to
+  `MAX_EVENT_NOTIFICATIONS_PER_DAY` per church per rolling 24h window,
+  serialized with a Postgres advisory lock (`pg_advisory_xact_lock`) so
+  concurrent event creation can't bypass the cap.
+- **Co-admin invites**: a church admin can invite a second `CHURCH_ADMIN` by
+  email right after creating their church (`/admin/welcome`), via the same
+  hash-at-rest/single-use/expiring token pattern as password reset
+  (`ChurchAdminInvite`, `src/lib/actions/churchInvites.ts`).
 - **Auth**: custom session cookies (httpOnly JWT via `jose`) + `bcryptjs`
   password hashing, plus a hand-rolled Google OAuth flow (no NextAuth — see
   `PLAN.md` for the reasoning) — `src/lib/googleOAuth.ts`,
@@ -46,7 +63,8 @@ this pass (see "What's not done yet" below before assuming something exists).
   accounts. A delivery failure is logged, never thrown — it can't crash the
   action (RSVP, connection request, etc.) that triggered it. Covers RSVP
   confirmation/waitlist/promotion, event cancellation, the full mentor
-  connection lifecycle, and password reset.
+  connection lifecycle, password reset, new-event notifications, and
+  co-admin invites.
 - **Tests**: Vitest for the RSVP capacity/waitlist logic and the mentor
   connection state machine (`src/lib/rsvp.test.ts`,
   `src/lib/connectionState.test.ts`), plus Playwright e2e tests for the
@@ -175,9 +193,9 @@ info; and a blocked mentor disappearing from the student's directory.
 
 | Role | Can do |
 |---|---|
-| `CHURCH_ADMIN` | Manage church settings, see all events/RSVPs/reports for their church, cancel any event. |
-| `VOLUNTEER` | Create/edit/cancel events, RSVP to help at others' events, opt in as a mentor, accept/decline mentor connection requests. |
-| `STUDENT` | Browse/RSVP to events, browse the mentor directory, send connection requests. |
+| `CHURCH_ADMIN` (shown to users as "church leader") | Manage church settings, see all events/RSVPs/reports for their church, cancel any event, invite a co-leader. |
+| `VOLUNTEER` | Plan/edit/cancel gatherings, co-host others' gatherings, RSVP to help, opt in as a friend, accept/decline reach-outs. |
+| `STUDENT` | Browse/RSVP to gatherings, browse the friend directory, reach out to volunteers. |
 
 A user's role is per-`Membership`, not global to their account — the same
 person could in principle belong to two churches with different roles, though
@@ -186,8 +204,10 @@ for why this is modeled as a join table rather than a column on `User`.
 
 ## The one non-negotiable safety rule
 
-**A student's and a volunteer/mentor's contact information is never shown to
-the other party until a `MentorConnection` reaches `ACCEPTED` status.** This
+**A student's and a volunteer friend's contact information is never shown to
+the other party until a `MentorConnection` reaches `ACCEPTED` status.** (The
+model name predates the ChurchedIn rebrand and is unchanged internally — only
+the user-facing "mentor" → "friend" label changed.) This
 exists specifically to protect a vulnerable population — international
 students interacting with people they haven't vetted — despite the platform's
 otherwise "open signup, no verification" trust model. There is no email
@@ -227,18 +247,19 @@ the data ever reaches a page component, using `contactInfoVisible()` in
 e2e/                                    Playwright specs + helpers (own Postgres schema, own port)
 src/
   app/
-    (public)/          landing, signup, login, join, join/[code], forgot-password, reset-password/[token]
-    admin/               church admin dashboard, reports
-    volunteer/           dashboard, profile (mentor toggle), events/new
+    (public)/          landing, signup, login, join, join/[code], join-as-admin/[token],
+                        forgot-password, reset-password/[token]
+    admin/               church admin dashboard, welcome (co-leader invite prompt), reports
+    volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost invite)
     student/              dashboard, profile, mentors (directory)
-    events/                shared event feed + detail page (RSVP lives here)
+    events/                shared event feed + detail page (RSVP, co-hosts, run-again)
     api/auth/               Google OAuth start + callback routes
     error.tsx, global-error.tsx, not-found.tsx    error/404 boundaries
     robots.ts, sitemap.ts                          SEO metadata routes
   components/
     ui/                   hand-built primitives (Button, Card, Field, Badge, Avatar,
                            CapacityBar, EmptyState, CopyButton, SubmitButton, PageLoading,
-                           GoogleButton, ...)
+                           GoogleButton, StatCard, DateBadge, AttendeeAvatars, ...)
     nav/                    AuthShell (authenticated layout + top nav), MobileMenu
                             (hamburger/drawer below lg), AuthPageLayout (split-panel auth
                             screens), NavLinks, ChurchSwitcher
@@ -246,16 +267,18 @@ src/
     BlockButton.tsx
   lib/
     actions/               server actions (auth, events, rsvps, mentors, connections, reports,
-                           blocks, passwordReset)
+                           blocks, passwordReset, churchInvites)
     auth.ts                 session + role/membership guards
     session.ts                JWT cookie signing/verification
     password.ts                bcrypt hashing
     googleOAuth.ts              Google auth URL building, token exchange, ID token verification
     oauthState.ts                signed CSRF state for the OAuth redirect round-trip
     email.ts                    Resend transport (dev-log fallback if no API key)
-    emailLayout.ts, emailTemplates.ts   branded HTML email templates
+    emailLayout.ts, emailTemplates.ts   branded HTML email templates (incl. new-event
+                                        notification, co-admin invite)
     prisma.ts                     Prisma client singleton (Postgres via @prisma/adapter-pg)
-    queries.ts                     shared read helpers (events, mentors, connections, reports)
+    queries.ts                     shared read helpers (events, mentors, connections, reports,
+                                    cohost candidates)
     rsvp.ts                         pure capacity/waitlist decision logic (unit tested)
     connectionState.ts               pure connection state machine (unit tested)
     eventCategoryStyle.tsx            category → icon/color mapping
@@ -293,3 +316,11 @@ Called out explicitly so a future session doesn't assume these exist:
   could brute-force a password or spam reset emails. Low risk at current
   scale (single-church-per-deploy, no public signup discovery), worth adding
   before wider rollout.
+- **From the ChurchedIn redesign** (see PLAN.md's redesign update note for
+  full details): the in-app nav badge for unseen events was an explicitly
+  optional stretch goal and was skipped; "Collaborate with another church" is
+  a UI-only "Coming soon" teaser card on the admin dashboard with no backend
+  behind it; scroll-triggered stagger animation on the landing page's
+  below-fold features grid was skipped (a CSS-only animate-on-mount would
+  have already finished before a user scrolls to it, and IntersectionObserver
+  felt like scope creep past the "no JS animation library" instruction).
