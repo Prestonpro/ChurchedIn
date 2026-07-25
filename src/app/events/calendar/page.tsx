@@ -4,6 +4,7 @@ import {
   Rows,
   ArrowLeft,
   ArrowRight,
+  MapTrifold,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { listEventsForChurch } from "@/lib/queries";
@@ -112,12 +113,20 @@ export default async function EventsCalendarPage({
             {user.activeMembership.church.name}&apos;s gatherings, by month.
           </p>
         </div>
-        <Link
-          href="/events"
-          className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
-        >
-          <Rows weight="bold" className="size-4" /> List view
-        </Link>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/events"
+            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+          >
+            <Rows weight="bold" className="size-4" /> List view
+          </Link>
+          <Link
+            href="/events/map"
+            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+          >
+            <MapTrifold weight="bold" className="size-4" /> Map view
+          </Link>
+        </div>
       </div>
 
       <Card className="mb-6">

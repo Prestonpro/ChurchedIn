@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, Sparkle, Buildings, HandsClapping, CalendarDots } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, Sparkle, Buildings, HandsClapping, CalendarDots, MapTrifold } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -82,6 +82,12 @@ export default async function EventsPage() {
             className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
           >
             <CalendarDots weight="bold" className="size-4" /> Calendar view
+          </Link>
+          <Link
+            href="/events/map"
+            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+          >
+            <MapTrifold weight="bold" className="size-4" /> Map view
           </Link>
           {canHost && (
             <LinkButton href="/volunteer/events/new">

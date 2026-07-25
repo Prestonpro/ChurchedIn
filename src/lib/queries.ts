@@ -242,6 +242,26 @@ export async function listRideRequestsForStudent(studentId: string) {
   }));
 }
 
+/** Upcoming published events at this church that have a map pin (both
+ * lat/lng set) — for /events/map. Includes RSVPs so the caller can compute
+ * capacity fullness and "is this the viewer's event" without a second
+ * query. */
+export function listMappedEventsForChurch(churchId: string) {
+  return prisma.event.findMany({
+    where: {
+      churchId,
+      status: EVENT_STATUS.PUBLISHED,
+      startsAt: { gte: new Date() },
+      locationLat: { not: null },
+      locationLng: { not: null },
+    },
+    orderBy: { startsAt: "asc" },
+    include: {
+      rsvps: { where: { status: { not: RSVP_STATUS.CANCELLED } } },
+    },
+  });
+}
+
 export function listReportsForChurch(churchId: string) {
   return prisma.report.findMany({
     where: { churchId },

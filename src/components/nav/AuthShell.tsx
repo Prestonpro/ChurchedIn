@@ -36,9 +36,15 @@ function navLinksForRole(role: string, unseenEvents: boolean): NavLink[] {
 export async function AuthShell({
   user,
   children,
+  fullBleed = false,
 }: {
   user: CurrentUser;
   children: React.ReactNode;
+  /** Skips the usual centered max-w-6xl/padding wrapper so content can fill
+   * the full viewport edge-to-edge below the header — for the event map,
+   * which needs to feel like its own full-screen surface, not a section
+   * inside the normal page shell. */
+  fullBleed?: boolean;
 }) {
   const role = user.activeMembership?.role ?? ROLES.STUDENT;
   const unseenEvents = user.activeMembership
@@ -91,7 +97,11 @@ export async function AuthShell({
           />
         </div>
       </header>
-      <main className="mx-auto max-w-6xl animate-fade-in px-6 py-8">{children}</main>
+      {fullBleed ? (
+        <main className="h-[calc(100dvh-65px)] animate-fade-in overflow-hidden">{children}</main>
+      ) : (
+        <main className="mx-auto max-w-6xl animate-fade-in px-6 py-8">{children}</main>
+      )}
     </div>
   );
 }

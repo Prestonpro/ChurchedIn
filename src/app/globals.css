@@ -172,3 +172,24 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* Strips Leaflet's default white popup chrome so EventPopupCard's own
+   glassmorphism card (bg-ink/85 + backdrop-blur) shows through cleanly,
+   instead of sitting inside a second, clashing white rounded box. Scoped
+   to .leaflet-container so it never touches anything outside the map. */
+.leaflet-container .leaflet-popup-content-wrapper {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+.leaflet-container .leaflet-popup-content {
+  margin: 0;
+  width: auto !important;
+}
+.leaflet-container .leaflet-popup-tip {
+  background: rgba(37, 34, 30, 0.85);
+}
+.leaflet-container a.leaflet-popup-close-button {
+  display: none;
+}
