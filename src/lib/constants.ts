@@ -80,6 +80,15 @@ export const PARTNERSHIP_STATUS = {
 
 export type PartnershipStatus = (typeof PARTNERSHIP_STATUS)[keyof typeof PARTNERSHIP_STATUS];
 
+export const RIDE_STATUS = {
+  OPEN: "OPEN",
+  CLAIMED: "CLAIMED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type RideStatus = (typeof RIDE_STATUS)[keyof typeof RIDE_STATUS];
+
 export function dashboardPathForRole(role: Role): string {
   switch (role) {
     case ROLES.CHURCH_ADMIN:

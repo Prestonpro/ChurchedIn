@@ -97,6 +97,13 @@ export const reportSchema = z.object({
   eventId: z.string().optional(),
 });
 
+export const rideRequestSchema = z.object({
+  destination: z.string().trim().min(1, "Enter where you need to go").max(300),
+  date: z.string().min(1, "Choose a date"),
+  time: z.string().trim().min(1, "Enter a time").max(100),
+  notes: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
 /** Formats the first Zod issue as a single plain-language string for form errors. */
 export function firstIssueMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Please check the form and try again.";

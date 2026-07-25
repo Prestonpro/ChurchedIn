@@ -1,0 +1,177 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
+import { sendEmail } from "@/lib/email";
+import { rideClaimedForStudentEmail, rideClaimedForVolunteerEmail } from "@/lib/emailTemplates";
+import { nextRideStatus, InvalidRideTransitionError } from "@/lib/rideState";
+import { ROLES } from "@/lib/constants";
+import { rideRequestSchema, firstIssueMessage } from "@/lib/validation";
+
+export type ActionResult = { error: string } | { ok: true } | void;
+
+export async function createRideRequestAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  if (!user.activeMembership || user.activeMembership.role !== ROLES.STUDENT) {
+    return { error: "Only students can request a ride." };
+  }
+
+  const parsed = rideRequestSchema.safeParse({
+    destination: formData.get("destination"),
+    date: formData.get("date"),
+    time: formData.get("time"),
+    notes: formData.get("notes"),
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+  const data = parsed.data;
+
+  const date = new Date(data.date);
+  if (Number.isNaN(date.getTime())) {
+    return { error: "Choose a valid date." };
+  }
+
+  await prisma.rideRequest.create({
+    data: {
+      destination: data.destination,
+      date,
+      time: data.time,
+      notes: data.notes || null,
+      churchId: user.activeMembership.churchId,
+      studentId: user.id,
+    },
+  });
+
+  revalidatePath("/student/rides");
+  revalidatePath("/volunteer/rides");
+  return { ok: true };
+}
+
+async function requireRideParticipant(rideId: string) {
+  const user = await requireUser();
+  const ride = await prisma.rideRequest.findUnique({
+    where: { id: rideId },
+    include: {
+      student: { select: { id: true, name: true, email: true } },
+      volunteer: { select: { id: true, name: true, email: true } },
+    },
+  });
+  if (!ride) {
+    throw new Error("Ride request not found.");
+  }
+  return { user, ride };
+}
+
+/** Claims an OPEN ride request — any volunteer at the same church can claim
+ * any open request; only reveals contact info to each other once claimed
+ * (PLAN.md's contact-reveal safety rule, applied here for the same reason
+ * it applies to mentor connections). */
+export async function claimRideRequestAction(rideId: string): Promise<ActionResult> {
+  const { user, ride } = await requireRideParticipant(rideId);
+  if (!user.activeMembership || user.activeMembership.role !== ROLES.VOLUNTEER) {
+    return { error: "Only volunteers can claim a ride." };
+  }
+  if (ride.churchId !== user.activeMembership.churchId) {
+    return { error: "This ride request isn't at your church." };
+  }
+
+  let nextStatus;
+  try {
+    nextStatus = nextRideStatus(ride.status, "CLAIM");
+  } catch (err) {
+    if (err instanceof InvalidRideTransitionError) {
+      return { error: "Someone already claimed this ride." };
+    }
+    throw err;
+  }
+
+  await prisma.rideRequest.update({
+    where: { id: rideId },
+    data: { status: nextStatus, volunteerId: user.id },
+  });
+
+  // Contact info reveal happens only here — do not surface either email
+  // anywhere else (see PLAN.md's safety rule and rideState.ts).
+  const forStudent = rideClaimedForStudentEmail({
+    volunteerName: user.name,
+    volunteerEmail: user.email,
+    destination: ride.destination,
+  });
+  const forVolunteer = rideClaimedForVolunteerEmail({
+    studentName: ride.student.name,
+    studentEmail: ride.student.email,
+    destination: ride.destination,
+  });
+  await Promise.all([
+    sendEmail({
+      to: ride.student.email,
+      subject: forStudent.subject,
+      body: forStudent.text,
+      html: forStudent.html,
+    }),
+    sendEmail({
+      to: user.email,
+      subject: forVolunteer.subject,
+      body: forVolunteer.text,
+      html: forVolunteer.html,
+    }),
+  ]);
+
+  revalidatePath("/student/rides");
+  revalidatePath("/volunteer/rides");
+}
+
+/** Marks a claimed ride as completed — either participant can do this. */
+export async function completeRideRequestAction(rideId: string): Promise<ActionResult> {
+  const { user, ride } = await requireRideParticipant(rideId);
+  if (ride.studentId !== user.id && ride.volunteerId !== user.id) {
+    return { error: "You don't have access to this ride request." };
+  }
+
+  let nextStatus;
+  try {
+    nextStatus = nextRideStatus(ride.status, "COMPLETE");
+  } catch (err) {
+    if (err instanceof InvalidRideTransitionError) {
+      return { error: err.message };
+    }
+    throw err;
+  }
+
+  await prisma.rideRequest.update({ where: { id: rideId }, data: { status: nextStatus } });
+
+  revalidatePath("/student/rides");
+  revalidatePath("/volunteer/rides");
+}
+
+/** Cancels a ride request — only the student who made it can cancel,
+ * whether it's still OPEN or already CLAIMED. */
+export async function cancelRideRequestAction(rideId: string): Promise<ActionResult> {
+  const { user, ride } = await requireRideParticipant(rideId);
+  if (ride.studentId !== user.id) {
+    return { error: "Only the student who requested this ride can cancel it." };
+  }
+
+  let nextStatus;
+  try {
+    nextStatus = nextRideStatus(ride.status, "CANCEL");
+  } catch (err) {
+    if (err instanceof InvalidRideTransitionError) {
+      return { error: err.message };
+    }
+    throw err;
+  }
+
+  await prisma.rideRequest.update({
+    where: { id: rideId },
+    data: { status: nextStatus },
+  });
+
+  revalidatePath("/student/rides");
+  revalidatePath("/volunteer/rides");
+}

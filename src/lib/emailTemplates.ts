@@ -224,3 +224,47 @@ export function coAdminInviteEmail(opts: { inviterName: string; churchName: stri
   });
   return { subject, text, html };
 }
+
+// ---------------------------------------------------------------------------
+// Rides board
+// ---------------------------------------------------------------------------
+
+// Contact info reveal happens only once a ride is CLAIMED — same
+// non-negotiable safety rule as mentor connections (PLAN.md section 8),
+// applied here since this is the same vulnerable population coordinating
+// with someone they haven't vetted.
+export function rideClaimedForStudentEmail(opts: {
+  volunteerName: string;
+  volunteerEmail: string;
+  destination: string;
+}): EmailContent {
+  const subject = `${opts.volunteerName} can give you a ride`;
+  const text = `${opts.volunteerName} claimed your ride request to ${opts.destination}. You can reach them at ${opts.volunteerEmail}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Your ride is covered!",
+    bodyHtml: paragraph(
+      `<strong>${escapeHtml(opts.volunteerName)}</strong> claimed your ride request to <strong>${escapeHtml(opts.destination)}</strong>. You can reach them at <a href="mailto:${escapeHtml(opts.volunteerEmail)}" style="color:#409688;">${escapeHtml(opts.volunteerEmail)}</a>.`,
+    ),
+    cta: { label: "View your ride requests", url: appUrl("/student/rides") },
+  });
+  return { subject, text, html };
+}
+
+export function rideClaimedForVolunteerEmail(opts: {
+  studentName: string;
+  studentEmail: string;
+  destination: string;
+}): EmailContent {
+  const subject = `You claimed a ride to ${opts.destination}`;
+  const text = `You're giving ${opts.studentName} a ride to ${opts.destination}. You can reach them at ${opts.studentEmail}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Ride claimed",
+    bodyHtml: paragraph(
+      `You're giving <strong>${escapeHtml(opts.studentName)}</strong> a ride to <strong>${escapeHtml(opts.destination)}</strong>. You can reach them at <a href="mailto:${escapeHtml(opts.studentEmail)}" style="color:#409688;">${escapeHtml(opts.studentEmail)}</a>.`,
+    ),
+    cta: { label: "View the rides board", url: appUrl("/volunteer/rides") },
+  });
+  return { subject, text, html };
+}

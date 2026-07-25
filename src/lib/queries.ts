@@ -1,8 +1,9 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-import { RSVP_STATUS, EVENT_STATUS, ROLES, PARTNERSHIP_STATUS } from "@/lib/constants";
+import { RSVP_STATUS, EVENT_STATUS, ROLES, PARTNERSHIP_STATUS, RIDE_STATUS } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
+import { rideContactVisible } from "@/lib/rideState";
 
 export function listEventsForChurch(churchId: string) {
   return prisma.event.findMany({
@@ -197,6 +198,47 @@ export async function listPartnershipsForChurch(churchId: string) {
     createdAt: p.createdAt,
     isIncoming: p.partnerChurchId === churchId,
     otherChurch: p.requestingChurchId === churchId ? p.partnerChurch : p.requestingChurch,
+  }));
+}
+
+/** OPEN ride requests at a church, for the volunteer Rides Board — no
+ * student contact info here since it's not relevant until claimed (and
+ * there's no volunteer assigned yet to reveal it to). */
+export function listOpenRideRequestsForChurch(churchId: string) {
+  return prisma.rideRequest.findMany({
+    where: { churchId, status: RIDE_STATUS.OPEN },
+    include: { student: { select: { id: true, name: true } } },
+    orderBy: { date: "asc" },
+  });
+}
+
+// Both listRideRequests* functions strip the other party's email from
+// anything not CLAIMED/COMPLETED before returning — same query-layer
+// defense-in-depth as listConnections*, pushing the safety rule down so a
+// page can't leak it by rendering `.email` too early.
+export async function listClaimedRideRequestsForVolunteer(volunteerId: string) {
+  const rides = await prisma.rideRequest.findMany({
+    where: { volunteerId },
+    include: { student: { select: { id: true, name: true, email: true } } },
+    orderBy: { date: "asc" },
+  });
+  return rides.map((r) => ({
+    ...r,
+    student: { ...r.student, email: rideContactVisible(r.status) ? r.student.email : null },
+  }));
+}
+
+export async function listRideRequestsForStudent(studentId: string) {
+  const rides = await prisma.rideRequest.findMany({
+    where: { studentId },
+    include: { volunteer: { select: { id: true, name: true, email: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+  return rides.map((r) => ({
+    ...r,
+    volunteer: r.volunteer
+      ? { ...r.volunteer, email: rideContactVisible(r.status) ? r.volunteer.email : null }
+      : null,
   }));
 }
 

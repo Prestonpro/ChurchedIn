@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree, Car } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listConnectionsAsMentor } from "@/lib/queries";
+import { listConnectionsAsMentor, listOpenRideRequestsForChurch } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -18,13 +18,14 @@ export default async function VolunteerDashboardPage() {
   const user = await requireRole(ROLES.VOLUNTEER);
   const churchId = user.activeMembership!.churchId;
 
-  const [myEvents, memberCount] = await Promise.all([
+  const [myEvents, memberCount, openRides] = await Promise.all([
     prisma.event.findMany({
       where: { createdById: user.id },
       orderBy: { startsAt: "desc" },
       take: 10,
     }),
     prisma.membership.count({ where: { churchId } }),
+    listOpenRideRequestsForChurch(churchId),
   ]);
 
   const connections = await listConnectionsAsMentor(user.id);
@@ -47,7 +48,7 @@ export default async function VolunteerDashboardPage() {
         </LinkButton>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={CalendarBlank}
           label="Upcoming gatherings"
@@ -62,6 +63,14 @@ export default async function VolunteerDashboardPage() {
           value={pending.length}
           tone="bg-accent-100 text-accent-700"
           accent="border-l-accent-500"
+        />
+        <StatCard
+          icon={Car}
+          label="Rides needing a volunteer"
+          value={openRides.length}
+          tone="bg-warning-soft text-warning"
+          accent="border-l-warning"
+          href="/volunteer/rides"
         />
         <StatCard
           icon={UsersThree}

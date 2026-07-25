@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { CalendarBlank, UsersThree, HandHeart } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, UsersThree, HandHeart, Car } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listConnectionsAsStudent } from "@/lib/queries";
+import { listConnectionsAsStudent, listRideRequestsForStudent } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -10,13 +10,13 @@ import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { CONNECTION_STATUS, RSVP_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+import { CONNECTION_STATUS, RSVP_STATUS, RIDE_STATUS, ROLES, type EventCategory } from "@/lib/constants";
 
 export default async function StudentDashboardPage() {
   const user = await requireRole(ROLES.STUDENT);
   const churchId = user.activeMembership!.churchId;
 
-  const [rsvps, connections, memberCount] = await Promise.all([
+  const [rsvps, connections, memberCount, rides] = await Promise.all([
     prisma.eventRsvp.findMany({
       where: { userId: user.id, status: { not: RSVP_STATUS.CANCELLED } },
       include: { event: true },
@@ -24,8 +24,12 @@ export default async function StudentDashboardPage() {
     }),
     listConnectionsAsStudent(user.id),
     prisma.membership.count({ where: { churchId } }),
+    listRideRequestsForStudent(user.id),
   ]);
   const friendCount = connections.filter((c) => c.status === CONNECTION_STATUS.ACCEPTED).length;
+  const activeRides = rides.filter(
+    (r) => r.status === RIDE_STATUS.OPEN || r.status === RIDE_STATUS.CLAIMED,
+  ).length;
   const upcoming = rsvps.filter((r) => r.event.startsAt >= new Date());
   const nextRsvp = [...upcoming].sort((a, b) => a.event.startsAt.getTime() - b.event.startsAt.getTime())[0];
 
@@ -43,7 +47,7 @@ export default async function StudentDashboardPage() {
         </LinkButton>
       </div>
 
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={CalendarBlank}
           label="Upcoming events"
@@ -59,6 +63,14 @@ export default async function StudentDashboardPage() {
           tone="bg-accent-100 text-accent-700"
           accent="border-l-accent-500"
           href="/student/mentors"
+        />
+        <StatCard
+          icon={Car}
+          label="Active ride requests"
+          value={activeRides}
+          tone="bg-warning-soft text-warning"
+          accent="border-l-warning"
+          href="/student/rides"
         />
         <StatCard
           icon={UsersThree}
