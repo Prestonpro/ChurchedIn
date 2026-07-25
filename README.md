@@ -58,6 +58,14 @@ this pass (see "What's not done yet" below before assuming something exists).
 - **Unseen-events nav badge**: `Membership.lastSeenEventsAt` + a small dot
   on the Events nav link when the church has events created since the
   member's last visit — clears the next time they visit `/events`.
+- **Rides board**: students ask for a ride (`RideRequest`, `/student/rides`)
+  and any volunteer at the same church can claim it (`/volunteer/rides`,
+  `src/lib/actions/rides.ts`). Same contact-reveal-only-after-claim safety
+  rule as mentor connections and cross-church partnerships — see
+  `rideContactVisible()` in `src/lib/rideState.ts`.
+- **Semester calendar**: `/events/calendar`, a CSS-grid monthly view (no
+  calendar library) with category and "my RSVP'd events" filters, linked to
+  and from the existing event feed (`/events`).
 - **Auth**: custom session cookies (httpOnly JWT via `jose`) + `bcryptjs`
   password hashing, plus a hand-rolled Google OAuth flow (no NextAuth — see
   `PLAN.md` for the reasoning) — `src/lib/googleOAuth.ts`,
@@ -260,9 +268,11 @@ src/
     (public)/          landing, signup, login, join, join/[code], join-as-admin/[token],
                         forgot-password, reset-password/[token]
     admin/               church admin dashboard, welcome (co-leader invite prompt), reports
-    volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost invite)
-    student/              dashboard, profile, mentors (directory)
-    events/                shared event feed (own + partner-church) + detail page (RSVP, co-hosts, run-again)
+    volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost invite),
+                        rides (rides board)
+    student/              dashboard, profile, mentors (directory), rides (request a ride)
+    events/                shared event feed (own + partner-church) + detail page (RSVP, co-hosts,
+                          run-again) + calendar (monthly grid view)
     api/auth/               Google OAuth start + callback routes
     error.tsx, global-error.tsx, not-found.tsx    error/404 boundaries
     robots.ts, sitemap.ts                          SEO metadata routes
@@ -274,10 +284,11 @@ src/
                             unseen-events nav badge), MobileMenu (hamburger/drawer below lg),
                             AuthPageLayout (split-panel auth screens), NavLinks, ChurchSwitcher
     ConnectionActions.tsx    accept/decline/end buttons for mentor connections
+    RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
     BlockButton.tsx
   lib/
     actions/               server actions (auth, events, rsvps, mentors, connections, reports,
-                           blocks, passwordReset, churchInvites, churchPartnerships)
+                           blocks, passwordReset, churchInvites, churchPartnerships, rides)
     auth.ts                 session + role/membership guards
     session.ts                JWT cookie signing/verification
     password.ts                bcrypt hashing
@@ -285,12 +296,13 @@ src/
     oauthState.ts                signed CSRF state for the OAuth redirect round-trip
     email.ts                    Resend transport (dev-log fallback if no API key)
     emailLayout.ts, emailTemplates.ts   branded HTML email templates (incl. new-event
-                                        notification, co-admin invite)
+                                        notification, co-admin invite, ride claimed)
     prisma.ts                     Prisma client singleton (Postgres via @prisma/adapter-pg)
     queries.ts                     shared read helpers (events, mentors, connections, reports,
-                                    cohost candidates)
+                                    cohost candidates, ride requests)
     rsvp.ts                         pure capacity/waitlist decision logic (unit tested)
     connectionState.ts               pure connection state machine (unit tested)
+    rideState.ts                      pure ride-request state machine (unit tested)
     eventCategoryStyle.tsx            category → icon/color mapping
     validation.ts                     zod schemas
   generated/prisma/                    Prisma client output
@@ -301,6 +313,11 @@ proxy.ts                                route protection middleware
 
 Called out explicitly so a future session doesn't assume these exist:
 
+- The rides board and calendar view (see "Community Needs" in PLAN.md's
+  build-phases section) aren't yet covered by the Playwright e2e suite —
+  verified with ad hoc smoke scripts during development instead. Add
+  proper e2e specs before relying on the suite alone to catch a regression
+  in either.
 - The Google OAuth consent screen is in Google Cloud Console's "Testing"
   publish status, which caps sign-in to test users explicitly added there —
   switch it to "Production" publish status when you're ready for anyone to

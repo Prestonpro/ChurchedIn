@@ -499,3 +499,76 @@ _(Updated as phases complete — check here first when resuming.)_
     nav link, not just networkidle), not the app.
   - tsc/lint/build/unit tests (24/24) all green after both features. Full
     e2e suite re-run pending as of this note.
+  - Full e2e suite (4/4) confirmed passing afterward, and both features
+    verified live on production after `prisma migrate deploy` (production
+    connection string re-supplied by the user after a context compaction —
+    it isn't recoverable from files/env, only from the conversation or the
+    user re-pasting it).
+
+---
+
+## "Community Needs" phase (new brief, separate from the 10-phase redesign
+above): a Rides Board and a Semester Calendar view. Three commits, each
+verified (tsc/lint/build/unit tests, plus a manual Playwright smoke script)
+and pushed individually per the brief's own git-workflow instructions.
+Two factual corrections applied silently rather than followed literally:
+the brief said `npx prisma db push` on "the local SQLite database" — this
+project is Postgres via Neon and has used `prisma migrate dev`/`deploy`
+exclusively all along, so `migrate dev` was used instead to keep migration
+history intact; the brief said `git push origin main` — this repo's default
+branch is `master`, confirmed by every prior push in this project.
+
+- **Schema (commit `38d417a`)**: new `RideRequest` model + `RideStatus` enum
+  (`OPEN`/`CLAIMED`/`COMPLETED`/`CANCELLED`), migration
+  `20260725052546_add_ride_request`. Back-relations added to `User`
+  (`rideRequestsAsStudent`/`rideRequestsAsVolunteer`) and `Church`
+  (`rideRequests`). Applied to production proactively, right after the dev
+  migration and before any code referencing the table was pushed — avoiding
+  a repeat of the earlier production-migration-debt mistake from the main
+  redesign.
+
+- **Rides board (commit `6dafd2e`)**: `src/lib/rideState.ts` — a pure,
+  unit-tested state machine (OPEN→CLAIMED→COMPLETED, or →CANCELLED from
+  either of the first two) plus `rideContactVisible()`, mirroring
+  `connectionState.ts` exactly since this is the same trust problem (a
+  vulnerable population coordinating with someone unvetted). Actions in
+  `src/lib/actions/rides.ts`: `createRideRequestAction` (student-only),
+  `claimRideRequestAction` (volunteer, same-church only, reveals contact
+  info to both sides via `rideClaimedForStudentEmail`/
+  `rideClaimedForVolunteerEmail` — the one place either email is ever
+  surfaced), `completeRideRequestAction` (either participant),
+  `cancelRideRequestAction` (student/creator only). UI: `/student/rides`
+  (request form + their requests, cancel/complete buttons) and
+  `/volunteer/rides` (open board with Claim buttons + "rides you're
+  giving" section). New shared `RideActionButton` client component
+  (`src/components/RideActionButton.tsx`) that captures and surfaces the
+  action's error instead of discarding it — applying the lesson from the
+  main redesign's code review (CohostManager originally swallowed errors)
+  from the start instead of repeating it. No new nav items — both pages
+  are reachable from a new dashboard StatCard each ("Rides needing a
+  volunteer" / "Active ride requests"), keeping the student nav at its
+  already-at-cap 4 items per the redesign's own "3-4 items max" rule.
+  Verified end-to-end with a Playwright smoke script covering the full
+  loop, including the safety-critical check that the student's email is
+  absent from the open rides board (pre-claim) and present on both sides
+  only after claiming.
+
+- **Calendar view (commit `b8b022e`)**: `/events/calendar`, a CSS-grid
+  monthly view — explicitly no calendar/charting library, per the brief.
+  Reuses `listEventsForChurch` (no new query); month navigation, day
+  selection, and category/"my RSVP'd events" filters are all plain
+  `<Link>`s and a `<form method="get">` reading `searchParams`, so none of
+  it needs client-side JavaScript. `categoryStyle()` gained a `dot` field
+  (solid, non-"-soft" background class) for the day-cell event markers,
+  since the existing pale "-soft" tones don't read at that size. A
+  reciprocal "List view" / "Calendar view" toggle link connects it with
+  the existing `/events` feed. Verified with a Playwright smoke script
+  (month heading correct, event's day cell shows a dot, clicking a day
+  lists that day's events, category filter persists across the GET form
+  submit).
+
+- **Known gap, called out rather than silently left**: neither the rides
+  board nor the calendar view is covered by the Playwright e2e suite yet —
+  only by the ad hoc smoke scripts run during development (not committed,
+  since they're throwaway verification scripts, not permanent test specs).
+  Documented in README.md's "What's not done yet".

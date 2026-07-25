@@ -394,6 +394,32 @@ model MentorConnection {
   @@unique([studentId, mentorId])
 }
 
+// Added in the "Community Needs" follow-on phase: a student's ask for a ride
+// (airport pickup, store run, etc.) that any volunteer at the same church
+// can claim. Modeled after MentorConnection's shape (a studentId/
+// volunteerId pair with a status enum) but simpler — no decline/re-request
+// dance, just OPEN until claimed. Same contact-info safety rule as mentor
+// connections: the student's and volunteer's contact info is only shown to
+// each other once CLAIMED/COMPLETED — see rideContactVisible() in
+// src/lib/rideState.ts, enforced at the query layer the same way
+// connectionState.ts's contactInfoVisible() is.
+model RideRequest {
+  id          String     @id @default(cuid())
+  destination String
+  date        DateTime
+  time        String
+  notes       String?
+  status      RideStatus @default(OPEN) // OPEN | CLAIMED | COMPLETED | CANCELLED
+  createdAt   DateTime   @default(now())
+
+  studentId String
+  student   User   @relation("RideRequestsAsStudent", fields: [studentId], references: [id])
+  volunteerId String?
+  volunteer   User?   @relation("RideRequestsAsVolunteer", fields: [volunteerId], references: [id])
+  churchId  String
+  church    Church @relation(fields: [churchId], references: [id])
+}
+
 model Block {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now())
@@ -487,16 +513,20 @@ church-linkedin/
     app/
       (public)/        landing, signup, login, join/[code], join-as-admin/[token]
       admin/            church admin dashboard (partnerships), welcome (co-leader invite), events, reports
-      volunteer/         dashboard, profile, events (create/manage, cohost invite), mentor toggle
-      student/            dashboard, profile, mentors (directory), connections
-      events/             shared event feed (own + partner-church) + detail page (cohosts, atChurch, run-again)
+      volunteer/         dashboard, profile, events (create/manage, cohost invite), mentor toggle,
+                        rides (rides board)
+      student/            dashboard, profile, mentors (directory), connections, rides (request a ride)
+      events/             shared event feed (own + partner-church) + detail page (cohosts, atChurch,
+                          run-again) + calendar (monthly grid view, /events/calendar)
     components/
       ui/                hand-built primitives (Button, Card, Field, Badge, StatCard,
                          DateBadge, AttendeeAvatars, ...)
       nav/                 AuthShell (async — computes the unseen-events nav badge), NavLinks, MobileMenu, ...
+      RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
     lib/
       actions/           server actions (auth, events, rsvps, mentors, connections,
-                         reports, blocks, churchInvites, churchPartnerships)
+                         reports, blocks, churchInvites, churchPartnerships, rides)
+      rideState.ts             pure ride-request state machine + contact-visibility rule (unit tested)
       auth.ts             session + role/membership guards
       session.ts           JWT cookie signing/verification
       password.ts           bcrypt hashing
@@ -571,10 +601,34 @@ that were deliberately skipped during the redesign were subsequently built.
 Full details in `redesign_prompt.md`'s Progress Log (the entry right after
 "Final: docs updated").
 
+**Update — "Community Needs" phase** (migration `20260725052546_add_ride_request`):
+a rides board and a semester calendar view, added after the above.
+- **Rides board**: new `RideRequest` model (section 6) — a student asks for
+  a ride, any volunteer at the same church can claim it
+  (`claimRideRequestAction`), either participant can mark it
+  `completeRideRequestAction`, and the requesting student can
+  `cancelRideRequestAction` while it's still OPEN or CLAIMED. Same
+  contact-reveal-only-after-claim safety rule as mentor connections and
+  cross-church partnerships (`rideState.ts`'s `rideContactVisible()`,
+  enforced at the query layer in `listClaimedRideRequestsForVolunteer`/
+  `listRideRequestsForStudent`). UI: `/student/rides` (request form + your
+  requests) and `/volunteer/rides` (open board + rides you're giving), both
+  reachable from a dashboard StatCard rather than a new nav item — the
+  redesign's own "3-4 nav items max, discoverable within sections" rule
+  was already at its cap on the student nav.
+- **Semester calendar**: `/events/calendar`, a CSS-grid monthly view (no
+  charting/calendar library) reusing `listEventsForChurch` — no new query.
+  Category and "my RSVP'd events" filters are a plain `<form method="get">`
+  (no client JS needed), month navigation and day-selection are plain
+  links with query params. A toggle link connects it with the existing
+  list view (`/events`) in both directions.
+
 **Still not done** (call these out explicitly if picking this up later, don't
 assume they're covered): the cross-church connection restriction (implemented
 in `requestConnectionAction`) isn't yet covered by an automated test;
 cross-church partnerships don't send an email notification when requested —
 visible in-app only, an explicit MVP scope choice; scroll-triggered stagger
 animation on the landing page's below-fold features grid was skipped as
-out-of-scope for a CSS-only, no-animation-library constraint.
+out-of-scope for a CSS-only, no-animation-library constraint; the rides
+board and calendar view aren't yet covered by the Playwright e2e suite
+(verified via ad hoc smoke scripts instead — see redesign_prompt.md).
