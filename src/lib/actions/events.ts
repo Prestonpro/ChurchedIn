@@ -42,6 +42,9 @@ export async function createEventAction(
       ? Number(formData.get("volunteerCap"))
       : null,
     studentCap: formData.get("studentCap") ? Number(formData.get("studentCap")) : null,
+    address: formData.get("address"),
+    locationLat: formData.get("locationLat") ? Number(formData.get("locationLat")) : null,
+    locationLng: formData.get("locationLng") ? Number(formData.get("locationLng")) : null,
   };
   const parsed = eventSchema.safeParse(raw);
   if (!parsed.success) {
@@ -70,6 +73,9 @@ export async function createEventAction(
       atChurch: data.atChurch,
       volunteerCap: data.volunteerCap,
       studentCap: data.studentCap,
+      address: data.address || null,
+      locationLat: data.locationLat,
+      locationLng: data.locationLng,
       churchId: user.activeMembership.churchId,
       createdById: user.id,
     },

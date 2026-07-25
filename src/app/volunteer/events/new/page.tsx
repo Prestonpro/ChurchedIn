@@ -34,6 +34,9 @@ export default async function NewEventPage({
         atChurch: source.atChurch,
         volunteerCap: source.volunteerCap,
         studentCap: source.studentCap,
+        address: source.address,
+        locationLat: source.locationLat,
+        locationLng: source.locationLng,
       };
     }
   }

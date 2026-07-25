@@ -70,6 +70,11 @@ export const eventSchema = z.object({
   // distinct from leaving it blank, which means uncapped.
   volunteerCap: z.number().int().nonnegative().optional().nullable(),
   studentCap: z.number().int().nonnegative().optional().nullable(),
+  // Optional map pin — distinct from the required `location` text above.
+  // All three come from the LocationPicker together (or not at all).
+  address: z.string().trim().max(300).optional().or(z.literal("")),
+  locationLat: z.number().min(-90).max(90).optional().nullable(),
+  locationLng: z.number().min(-180).max(180).optional().nullable(),
 });
 
 export const mentorProfileSchema = z.object({

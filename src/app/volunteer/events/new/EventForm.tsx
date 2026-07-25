@@ -7,6 +7,7 @@ import { createEventAction } from "@/lib/actions/events";
 import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
+import { LocationPicker } from "./LocationPicker";
 import type { EventCategory } from "@/lib/constants";
 
 /** Presets shown as tappable cards before the full form — a blank category
@@ -33,6 +34,9 @@ type Prefill = {
   atChurch: boolean;
   volunteerCap: number | null;
   studentCap: number | null;
+  address: string | null;
+  locationLat: number | null;
+  locationLng: number | null;
 };
 
 export function EventForm({ churchName, prefill }: { churchName: string; prefill?: Prefill }) {
@@ -152,6 +156,12 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
         }}
       />
       <CheckboxField label="This is a virtual event" name="isVirtual" defaultChecked={prefill?.isVirtual} />
+
+      <LocationPicker
+        defaultAddress={prefill?.address ?? undefined}
+        defaultLat={prefill?.locationLat}
+        defaultLng={prefill?.locationLng}
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field
