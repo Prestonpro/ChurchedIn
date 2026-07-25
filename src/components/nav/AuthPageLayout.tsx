@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UsersThree, Quotes } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, Sparkle } from "@phosphor-icons/react/dist/ssr";
 
 export function AuthPageLayout({
   children,
@@ -20,7 +20,7 @@ export function AuthPageLayout({
           ChurchedIn
         </Link>
         <div className="max-w-md">
-          <Quotes weight="fill" className="size-8 text-brand-300" />
+          <Sparkle weight="fill" className="size-8 text-brand-300" />
           <h2 className="mt-4 text-3xl font-extrabold leading-tight">{panelTitle}</h2>
           <p className="mt-4 text-brand-100">{panelBody}</p>
         </div>

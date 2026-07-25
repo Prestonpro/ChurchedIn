@@ -1,7 +1,5 @@
 import Link from "next/link";
 import {
-  CalendarPlus,
-  HandHeart,
   UsersThree,
   ArrowRight,
   ShieldCheck,
@@ -10,23 +8,31 @@ import {
   Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
+import { FeatureCards } from "./FeatureCards";
 
+// Icon keyed by a plain string, not the component itself — Server
+// Components can't pass function/component references as props to Client
+// Components, only serializable data (same reasoning as NAV_ICONS in
+// src/components/nav/NavLinks.tsx). FeatureCards looks the icon back up
+// from this key on the client side.
 const FEATURES = [
   {
-    icon: CalendarPlus,
+    iconKey: "calendar" as const,
     title: "Plan a gathering",
     body: "Dinners, coffee chats, study groups, airport pickups — share it, set a headcount, and see who's coming.",
+    details: "Pick a preset like a dinner or coffee chat, or start from scratch. Set headcounts for helpers and attendees separately, and everyone can see who else is coming before they commit.",
   },
   {
-    icon: HandHeart,
+    iconKey: "hand" as const,
     title: "RSVP together",
     body: "Students say they're in. Other volunteers pitch in to help run it. Full gatherings waitlist automatically.",
+    details: "Confirmed spots show up instantly. Once a gathering fills up, new RSVPs join a waitlist and get bumped up automatically the moment someone cancels.",
   },
   {
-    icon: UsersThree,
+    iconKey: "users" as const,
     title: "Find a friend",
     body: "Students browse a friend directory and reach out — contact info is shared only once a friend accepts.",
+    details: "Browse by language and interests, send a reach-out with a short note, and email addresses stay private on both sides until the other person accepts.",
   },
 ];
 
@@ -100,17 +106,7 @@ export default function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-24">
-        <div className="grid gap-6 sm:grid-cols-3">
-          {FEATURES.map(({ icon: Icon, title, body }) => (
-            <Card key={title} className="group">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-brand group-hover:bg-brand-600 group-hover:text-white">
-                <Icon weight="duotone" className="size-6" />
-              </span>
-              <h2 className="mt-4 text-lg font-bold text-ink">{title}</h2>
-              <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
-            </Card>
-          ))}
-        </div>
+        <FeatureCards features={FEATURES} />
       </section>
 
       <section className="border-y border-line bg-surface">
