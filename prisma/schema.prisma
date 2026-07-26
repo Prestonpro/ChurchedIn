@@ -68,12 +68,39 @@ enum RideStatus {
   CANCELLED
 }
 
+enum RideRequestType {
+  GENERAL
+  FIRST_VISIT
+}
+
+enum VerificationStatus {
+  UNVERIFIED
+  COMMUNITY_VERIFIED
+  PASTOR_VERIFIED
+}
+
 model Church {
   id        String   @id @default(cuid())
   name      String
   city      String?
   joinCode  String   @unique
   createdAt DateTime @default(now())
+
+  // Added for church discovery/trust (Phase 4 of the "Church Discovery,
+  // Trust & First-Visit Rides" brief). `joinCode` above already covers the
+  // brief's "inviteCode" ask — same concept (shareable, human-friendly
+  // code), so there's no second code field. Community vouching and pastor
+  // self-verification are both trust-based (no external verification
+  // service) — see ChurchVouch and Membership.isPastor.
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  denomination       String?
+  languages          String?
+  serviceTimes       String?
+  bio                String?
+  locationLat        Float?
+  locationLng        Float?
+  address            String?
+  website            String?
 
   memberships Membership[]
   events      Event[]
@@ -82,6 +109,26 @@ model Church {
   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
   rideRequests RideRequest[]
+  vouches ChurchVouch[]
+}
+
+/**
+ * A community trust signal: any user who belongs to at least one already-
+ * verified church can vouch for a different church ("I can confirm this
+ * is a real church"). At 3 vouches, the church's verificationStatus
+ * upgrades to COMMUNITY_VERIFIED (see requestVouchAction in
+ * src/lib/actions/churches.ts). One vouch per user per church.
+ */
+model ChurchVouch {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  churchId String
+  church   Church @relation(fields: [churchId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([churchId, userId])
 }
 
 /**
@@ -161,6 +208,7 @@ model User {
   cohostedEvents       EventCohost[]
   rideRequestsAsStudent   RideRequest[] @relation("RideRequestsAsStudent")
   rideRequestsAsVolunteer RideRequest[] @relation("RideRequestsAsVolunteer")
+  churchVouches           ChurchVouch[]
 }
 
 model PasswordResetToken {
@@ -186,6 +234,15 @@ model Membership {
   // small "something's new" dot on the Events link by comparing against
   // Event.createdAt, without a dedicated read/unread tracking table.
   lastSeenEventsAt DateTime?
+  // Self-asserted, trust-based (per the discovery/trust brief: "for now,
+  // this simply upgrades the church... future enhancement: email domain
+  // verification"). A CHURCH_ADMIN is already the leadership tier
+  // everywhere else in this app; isPastor is the one narrow extra
+  // permission on top of that — triggering the church's
+  // PASTOR_VERIFIED status. Deliberately NOT a 4th Role value: Role
+  // determines RSVP bucket/dashboard/nav throughout the app, and a
+  // pastor fits the existing CHURCH_ADMIN/VOLUNTEER bucket exactly.
+  isPastor Boolean @default(false)
 
   userId   String
   user     User   @relation(fields: [userId], references: [id])
@@ -319,6 +376,13 @@ model RideRequest {
   time        String
   notes       String?
   status      RideStatus @default(OPEN)
+  // GENERAL: a student asking their own church's volunteers for a ride.
+  // FIRST_VISIT: someone (not necessarily a member of `churchId` at all —
+  // see createFirstVisitRideRequestAction) asking for a ride to visit a
+  // church they found on /discover. `churchId` is always the *destination*
+  // church either way; for FIRST_VISIT it's specifically NOT derived from
+  // the requester's own membership, since they may not have one anywhere.
+  type        RideRequestType @default(GENERAL)
   createdAt   DateTime   @default(now())
 
   studentId String
