@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, Translate, UsersThree, MapPinLine } from "@phosphor-icons/react/dist/ssr";
+import { Clock, Translate, UsersThree, MapPinLine, Car } from "@phosphor-icons/react/dist/ssr";
 import { VerificationBadge } from "@/components/VerificationBadge";
 import type { DiscoverableChurch } from "./DiscoverClient";
 
@@ -54,6 +54,12 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
           className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-brand hover:bg-brand-700"
         >
           <UsersThree weight="bold" className="size-3.5" /> Visit profile
+        </Link>
+        <Link
+          href={`/churches/${church.id}?ride=1`}
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-line-strong px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+        >
+          <Car weight="bold" className="size-3.5" /> Need a ride?
         </Link>
       </div>
     </div>

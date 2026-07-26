@@ -22,13 +22,17 @@ import { PastorVerifyButton } from "@/components/PastorVerifyButton";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
 import { VERIFICATION_STATUS, type EventCategory } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
+import { FirstVisitRideForm } from "./FirstVisitRideForm";
 
 export default async function ChurchProfilePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ ride?: string }>;
 }) {
   const { id } = await params;
+  const { ride } = await searchParams;
   const user = await requireUser();
   const church = await getChurchProfile(id);
   if (!church) {
@@ -182,6 +186,14 @@ export default async function ChurchProfilePage({
               <JoinChurchForm churchId={id} />
             </Card>
           )}
+
+          <Card>
+            <FirstVisitRideForm
+              churchId={id}
+              defaultDestination={church.address || church.name}
+              autoOpen={ride === "1"}
+            />
+          </Card>
         </div>
       </div>
     </AuthShell>

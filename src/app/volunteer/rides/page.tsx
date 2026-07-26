@@ -1,4 +1,4 @@
-import { Car, EnvelopeSimple, MapPin } from "@phosphor-icons/react/dist/ssr";
+import { Car, EnvelopeSimple, MapPin, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listOpenRideRequestsForChurch, listClaimedRideRequestsForVolunteer } from "@/lib/queries";
 import { rideContactVisible } from "@/lib/rideState";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RideActionButton } from "@/components/RideActionButton";
-import { ROLES, RIDE_STATUS } from "@/lib/constants";
+import { ROLES, RIDE_STATUS, RIDE_REQUEST_TYPE } from "@/lib/constants";
 
 export default async function VolunteerRidesPage() {
   const user = await requireRole(ROLES.VOLUNTEER);
@@ -81,35 +81,53 @@ export default async function VolunteerRidesPage() {
         <EmptyState icon={Car} title="No open ride requests" body="Check back later — nothing needs a lift right now." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {openRides.map((ride, i) => (
-            <Card key={ride.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}>
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-9 items-center justify-center rounded-lg bg-warning-soft text-warning">
-                    <MapPin weight="fill" className="size-4.5" />
-                  </span>
-                  <div>
-                    <p className="font-semibold text-ink">{ride.destination}</p>
-                    <p className="text-xs text-ink-muted">
-                      {ride.date.toLocaleDateString()} · {ride.time}
-                    </p>
+          {openRides.map((ride, i) => {
+            const isFirstVisit = ride.type === RIDE_REQUEST_TYPE.FIRST_VISIT;
+            return (
+              <Card
+                key={ride.id}
+                className={`animate-fade-up ${isFirstVisit ? "border-l-4 border-l-accent-500" : ""}`}
+                style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`flex size-9 items-center justify-center rounded-lg ${
+                        isFirstVisit ? "bg-accent-100 text-accent-700" : "bg-warning-soft text-warning"
+                      }`}
+                    >
+                      {isFirstVisit ? (
+                        <Sparkle weight="fill" className="size-4.5" />
+                      ) : (
+                        <MapPin weight="fill" className="size-4.5" />
+                      )}
+                    </span>
+                    <div>
+                      <p className="font-semibold text-ink">{ride.destination}</p>
+                      <p className="text-xs text-ink-muted">
+                        {ride.date.toLocaleDateString()} · {ride.time}
+                      </p>
+                    </div>
                   </div>
+                  {isFirstVisit ? <Badge tone="accent">🆕 First visit</Badge> : <Badge tone="warning">Open</Badge>}
                 </div>
-                <Badge tone="warning">Open</Badge>
-              </div>
-              <p className="mt-2 text-xs text-ink-muted">Requested by {ride.student.name}</p>
-              {ride.notes && <p className="mt-2 text-sm text-ink-soft">{ride.notes}</p>}
-              <div className="mt-3">
-                <RideActionButton
-                  rideId={ride.id}
-                  action={claimRideRequestAction}
-                  label="Claim this ride"
-                  pendingLabel="Claiming…"
-                  variant="primary"
-                />
-              </div>
-            </Card>
-          ))}
+                <p className="mt-2 flex items-center gap-2 text-xs text-ink-muted">
+                  <Avatar name={ride.student.name} size="xs" />
+                  {isFirstVisit ? `${ride.student.name} is visiting for the first time` : `Requested by ${ride.student.name}`}
+                </p>
+                {ride.notes && <p className="mt-2 text-sm text-ink-soft">{ride.notes}</p>}
+                <div className="mt-3">
+                  <RideActionButton
+                    rideId={ride.id}
+                    action={claimRideRequestAction}
+                    label={isFirstVisit ? "Welcome them — claim this ride" : "Claim this ride"}
+                    pendingLabel="Claiming…"
+                    variant="primary"
+                  />
+                </div>
+              </Card>
+            );
+          })}
         </div>
       )}
 

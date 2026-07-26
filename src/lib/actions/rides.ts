@@ -6,7 +6,7 @@ import { requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { rideClaimedForStudentEmail, rideClaimedForVolunteerEmail } from "@/lib/emailTemplates";
 import { nextRideStatus, InvalidRideTransitionError } from "@/lib/rideState";
-import { ROLES } from "@/lib/constants";
+import { ROLES, RIDE_REQUEST_TYPE } from "@/lib/constants";
 import { rideRequestSchema, firstIssueMessage } from "@/lib/validation";
 
 export type ActionResult = { error: string } | { ok: true } | void;
@@ -49,6 +49,62 @@ export async function createRideRequestAction(
 
   revalidatePath("/student/rides");
   revalidatePath("/volunteer/rides");
+  return { ok: true };
+}
+
+/**
+ * A ride to visit a church someone found on /discover, for the first
+ * time — distinct from createRideRequestAction, which requires the
+ * requester to already be a STUDENT member of the destination church.
+ * Here `churchId` is the destination but the requester may have no
+ * relationship to it at all (they haven't visited yet); any logged-in
+ * user can ask. Routes to that church's volunteers the same way a
+ * GENERAL ride does (listOpenRideRequestsForChurch filters by churchId
+ * regardless of type), so no separate rides-board query is needed.
+ */
+export async function createFirstVisitRideRequestAction(
+  churchId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const user = await requireUser();
+
+  const church = await prisma.church.findUnique({ where: { id: churchId } });
+  if (!church) {
+    return { error: "That church no longer exists." };
+  }
+
+  const parsed = rideRequestSchema.safeParse({
+    destination: formData.get("destination"),
+    date: formData.get("date"),
+    time: formData.get("time"),
+    notes: formData.get("notes"),
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+  const data = parsed.data;
+
+  const date = new Date(data.date);
+  if (Number.isNaN(date.getTime())) {
+    return { error: "Choose a valid date." };
+  }
+
+  await prisma.rideRequest.create({
+    data: {
+      destination: data.destination,
+      date,
+      time: data.time,
+      notes: data.notes || null,
+      churchId,
+      studentId: user.id,
+      type: RIDE_REQUEST_TYPE.FIRST_VISIT,
+    },
+  });
+
+  revalidatePath("/student/rides");
+  revalidatePath("/volunteer/rides");
+  revalidatePath(`/churches/${churchId}`);
   return { ok: true };
 }
 

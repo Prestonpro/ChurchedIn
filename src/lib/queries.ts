@@ -7,6 +7,7 @@ import {
   ROLES,
   PARTNERSHIP_STATUS,
   RIDE_STATUS,
+  RIDE_REQUEST_TYPE,
   VERIFICATION_STATUS,
 } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
@@ -211,12 +212,26 @@ export async function listPartnershipsForChurch(churchId: string) {
 /** OPEN ride requests at a church, for the volunteer Rides Board — no
  * student contact info here since it's not relevant until claimed (and
  * there's no volunteer assigned yet to reveal it to). */
-export function listOpenRideRequestsForChurch(churchId: string) {
-  return prisma.rideRequest.findMany({
+/** OPEN rides for a church's board — every row here is pre-claim by
+ * definition (status: OPEN), so FIRST_VISIT rides get the brief's "first
+ * name + profile photo only until claimed" treatment applied unconditionally
+ * here at the query layer, same defense-in-depth spirit as the contact-info
+ * rules elsewhere. GENERAL rides keep showing the full name — that
+ * restriction is specifically about a stranger visiting a church for the
+ * first time, not a student already known to their own church's volunteers. */
+export async function listOpenRideRequestsForChurch(churchId: string) {
+  const rides = await prisma.rideRequest.findMany({
     where: { churchId, status: RIDE_STATUS.OPEN },
-    include: { student: { select: { id: true, name: true } } },
+    include: { student: { select: { id: true, name: true, photoUrl: true } } },
     orderBy: { date: "asc" },
   });
+  return rides.map((r) => ({
+    ...r,
+    student:
+      r.type === RIDE_REQUEST_TYPE.FIRST_VISIT
+        ? { ...r.student, name: r.student.name.split(" ")[0] }
+        : r.student,
+  }));
 }
 
 // Both listRideRequests* functions strip the other party's email from
