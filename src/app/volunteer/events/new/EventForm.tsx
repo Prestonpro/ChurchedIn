@@ -7,7 +7,7 @@ import { createEventAction } from "@/lib/actions/events";
 import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { LocationPicker } from "./LocationPicker";
+import { LocationPicker } from "@/components/LocationPicker";
 import type { EventCategory } from "@/lib/constants";
 
 /** Presets shown as tappable cards before the full form — a blank category
@@ -158,6 +158,8 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
       <CheckboxField label="This is a virtual event" name="isVirtual" defaultChecked={prefill?.isVirtual} />
 
       <LocationPicker
+        title="Add to the event map (optional)"
+        helpText="Shows this gathering as a pin on the event map so people can find it visually."
         defaultAddress={prefill?.address ?? undefined}
         defaultLat={prefill?.locationLat}
         defaultLng={prefill?.locationLng}

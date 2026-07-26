@@ -89,6 +89,21 @@ export const RIDE_STATUS = {
 
 export type RideStatus = (typeof RIDE_STATUS)[keyof typeof RIDE_STATUS];
 
+export const RIDE_REQUEST_TYPE = {
+  GENERAL: "GENERAL",
+  FIRST_VISIT: "FIRST_VISIT",
+} as const;
+
+export type RideRequestType = (typeof RIDE_REQUEST_TYPE)[keyof typeof RIDE_REQUEST_TYPE];
+
+export const VERIFICATION_STATUS = {
+  UNVERIFIED: "UNVERIFIED",
+  COMMUNITY_VERIFIED: "COMMUNITY_VERIFIED",
+  PASTOR_VERIFIED: "PASTOR_VERIFIED",
+} as const;
+
+export type VerificationStatus = (typeof VERIFICATION_STATUS)[keyof typeof VERIFICATION_STATUS];
+
 export function dashboardPathForRole(role: Role): string {
   switch (role) {
     case ROLES.CHURCH_ADMIN:
@@ -112,3 +127,8 @@ export const MAX_CONNECTION_REQUESTS_PER_DAY = 5;
 // member's inbox. Enforced in src/lib/actions/events.ts by counting recent
 // Event.createdAt values for the church, not an external rate limiter.
 export const MAX_EVENT_NOTIFICATIONS_PER_DAY = 3;
+
+// Number of community vouches ("I can confirm this is a real church")
+// needed to upgrade a church from UNVERIFIED to COMMUNITY_VERIFIED. See
+// requestVouchAction in src/lib/actions/churches.ts.
+export const VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED = 3;

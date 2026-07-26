@@ -1,7 +1,14 @@
 import "server-only";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
-import { RSVP_STATUS, EVENT_STATUS, ROLES, PARTNERSHIP_STATUS, RIDE_STATUS } from "@/lib/constants";
+import {
+  RSVP_STATUS,
+  EVENT_STATUS,
+  ROLES,
+  PARTNERSHIP_STATUS,
+  RIDE_STATUS,
+  VERIFICATION_STATUS,
+} from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
 import { rideContactVisible } from "@/lib/rideState";
 
@@ -260,6 +267,42 @@ export function listMappedEventsForChurch(churchId: string) {
       rsvps: { where: { status: { not: RSVP_STATUS.CANCELLED } } },
     },
   });
+}
+
+/** Full profile details for a church, plus member/vouch counts computed on
+ * demand (not cached — same "just count it" convention used everywhere
+ * else in this app, e.g. the admin dashboard's memberCount). */
+export async function getChurchProfile(churchId: string) {
+  const [church, memberCount, vouchCount] = await Promise.all([
+    prisma.church.findUnique({ where: { id: churchId } }),
+    prisma.membership.count({ where: { churchId } }),
+    prisma.churchVouch.count({ where: { churchId } }),
+  ]);
+  if (!church) return null;
+  return { ...church, memberCount, vouchCount };
+}
+
+export async function hasUserVouchedForChurch(userId: string, churchId: string): Promise<boolean> {
+  const vouch = await prisma.churchVouch.findUnique({
+    where: { churchId_userId: { churchId, userId } },
+  });
+  return !!vouch;
+}
+
+/** True if the user belongs to a verified church other than `churchId` —
+ * the "verified user" bar for being allowed to vouch for a church (brief:
+ * "any verified user... can vouch for another church"). */
+export async function isVerifiedElsewhere(userId: string, churchId: string): Promise<boolean> {
+  const membership = await prisma.membership.findFirst({
+    where: {
+      userId,
+      churchId: { not: churchId },
+      church: {
+        verificationStatus: { in: [VERIFICATION_STATUS.COMMUNITY_VERIFIED, VERIFICATION_STATUS.PASTOR_VERIFIED] },
+      },
+    },
+  });
+  return !!membership;
 }
 
 export function listReportsForChurch(churchId: string) {

@@ -22,6 +22,21 @@ export const createChurchSchema = z.object({
   churchCity: z.string().trim().max(150).optional().or(z.literal("")),
 });
 
+/** For /churches/new — an already-logged-in user adding a new church
+ * profile, distinct from createChurchSchema (which also creates the
+ * account itself, at signup). */
+export const churchProfileSchema = z.object({
+  name: z.string().trim().min(1, "Enter the church's name").max(150),
+  denomination: z.string().trim().max(150).optional().or(z.literal("")),
+  address: z.string().trim().max(300).optional().or(z.literal("")),
+  serviceTimes: z.string().trim().max(300).optional().or(z.literal("")),
+  languages: z.string().trim().max(300).optional().or(z.literal("")),
+  bio: z.string().trim().max(1000).optional().or(z.literal("")),
+  website: z.string().trim().max(300).optional().or(z.literal("")),
+  locationLat: z.number().min(-90).max(90).optional().nullable(),
+  locationLng: z.number().min(-180).max(180).optional().nullable(),
+});
+
 export const joinChurchSchema = z.object({
   name: nameSchema,
   email: emailSchema,
