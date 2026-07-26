@@ -269,6 +269,30 @@ export function listMappedEventsForChurch(churchId: string) {
   });
 }
 
+/**
+ * All churches on the platform, for /discover — deliberately NOT scoped to
+ * the viewer's own church(es), unlike almost every other query in this
+ * file. This is intentional: a church's own public-facing profile info
+ * (name, bio, service times, location) is meant to be found by anyone
+ * looking, the same way a business listing would be. It's a different
+ * category of data from the per-church-scoped operational data (events,
+ * RSVPs, the friend directory) that the rest of the app keeps strictly
+ * separated by tenant — nothing sensitive is exposed here.
+ */
+export async function listDiscoverableChurches() {
+  const churches = await prisma.church.findMany({
+    orderBy: { createdAt: "desc" },
+    include: {
+      _count: { select: { memberships: true, events: { where: { status: EVENT_STATUS.PUBLISHED, startsAt: { gte: new Date() } } } } },
+    },
+  });
+  return churches.map((c) => ({
+    ...c,
+    memberCount: c._count.memberships,
+    upcomingEventCount: c._count.events,
+  }));
+}
+
 /** Full profile details for a church, plus member/vouch counts computed on
  * demand (not cached — same "just count it" convention used everywhere
  * else in this app, e.g. the admin dashboard's memberCount). */
@@ -280,6 +304,13 @@ export async function getChurchProfile(churchId: string) {
   ]);
   if (!church) return null;
   return { ...church, memberCount, vouchCount };
+}
+
+/** All church ids this user has already vouched for — fetched once for
+ * /discover's whole list instead of one query per card. */
+export async function listVouchedChurchIds(userId: string): Promise<Set<string>> {
+  const vouches = await prisma.churchVouch.findMany({ where: { userId }, select: { churchId: true } });
+  return new Set(vouches.map((v) => v.churchId));
 }
 
 export async function hasUserVouchedForChurch(userId: string, churchId: string): Promise<boolean> {

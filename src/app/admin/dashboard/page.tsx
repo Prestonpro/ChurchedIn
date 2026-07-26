@@ -65,9 +65,17 @@ export default async function AdminDashboardPage() {
             {memberCount} {memberCount === 1 ? "member" : "members"} — church leader overview
           </p>
         </div>
-        <LinkButton href="/volunteer/events/new">
-          <Plus weight="bold" className="size-4" /> Plan a gathering
-        </LinkButton>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/discover"
+            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:text-ink"
+          >
+            Discover churches
+          </Link>
+          <LinkButton href="/volunteer/events/new">
+            <Plus weight="bold" className="size-4" /> Plan a gathering
+          </LinkButton>
+        </div>
       </div>
 
       {church && church.verificationStatus !== VERIFICATION_STATUS.PASTOR_VERIFIED && (

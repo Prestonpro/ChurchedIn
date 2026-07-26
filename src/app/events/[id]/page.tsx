@@ -11,7 +11,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { RsvpControls } from "./RsvpControls";
 import { CancelEventButton } from "./CancelEventButton";
 import { CohostManager } from "./CohostManager";
-import { EventMiniMapLoader } from "./EventMiniMapLoader";
+import { MiniMapLoader } from "@/components/MiniMapLoader";
 import {
   EVENT_STATUS,
   ROLES,
@@ -206,7 +206,7 @@ export default async function EventDetailPage({
               </h2>
               {event.locationLat !== null && event.locationLng !== null && (
                 <div className="mb-3 overflow-hidden rounded-xl">
-                  <EventMiniMapLoader lat={event.locationLat} lng={event.locationLng} />
+                  <MiniMapLoader lat={event.locationLat} lng={event.locationLng} />
                 </div>
               )}
               <p className="text-sm text-ink-soft">{event.address || event.location}</p>

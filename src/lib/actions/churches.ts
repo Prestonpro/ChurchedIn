@@ -7,8 +7,9 @@ import { requireUser } from "@/lib/auth";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
 import { generateJoinCode } from "@/lib/codes";
 import { isVerifiedElsewhere, hasUserVouchedForChurch } from "@/lib/queries";
-import { ROLES, VERIFICATION_STATUS, VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED } from "@/lib/constants";
+import { ROLES, VERIFICATION_STATUS, VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED, dashboardPathForRole, type Role } from "@/lib/constants";
 import { churchProfileSchema, firstIssueMessage } from "@/lib/validation";
+import { z } from "zod";
 
 export type ActionResult = { error: string } | { ok: true } | void;
 
@@ -70,6 +71,43 @@ export async function createChurchProfileAction(
   await setSessionCookie(token);
 
   redirect("/admin/welcome");
+}
+
+const joinRoleSchema = z.enum(["VOLUNTEER", "STUDENT"]);
+
+/**
+ * Joins a church the user found on /discover — for an ALREADY-LOGGED-IN
+ * user, distinct from the (public)/join/[code] flow (which creates a
+ * brand-new account). Multi-membership is already supported everywhere
+ * else in this app (ChurchSwitcher); this just adds one more.
+ */
+export async function joinDiscoveredChurchAction(
+  churchId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const user = await requireUser();
+
+  const parsedRole = joinRoleSchema.safeParse(formData.get("role"));
+  if (!parsedRole.success) {
+    return { error: "Choose whether you're joining as a volunteer or a student." };
+  }
+  const role = parsedRole.data;
+
+  const church = await prisma.church.findUnique({ where: { id: churchId } });
+  if (!church) {
+    return { error: "That church no longer exists." };
+  }
+  if (user.memberships.some((m) => m.churchId === churchId)) {
+    return { error: "You're already a member of this church." };
+  }
+
+  await prisma.membership.create({ data: { userId: user.id, churchId, role } });
+
+  const token = await createSessionToken({ userId: user.id, activeChurchId: churchId });
+  await setSessionCookie(token);
+
+  redirect(dashboardPathForRole(role as Role));
 }
 
 /**

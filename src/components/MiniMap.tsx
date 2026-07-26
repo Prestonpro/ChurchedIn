@@ -9,12 +9,13 @@ const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 /**
- * A small, lightly-interactive map preview for the event detail page — a
- * single pin, no popup, no fly-to. Panning/zoom buttons still work (so a
- * viewer can get their bearings without leaving the page), but scroll-wheel
- * zoom is off so the map doesn't hijack the page's own scroll.
+ * A small, lightly-interactive map preview — a single pin, no popup, no
+ * fly-to. Shared between the event detail page and the church profile
+ * page. Panning/zoom buttons still work (so a viewer can get their
+ * bearings without leaving the page), but scroll-wheel zoom is off so the
+ * map doesn't hijack the page's own scroll.
  */
-export function EventMiniMap({ lat, lng }: { lat: number; lng: number }) {
+export function MiniMap({ lat, lng }: { lat: number; lng: number }) {
   return (
     <MapContainer
       center={[lat, lng]}
