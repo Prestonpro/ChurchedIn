@@ -351,6 +351,16 @@ export async function isVerifiedElsewhere(userId: string, churchId: string): Pro
   return !!membership;
 }
 
+/** All members of a church with role/isPastor, for the admin settings
+ * page's member list — admins first, then by join date. */
+export function listMembersForChurch(churchId: string) {
+  return prisma.membership.findMany({
+    where: { churchId },
+    include: { user: { select: { id: true, name: true, email: true } } },
+    orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+  });
+}
+
 export function listReportsForChurch(churchId: string) {
   return prisma.report.findMany({
     where: { churchId },

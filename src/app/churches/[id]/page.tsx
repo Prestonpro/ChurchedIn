@@ -41,6 +41,7 @@ export default async function ChurchProfilePage({
 
   const isMember = user.memberships.some((m) => m.churchId === id);
   const membership = user.memberships.find((m) => m.churchId === id);
+  const canManageSettings = membership?.role === "CHURCH_ADMIN" || !!membership?.isPastor;
   const canVerifyAsPastor =
     isMember &&
     church.verificationStatus !== VERIFICATION_STATUS.PASTOR_VERIFIED &&
@@ -75,7 +76,17 @@ export default async function ChurchProfilePage({
                   </p>
                 </div>
               </div>
-              <VerificationBadge status={church.verificationStatus} />
+              <div className="flex items-center gap-3">
+                {canManageSettings && (
+                  <Link
+                    href={`/churches/${id}/settings`}
+                    className="text-sm font-semibold text-brand-600 transition-brand hover:underline"
+                  >
+                    Settings
+                  </Link>
+                )}
+                <VerificationBadge status={church.verificationStatus} />
+              </div>
             </div>
 
             {church.bio && <p className="mt-4 text-sm leading-relaxed text-ink-soft">{church.bio}</p>}

@@ -182,3 +182,150 @@ export async function verifyAsPastorAction(churchId: string): Promise<ActionResu
   revalidatePath("/discover");
   revalidatePath("/admin/dashboard");
 }
+
+async function requireChurchAdmin(churchId: string) {
+  const user = await requireUser();
+  const membership = user.memberships.find((m) => m.churchId === churchId);
+  if (!membership || membership.role !== ROLES.CHURCH_ADMIN) {
+    throw new Error("Only a church leader can do this.");
+  }
+  return { user, membership };
+}
+
+/** Church profile editing — /churches/[id]/settings, admin-only. Same
+ * fields as creation, just an update instead of an insert. */
+export async function updateChurchProfileAction(
+  churchId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  await requireChurchAdmin(churchId);
+
+  const parsed = churchProfileSchema.safeParse({
+    name: formData.get("name"),
+    denomination: formData.get("denomination"),
+    address: formData.get("address"),
+    serviceTimes: formData.get("serviceTimes"),
+    languages: formData.get("languages"),
+    bio: formData.get("bio"),
+    website: formData.get("website"),
+    locationLat: formData.get("locationLat") ? Number(formData.get("locationLat")) : null,
+    locationLng: formData.get("locationLng") ? Number(formData.get("locationLng")) : null,
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+  const data = parsed.data;
+
+  await prisma.church.update({
+    where: { id: churchId },
+    data: {
+      name: data.name,
+      denomination: data.denomination || null,
+      address: data.address || null,
+      serviceTimes: data.serviceTimes || null,
+      languages: data.languages || null,
+      bio: data.bio || null,
+      website: data.website || null,
+      locationLat: data.locationLat,
+      locationLng: data.locationLng,
+    },
+  });
+
+  revalidatePath(`/churches/${churchId}`);
+  revalidatePath(`/churches/${churchId}/settings`);
+  revalidatePath("/discover");
+  revalidatePath("/admin/dashboard");
+  return { ok: true };
+}
+
+/** Regenerates a church's join code — admin-only, e.g. if the old one
+ * leaked or the church just wants a fresh one. */
+export async function regenerateJoinCodeAction(churchId: string): Promise<ActionResult> {
+  await requireChurchAdmin(churchId);
+
+  await prisma.church.update({
+    where: { id: churchId },
+    data: { joinCode: generateJoinCode() },
+  });
+
+  revalidatePath(`/churches/${churchId}/settings`);
+  revalidatePath("/admin/dashboard");
+}
+
+/** Promotes a member to CHURCH_ADMIN — admin-only. */
+export async function promoteToAdminAction(churchId: string, memberUserId: string): Promise<ActionResult> {
+  await requireChurchAdmin(churchId);
+
+  const membership = await prisma.membership.findUnique({
+    where: { userId_churchId: { userId: memberUserId, churchId } },
+  });
+  if (!membership) {
+    return { error: "That person isn't a member of this church." };
+  }
+
+  await prisma.membership.update({
+    where: { userId_churchId: { userId: memberUserId, churchId } },
+    data: { role: ROLES.CHURCH_ADMIN },
+  });
+
+  revalidatePath(`/churches/${churchId}/settings`);
+}
+
+/** Demotes a CHURCH_ADMIN back to VOLUNTEER — admin-only. Refuses to
+ * demote the church's last remaining admin, so a church can never end up
+ * with no one able to manage it. */
+export async function demoteFromAdminAction(churchId: string, memberUserId: string): Promise<ActionResult> {
+  await requireChurchAdmin(churchId);
+
+  const adminCount = await prisma.membership.count({ where: { churchId, role: ROLES.CHURCH_ADMIN } });
+  const membership = await prisma.membership.findUnique({
+    where: { userId_churchId: { userId: memberUserId, churchId } },
+  });
+  if (!membership) {
+    return { error: "That person isn't a member of this church." };
+  }
+  if (membership.role === ROLES.CHURCH_ADMIN && adminCount <= 1) {
+    return { error: "A church needs at least one leader — promote someone else first." };
+  }
+
+  await prisma.membership.update({
+    where: { userId_churchId: { userId: memberUserId, churchId } },
+    data: { role: ROLES.VOLUNTEER },
+  });
+
+  revalidatePath(`/churches/${churchId}/settings`);
+}
+
+/**
+ * Flags (or unflags) a member as a recognized pastor — settable by a
+ * CHURCH_ADMIN or an existing isPastor member ("only PASTOR role can
+ * assign PASTOR to others," per the brief — CHURCH_ADMIN included for the
+ * same bootstrap reason as verifyAsPastorAction above).
+ */
+export async function setIsPastorAction(
+  churchId: string,
+  memberUserId: string,
+  isPastor: boolean,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  const callerMembership = user.memberships.find((m) => m.churchId === churchId);
+  if (!callerMembership || !(callerMembership.role === ROLES.CHURCH_ADMIN || callerMembership.isPastor)) {
+    return { error: "Only a church leader or recognized pastor can do this." };
+  }
+
+  const membership = await prisma.membership.findUnique({
+    where: { userId_churchId: { userId: memberUserId, churchId } },
+  });
+  if (!membership) {
+    return { error: "That person isn't a member of this church." };
+  }
+
+  await prisma.membership.update({
+    where: { userId_churchId: { userId: memberUserId, churchId } },
+    data: { isPastor },
+  });
+
+  revalidatePath(`/churches/${churchId}/settings`);
+  revalidatePath(`/churches/${churchId}`);
+}

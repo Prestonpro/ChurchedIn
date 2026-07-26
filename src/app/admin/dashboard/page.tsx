@@ -72,6 +72,12 @@ export default async function AdminDashboardPage() {
           >
             Discover churches
           </Link>
+          <Link
+            href={`/churches/${churchId}/settings`}
+            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:text-ink"
+          >
+            Church settings
+          </Link>
           <LinkButton href="/volunteer/events/new">
             <Plus weight="bold" className="size-4" /> Plan a gathering
           </LinkButton>
