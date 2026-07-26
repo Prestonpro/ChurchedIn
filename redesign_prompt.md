@@ -689,3 +689,198 @@ migration-history workflow already established); `git push origin main` →
 - tsc/lint/unit tests (47 total, 7 new for `eventMapStatus`)/build all
   green after every commit; full e2e suite (4/4) re-confirmed passing
   after each of the four phases, not just once at the end.
+
+---
+
+## Landing page polish (commit `0b742ea`, small ad hoc follow-up, not a
+brief): direct user feedback on two screenshots — "im not sure why theres a
+quotation mark, and make the panels more interactive like maybe make them
+open up to more info or smth idk." Resolved via `/plan` + two
+AskUserQuestion-confirmed choices before touching code.
+
+- The `Quotes` icon on the auth pages implied an unattributed testimonial
+  quote that didn't actually exist — swapped for a `Sparkle` icon (no
+  quote framing, same visual weight).
+- The landing page's 3 below-fold feature cards became click-to-expand
+  accordion cards (one open at a time) instead of static panels, each
+  revealing a short paragraph of additional detail on expand. Kept CSS-only
+  (no animation library), consistent with this project's existing
+  no-JS-animation-library constraint noted elsewhere in this doc.
+
+---
+
+## "Church Discovery, Trust & First-Visit Rides" phase (a new brief,
+separate from the above): decentralizing church setup (any group of
+members can create a church without a pastor), a public `/discover` page
+so new users can find nearby churches, a lightweight community-vouching +
+pastor-self-verification trust system (no real identity verification —
+trust-based, by design), and first-visit ride requests that route to the
+*destination* church's volunteers rather than the visitor's own (since a
+first-time visitor may have no church membership at all). Five commits,
+each independently verified (tsc/lint/build/40 unit tests/full 4-spec e2e
+suite, plus a dedicated Playwright smoke script per phase) and pushed,
+matching the brief's own git-workflow instructions. Same two standing
+corrections applied as every prior phase: `prisma migrate dev`/`deploy`
+(never `db push`, Postgres via Neon) and `git push origin master` (not
+`main`).
+
+Two architectural decisions were escalated to the user via AskUserQuestion
+*before* writing any schema, rather than assumed — both recommended options
+were chosen:
+- **Roles**: extend the existing `Membership` model with an `isPastor`
+  boolean flag, instead of building the brief's separately-specified
+  `ChurchMembership` model with a `MEMBER/ADMIN/PASTOR` role enum. Avoids
+  two competing membership systems in the same app.
+- **Invite code**: reuse the existing `Church.joinCode` field (already
+  built, already has a UI) instead of adding a second, functionally
+  identical `inviteCode` field.
+
+- **Schema (commit `bfb4755`)**: migration
+  `20260726165853_add_church_discovery_trust`. `VerificationStatus` enum
+  (`UNVERIFIED`/`COMMUNITY_VERIFIED`/`PASTOR_VERIFIED`) on `Church`, plus
+  `denomination`/`languages`/`serviceTimes`/`bio`/`locationLat`/
+  `locationLng`/`address`/`website` — `memberCount` deliberately *not*
+  cached as a column, computed on demand the same way every other count in
+  this app already is (`_count`/`prisma....count()`). New `ChurchVouch`
+  model (`@@unique([churchId, userId])` — one vouch per user per church).
+  `Membership.isPastor` boolean, `@default(false)`, with an in-schema
+  comment explaining why this is a flag on the existing model rather than a
+  new entity (see the AskUserQuestion decision above). `RideRequest.type`
+  (`GENERAL`/`FIRST_VISIT`) — `churchId` stays the *destination* regardless
+  of type, so no new relation was needed. Applied to production
+  (`prisma migrate deploy` against the direct/non-pooled Neon URL)
+  proactively, before any code depending on it was pushed — same discipline
+  as every prior schema-adding phase this session, after an earlier
+  incident where skipping this caused a production outage.
+
+- **Church creation & verification (commit `cc9126d`)**: `/churches/new`
+  (any logged-in user, not gated behind an existing pastor/admin — the
+  brief's whole point is decentralizing setup) creates an `UNVERIFIED`
+  church and makes the creator its `CHURCH_ADMIN`, reusing
+  `ChurchProfileForm.tsx`'s field set. `VerificationBadge.tsx`: nothing
+  fancy for `UNVERIFIED` (muted "Unverified" text, not a badge shape, per
+  the brief's "don't shame new churches" framing), a single checkmark
+  "Community verified" badge, a `SealCheck`-shield "Pastor verified" badge
+  — both with native `title` tooltips (no tooltip component exists
+  elsewhere in this app, so this didn't introduce one just for two badges).
+  `requestVouchAction`: any user who belongs to at least one already
+  *-verified* church (`isVerifiedElsewhere()`) can vouch for a different,
+  unverified one; at `VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED` (3) vouches
+  the church flips to `COMMUNITY_VERIFIED` — never downgrades an already
+  `PASTOR_VERIFIED` church. `verifyAsPastorAction`: trust-based, no actual
+  verification (matches the brief exactly) — flips straight to
+  `PASTOR_VERIFIED`, outranking community vouching. Callable by anyone
+  with `isPastor` **or** `CHURCH_ADMIN` — the `CHURCH_ADMIN` allowance
+  exists because at this point in the build order nothing could set
+  `isPastor` on a fresh church yet (the settings page granting that didn't
+  exist until the final phase); without it, a brand-new church's own
+  founder would've had no path to this feature at all. Verified with a
+  multi-account Playwright smoke script: a second, already-verified
+  church's member vouches 3 times → target church flips to
+  `COMMUNITY_VERIFIED`; a member flags their own fresh church as pastor-led
+  → flips straight to `PASTOR_VERIFIED`.
+
+- **Discovery page (commit `166b4ca`)**: `/discover` — the first
+  deliberately cross-tenant-visible query in this entire app
+  (`listDiscoverableChurches()`), a conscious departure from every other
+  query's strict same-church scoping: a church's own public profile
+  (name/bio/service-times/location) is meant to be discoverable like a
+  business listing, distinct from the operational data (events/RSVPs/
+  friend directory) that stays strictly scoped everywhere else. Split
+  map/list layout (`AuthShell`'s `fullBleed` prop, reused from the event
+  map phase) — `DiscoverClient.tsx` requests browser geolocation on load
+  (falls back gracefully, no coordinates required to use the page),
+  computes haversine distance client-side (no geocoding API), and filters
+  by denomination/language/distance/verification/"has upcoming events."
+  `DiscoverMap.tsx`: color-coded Leaflet pins by verification status (blue
+  = pastor-verified, green = community-verified, gray = unverified),
+  popups reusing the same `ChurchCard` component as the sidebar list (one
+  card component, two contexts, via a `compact` prop). `LocationPicker`/
+  `PinDropMap` and `EventMiniMap`/`EventMiniMapLoader` were moved (`git mv`,
+  history preserved) out of their original event-specific folders into
+  `src/components/`, generalized (`title`/`helpText` props on
+  `LocationPicker`, renamed `EventMiniMap` → `MiniMap`) and renamed exports
+  so the event feature and this new church feature share one Leaflet setup
+  instead of three near-duplicate implementations. An ESLint
+  `react-hooks/set-state-in-effect` violation in the geolocation effect
+  (a synchronous `setState` for the "no geolocation API" branch) was fixed
+  by deferring it through `setTimeout(..., 0)` — the async
+  success/error-callback `setState` calls were already fine as-is. Verified
+  with a Playwright smoke script plus a visual screenshot pass (map tiles,
+  pin colors, popup contents, filter behavior all confirmed rendering
+  correctly).
+
+- **First-visit rides (commit `29097e0`)**: "Need a ride to visit?" on
+  both the discover card and the church profile page opens a pre-filled
+  ride form (destination = church address/name) that creates a
+  `RideRequest` with `type: FIRST_VISIT` and `churchId` set to the
+  *destination* church — not the visitor's own (who may have none at all).
+  Zero query changes were needed beyond that: `listOpenRideRequestsForChurch`
+  already filtered purely by `churchId`, so first-visit rides automatically
+  landed on the correct church's volunteer board. Safety: the same query
+  now truncates `student.name` to first-name-only specifically for
+  `FIRST_VISIT` rows (every row it returns is pre-claim/`OPEN` by
+  definition, so this can't accidentally leak a claimed ride's full name)
+  — same defense-in-depth pattern as `contactInfoVisible()`/
+  `rideContactVisible()` elsewhere: push the safety rule into the query
+  layer, don't trust every page to remember it. `/volunteer/rides` gives
+  first-visit cards a distinct treatment (accent left border, "🆕 First
+  visit" badge instead of "Open," "Welcome them — claim this ride" instead
+  of the generic claim label) so volunteers can tell these apart from
+  routine ride requests at a glance. After claim, the exact same
+  contact-reveal-after-claim mechanism as every other ride is reused
+  (this app has no phone field or messaging system, so "limited contact
+  info… phone or in-app message" from the brief was deliberately
+  implemented as the existing email reveal, not a new channel). Verified
+  with a 3-context Playwright smoke script (destination church + its
+  volunteer, and an unrelated visitor with their *own separate* church):
+  ride auto-opens via `?ride=1`, destination pre-fills from the church's
+  address, the visitor's own church has no bearing on where the ride
+  lands, the board shows the First Visit tag and first-name-only pre-claim,
+  and full contact info appears only after the volunteer claims it.
+
+- **Admin settings & role management (commit `1bcbba6`)**:
+  `/churches/[id]/settings`, gated to members who are `CHURCH_ADMIN` *or*
+  `isPastor` (`notFound()` for anyone else — a plain volunteer can't even
+  discover the route exists). Three pieces: `EditChurchProfileForm.tsx`
+  (same field set as creation, pre-filled, `updateChurchProfileAction`),
+  `InviteCodeCard.tsx` (copy + regenerate, confirm-gated since regenerating
+  invalidates the old code immediately), and `MembersList.tsx` (promote to
+  leader / remove leadership / flag-or-unflag as pastor, each a
+  `useTransition` + inline error pattern matching `RideActionButton`'s
+  established style — a lesson this session learned early from a code
+  review finding that an earlier component, `CohostManager.tsx`, originally
+  swallowed action errors). `demoteFromAdminAction` refuses to demote a
+  church's last remaining admin, so a church can never end up leaderless.
+  `setIsPastorAction`'s permission check (admin *or* existing pastor can
+  flag others as pastor, matching the brief's "only PASTOR role can assign
+  PASTOR to others," with `CHURCH_ADMIN` included for the same bootstrap
+  reason as `verifyAsPastorAction` above) went through one self-caught
+  revision: the first draft used a convoluted
+  `requireChurchAdmin(churchId).catch(async () => {...})` fallback to allow
+  either caller type, flagged as overly clever during my own review before
+  any test ran, and replaced with a plain membership lookup + boolean
+  check. Settings entry points were added in two places: a "Church
+  settings" link on the admin dashboard header (every `CHURCH_ADMIN` always
+  has one, since the dashboard itself requires that role) and on the church
+  profile page for any member with `isPastor` or `CHURCH_ADMIN` (needed
+  since an `isPastor`-flagged plain volunteer has no `/admin/dashboard`
+  access at all — `requireRole(CHURCH_ADMIN)` blocks them — so without this
+  second link they'd have no way to reach a page they're allowed to use).
+  Verified with a Playwright smoke script covering: a plain volunteer
+  denied access (404); the admin editing the profile (confirmed persisted
+  via direct DB read) and regenerating the invite code (confirmed the code
+  actually changed); promoting a volunteer to leader and demoting them back
+  (allowed because a second admin existed at the time); flagging that same
+  volunteer as pastor and confirming they can *then* reach the settings
+  page and toggle the pastor flag on others, but do **not** see
+  promote/demote controls (proving `canManage` and `canAssignPastor` are
+  genuinely independent gates, not one flag doing double duty); and that
+  the sole remaining admin sees no self-demote control.
+
+- No schema drift going into this phase's commit — double-checked via
+  `prisma migrate status` before pushing, since Phase 5 was pure
+  application code with no new fields beyond what Phase 1's migration
+  already added.
+- tsc/lint/build/40 unit tests/full e2e suite (4/4) all green after every
+  one of the five commits, not just once at the end.

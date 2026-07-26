@@ -192,12 +192,34 @@ enum ReportStatus {
   DISMISSED
 }
 
+enum VerificationStatus {
+  UNVERIFIED
+  COMMUNITY_VERIFIED
+  PASTOR_VERIFIED
+}
+
 model Church {
-  id        String   @id @default(cuid())
+  id        String             @id @default(cuid())
   name      String
   city      String?
-  joinCode  String   @unique
-  createdAt DateTime @default(now())
+  joinCode  String             @unique
+  createdAt DateTime           @default(now())
+  // Added in the "Church Discovery, Trust & First-Visit Rides" phase: a
+  // trust-based (not identity-verified) signal so newly self-created
+  // churches aren't indistinguishable from long-established ones on
+  // /discover. Never downgraded once PASTOR_VERIFIED.
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  denomination  String?
+  languages     String?
+  serviceTimes  String?
+  bio           String?
+  website       String?
+  address       String?
+  locationLat   Float?
+  locationLng   Float?
+  // memberCount is deliberately NOT a column — computed on demand via
+  // `_count`/`.count()`, same "just count it" convention as everywhere
+  // else in this app.
 
   memberships Membership[]
   events      Event[]
@@ -205,6 +227,25 @@ model Church {
   adminInvites ChurchAdminInvite[]
   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
+  vouches               ChurchVouch[]
+}
+
+// Added in the "Church Discovery, Trust & First-Visit Rides" phase: one
+// vouch per (church, user) pair. At VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED
+// (3) vouches, the church flips UNVERIFIED -> COMMUNITY_VERIFIED. Only a
+// member of a DIFFERENT, already-verified church can vouch (see
+// isVerifiedElsewhere() in queries.ts) — you can't vouch for your own
+// church or stack vouches from unverified accounts.
+model ChurchVouch {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  churchId String
+  church   Church @relation(fields: [churchId], references: [id])
+  userId   String
+  user     User   @relation(fields: [userId], references: [id])
+
+  @@unique([churchId, userId])
 }
 
 // Added post-redesign: cross-church collaboration ("Collaborate with
@@ -251,6 +292,7 @@ model User {
   reportsReceived      Report[]           @relation("ReportsReceived")
   blocksInitiated      Block[]            @relation("BlocksInitiated")
   blocksReceived       Block[]            @relation("BlocksReceived")
+  churchVouches        ChurchVouch[]
 }
 
 model Membership {
@@ -261,6 +303,15 @@ model Membership {
   // the nav can show a small "something's new" dot on the Events link by
   // comparing against Event.createdAt — no separate read/unread table.
   lastSeenEventsAt DateTime?
+  // Added in the "Church Discovery, Trust & First-Visit Rides" phase: a
+  // boolean flag rather than a third role, or a competing ChurchMembership
+  // model with its own MEMBER/ADMIN/PASTOR enum (the brief's original
+  // spec) — an explicit AskUserQuestion decision, to avoid two membership
+  // systems in the same app. Settable via /churches/[id]/settings by a
+  // CHURCH_ADMIN or an existing isPastor member; lets a pastor-flagged
+  // member self-verify their church to PASTOR_VERIFIED
+  // (verifyAsPastorAction) without needing the CHURCH_ADMIN role too.
+  isPastor  Boolean  @default(false)
 
   userId   String
   user     User   @relation(fields: [userId], references: [id])
@@ -402,6 +453,11 @@ model MentorConnection {
   @@unique([studentId, mentorId])
 }
 
+enum RideRequestType {
+  GENERAL
+  FIRST_VISIT
+}
+
 // Added in the "Community Needs" follow-on phase: a student's ask for a ride
 // (airport pickup, store run, etc.) that any volunteer at the same church
 // can claim. Modeled after MentorConnection's shape (a studentId/
@@ -419,6 +475,16 @@ model RideRequest {
   notes       String?
   status      RideStatus @default(OPEN) // OPEN | CLAIMED | COMPLETED | CANCELLED
   createdAt   DateTime   @default(now())
+  // Added in the "Church Discovery, Trust & First-Visit Rides" phase:
+  // FIRST_VISIT rides come from someone requesting a ride to a church
+  // they've never joined (from /discover or a church's public profile).
+  // `churchId` is always the DESTINATION church regardless of type — a
+  // FIRST_VISIT requester may have no membership anywhere, so this can't
+  // be inferred from their own church. Pre-claim, the query layer
+  // truncates the requester's name to first-name-only for FIRST_VISIT
+  // rows specifically (every row returned pre-claim is OPEN by
+  // definition) — see listOpenRideRequestsForChurch in queries.ts.
+  type        RideRequestType @default(GENERAL)
 
   studentId String
   student   User   @relation("RideRequestsAsStudent", fields: [studentId], references: [id])
@@ -527,6 +593,10 @@ church-linkedin/
       events/             shared event feed (own + partner-church) + detail page (cohosts, atChurch,
                           run-again, mini-map) + calendar (monthly grid, /events/calendar) + map
                           (interactive full-screen map, /events/map)
+      discover/           church discovery (map + filterable list, browser geolocation)
+      churches/           new (create), [id] (public profile, join, vouch, pastor-verify,
+                         first-visit ride request), [id]/settings (profile edit, invite code,
+                         member/role management — CHURCH_ADMIN/isPastor only)
     components/
       ui/                hand-built primitives (Button, Card, Field, Badge, StatCard,
                          DateBadge, AttendeeAvatars, ...)
@@ -535,7 +605,8 @@ church-linkedin/
       RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
     lib/
       actions/           server actions (auth, events, rsvps, mentors, connections,
-                         reports, blocks, churchInvites, churchPartnerships, rides)
+                         reports, blocks, churchInvites, churchPartnerships, rides, churches —
+                         creation, vouching, pastor verification, settings/role management)
       rideState.ts             pure ride-request state machine + contact-visibility rule (unit tested)
       eventMapStatus.ts         pure pin-color/status logic for the event map (unit tested)
       leafletPin.ts             shared colored-circle divIcon helper (map page + both mini-maps)
@@ -675,6 +746,48 @@ tiles — no API key.
   surfaces — sidesteps Leaflet's classic "default marker icon 404s under
   a bundler" problem entirely (no image assets to resolve).
 
+**Update — "Church Discovery, Trust & First-Visit Rides" phase** (migration
+`20260726165853_add_church_discovery_trust`): decentralized church setup —
+any logged-in user can create a church (`/churches/new`, no pastor/admin
+gate) and become its `CHURCH_ADMIN`. Two decisions were escalated to the
+user via AskUserQuestion before writing schema, both resolved to the
+recommended option: extend the existing `Membership` model with an
+`isPastor` boolean rather than build a competing `ChurchMembership` model
+with its own role enum (see section 6); reuse the existing `Church.joinCode`
+as the shareable invite code rather than add a second, redundant field.
+- **Trust model**: `Church.verificationStatus`
+  (`UNVERIFIED`/`COMMUNITY_VERIFIED`/`PASTOR_VERIFIED`, section 6) —
+  entirely trust-based, no real identity verification. Community vouching
+  (`ChurchVouch`): a member of a *different*, already-verified church can
+  vouch for an unverified one; at `VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED`
+  (3) vouches the church flips to `COMMUNITY_VERIFIED`. Pastor
+  self-verification (`verifyAsPastorAction`): a member flagged `isPastor`
+  (or the church's `CHURCH_ADMIN`, for bootstrap reasons — nothing else
+  could set `isPastor` on a brand-new church until the settings page
+  below existed) flips the church straight to `PASTOR_VERIFIED`, which
+  outranks and is never downgraded by community vouching.
+- **Discovery** (`/discover`): the first deliberately cross-tenant-visible
+  query in this app (`listDiscoverableChurches()`) — a church's own public
+  profile (name/bio/service-times/location) is discoverable like a
+  business listing, unlike every other query which stays strictly
+  same-church scoped. Split map/list layout, browser geolocation,
+  client-side haversine distance (no geocoding API), filters by
+  denomination/language/distance/verification/upcoming-events.
+- **First-visit rides**: `RideRequest.type` (`GENERAL`/`FIRST_VISIT`,
+  section 6) — a "Need a ride to visit?" request from the discover page or
+  a church's public profile routes to that church's own volunteer board
+  (`churchId` is always the destination), with the requester's name
+  truncated to first-name-only pre-claim at the query layer, then the same
+  contact-reveal-after-claim mechanism as any other ride.
+- **Admin settings & roles** (`/churches/[id]/settings`, gated to
+  `CHURCH_ADMIN`/`isPastor` members): profile editing, invite-code
+  regenerate, and member promote/demote/pastor-flag management
+  (`demoteFromAdminAction` refuses to demote a church's last admin).
+- Verified with a dedicated Playwright smoke script per phase (5 commits,
+  each independently verified: tsc/lint/build/40 unit tests/full e2e suite)
+  plus a production smoke test after deploy. Full phase-by-phase detail in
+  `redesign_prompt.md`'s Progress Log.
+
 **Still not done** (call these out explicitly if picking this up later, don't
 assume they're covered): the cross-church connection restriction (implemented
 in `requestConnectionAction`) isn't yet covered by an automated test;
@@ -686,4 +799,12 @@ board, calendar view, and interactive map aren't yet covered by the
 Playwright e2e suite (verified via ad hoc smoke scripts instead — see
 redesign_prompt.md); the location picker has no geocoding, so an address
 typed in without dropping a pin never gets coordinates (and vice versa) —
-both are independently optional by design, not validated against each other.
+both are independently optional by design, not validated against each other;
+church verification (community vouching and pastor self-verification) is
+trust-based with no anti-collusion or identity check, by design for the
+current stage; `/discover`'s church listing query is unpaginated and its
+distance filter/sort has no non-geolocation fallback (e.g. city/zip search);
+neither the church discovery/trust/first-visit-rides flows nor the church
+settings/role-management page are yet covered by the Playwright e2e suite
+(verified via ad hoc smoke scripts instead, same as the rides/calendar/map
+features above).

@@ -63,6 +63,26 @@ this pass (see "What's not done yet" below before assuming something exists).
   `src/lib/actions/rides.ts`). Same contact-reveal-only-after-claim safety
   rule as mentor connections and cross-church partnerships — see
   `rideContactVisible()` in `src/lib/rideState.ts`.
+- **Church discovery, trust & first-visit rides**: any logged-in user can
+  create a church (`/churches/new`, no pastor/admin gate — decentralized
+  setup) and any user can browse nearby churches on `/discover` (map +
+  filterable list, browser geolocation, client-side haversine distance).
+  Churches carry a trust-based `verificationStatus`
+  (`UNVERIFIED`/`COMMUNITY_VERIFIED`/`PASTOR_VERIFIED`, `Church` model):
+  members of another already-verified church can "vouch" for one
+  (`ChurchVouch`, 3 vouches → `COMMUNITY_VERIFIED`), and a member flagged
+  `isPastor` (or the church's `CHURCH_ADMIN`, for bootstrap reasons) can
+  self-verify straight to `PASTOR_VERIFIED` — no real identity check,
+  trust-based by design. "Need a ride to visit?" on the discover card or a
+  church's profile creates a `RideRequest` with `type: FIRST_VISIT` routed
+  to the *destination* church's volunteer board (not the visitor's own,
+  who may have none) — pre-claim, the requester's name is truncated to
+  first-name-only at the query layer, then the same contact-reveal-after-
+  claim mechanism as any other ride applies. `/churches/[id]/settings`
+  (gated to `CHURCH_ADMIN`/`isPastor` members) covers profile editing,
+  invite-code regeneration, and member promote/demote/pastor-flag
+  management. See `src/lib/actions/churches.ts` and
+  `src/app/discover/`, `src/app/churches/`.
 - **Semester calendar**: `/events/calendar`, a CSS-grid monthly view (no
   calendar library) with category and "my RSVP'd events" filters, linked to
   and from the existing event feed (`/events`).
@@ -283,6 +303,10 @@ src/
     events/                shared event feed (own + partner-church) + detail page (RSVP, co-hosts,
                           run-again, mini-map) + calendar (monthly grid) + map (full-screen
                           interactive map, /events/map)
+    discover/               church discovery page (map + filterable list, browser geolocation)
+    churches/               new (create a church), [id] (public profile, join, vouch, pastor-
+                          verify, first-visit ride request), [id]/settings (profile edit,
+                          invite code, member/role management — admin/pastor-only)
     api/auth/               Google OAuth start + callback routes
     error.tsx, global-error.tsx, not-found.tsx    error/404 boundaries
     robots.ts, sitemap.ts                          SEO metadata routes
@@ -291,15 +315,22 @@ src/
                            CapacityBar, EmptyState, CopyButton, SubmitButton, PageLoading,
                            GoogleButton, StatCard, DateBadge, AttendeeAvatars, ...)
     nav/                    AuthShell (authenticated layout + top nav — async, computes the
-                            unseen-events nav badge; `fullBleed` prop for the map page),
+                            unseen-events nav badge; `fullBleed` prop for the map/discover pages),
                             MobileMenu (hamburger/drawer below lg), AuthPageLayout (split-panel
                             auth screens), NavLinks, ChurchSwitcher
     ConnectionActions.tsx    accept/decline/end buttons for mentor connections
     RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
     BlockButton.tsx
+    VerificationBadge.tsx    unverified/community-verified/pastor-verified church badge
+    VouchButton.tsx, PastorVerifyButton.tsx    church trust actions
+    LocationPicker.tsx, PinDropMap.tsx    shared address + click-to-drop-pin picker
+                                         (churches and events both use this)
+    MiniMap.tsx, MiniMapLoader.tsx        shared small preview map (event and church
+                                          detail pages both use this)
   lib/
     actions/               server actions (auth, events, rsvps, mentors, connections, reports,
-                           blocks, passwordReset, churchInvites, churchPartnerships, rides)
+                           blocks, passwordReset, churchInvites, churchPartnerships, rides,
+                           churches — creation, vouching, pastor verification, settings/roles)
     auth.ts                 session + role/membership guards
     session.ts                JWT cookie signing/verification
     password.ts                bcrypt hashing
@@ -374,3 +405,15 @@ Called out explicitly so a future session doesn't assume these exist:
   visible in-app on the receiving church's admin dashboard. An explicit MVP
   scope choice; add one (reusing `emailTemplates.ts`'s pattern) if partner
   churches need to be notified without checking the dashboard.
+- **From the church discovery/trust/first-visit-rides phase**: church
+  verification is entirely trust-based — community vouching has no
+  anti-collusion check (nothing stops 3 accounts controlled by one person
+  from vouching for each other's churches) and pastor self-verification is
+  a self-attested checkbox, not a real identity/ordination check. This is
+  intentional for the current stage, not an oversight, but worth
+  hardening before this matters at scale. The discovery page's distance
+  filter/sort only works once the browser grants geolocation — there's no
+  city/zip-based fallback search yet, just a graceful "no distance
+  available" degradation. The discovery query
+  (`listDiscoverableChurches()`) is unpaginated — fine at current scale,
+  will need pagination once there are enough churches for it to matter.
