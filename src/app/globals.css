@@ -151,6 +151,12 @@
     animation: float-gentle 6s ease-in-out infinite;
   }
 
+  /* A more energetic version for shapes with more open space around them
+     to move in (see FloatingShape's `strong` prop). */
+  .animate-float-strong {
+    animation: float-strong 5.5s ease-in-out infinite;
+  }
+
   /* Modal entrance — a slightly bigger pop than the micro-interactions
      elsewhere, since a dialog appearing deserves a touch more presence. */
   .animate-modal-pop {
@@ -168,6 +174,11 @@
 @keyframes float-gentle {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-16px); }
+}
+
+@keyframes float-strong {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-26px); }
 }
 
 @keyframes modal-pop {

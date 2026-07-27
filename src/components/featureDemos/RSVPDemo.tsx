@@ -83,8 +83,8 @@ export function RSVPDemo({ playKey }: { playKey: number }) {
       <Card className="bg-surface p-5">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <h3 className="text-base font-bold text-ink">Friday Dinner at the Nguyen&apos;s</h3>
-            <p className="mt-0.5 text-xs text-ink-muted">Fri, Jan 30 · 6:30 PM</p>
+            <h3 className="text-base font-bold text-ink">Tuesday Study Group</h3>
+            <p className="mt-0.5 text-xs text-ink-muted">Tue, Feb 3 · 7:00 PM</p>
           </div>
           <div className="relative shrink-0">
             <button

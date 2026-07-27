@@ -14,14 +14,23 @@ export function FloatingShape({
   tone,
   delay = "0s",
   scrollSpeed = 0.05,
+  scrollMax = 40,
+  strong = false,
 }: {
   position: string;
   size: string;
   tone: string;
   delay?: string;
   scrollSpeed?: number;
+  /** Clamp for the scroll-linked offset — raise alongside `strong` so the
+   * bigger float doesn't get cut off by the section's own overflow-hidden
+   * boundary; give the shape's own position enough margin to match. */
+  scrollMax?: number;
+  /** A bigger float-loop amplitude for shapes with more open space to move
+   * in — see .animate-float-strong in globals.css. */
+  strong?: boolean;
 }) {
-  const offset = useScrollOffset(scrollSpeed);
+  const offset = useScrollOffset(scrollSpeed, scrollMax);
 
   return (
     <div
@@ -29,7 +38,10 @@ export function FloatingShape({
       className={`pointer-events-none absolute ${position} transition-transform duration-300 ease-out`}
       style={{ transform: `translateY(${offset}px)` }}
     >
-      <div className={`${size} animate-float-gentle rounded-full ${tone}`} style={{ animationDelay: delay }} />
+      <div
+        className={`${size} ${strong ? "animate-float-strong" : "animate-float-gentle"} rounded-full ${tone}`}
+        style={{ animationDelay: delay }}
+      />
     </div>
   );
 }
