@@ -40,9 +40,24 @@ const FEATURES = [
 ];
 
 const STEPS = [
-  { number: "01", title: "Start or join a church", body: "Create your church's space in a minute, or join an existing one with a 6-character code." },
-  { number: "02", title: "Share or browse gatherings", body: "Volunteers share dinners and meetups. Students browse and RSVP in a couple of taps." },
-  { number: "03", title: "Connect one-on-one", body: "Students find friends by language and interest, and message only after a friend accepts." },
+  {
+    number: "01",
+    demoKey: "startJoin" as const,
+    title: "Start or join a church",
+    body: "Create your church's space in a minute, or join an existing one with a 6-character code.",
+  },
+  {
+    number: "02",
+    demoKey: "shareBrowse" as const,
+    title: "Share or browse gatherings",
+    body: "Volunteers share dinners and meetups. Students browse and RSVP in a couple of taps.",
+  },
+  {
+    number: "03",
+    demoKey: "connect" as const,
+    title: "Connect one-on-one",
+    body: "Students find friends by language and interest, and message only after a friend accepts.",
+  },
 ];
 
 export default function LandingPage() {
@@ -73,15 +88,15 @@ export default function LandingPage() {
       <HeroSection />
 
       <section className="relative overflow-hidden">
-        <FloatingShape position="-right-4 top-4" size="size-10" tone="bg-brand-200/15" scrollSpeed={0.04} />
+        <FloatingShape position="-right-4 top-4" size="size-10" tone="bg-brand-300/35" scrollSpeed={0.04} />
         <div className="relative mx-auto max-w-6xl px-6 pb-24">
           <FeatureCards features={FEATURES} />
         </div>
       </section>
 
       <section className="relative overflow-hidden border-y border-line bg-surface">
-        <FloatingShape position="left-6 top-10" size="size-9" tone="bg-accent-200/15" delay="2s" scrollSpeed={-0.03} />
-        <FloatingShape position="bottom-8 right-8" size="size-14" tone="bg-brand-200/15" delay="4s" scrollSpeed={0.06} />
+        <FloatingShape position="left-6 top-10" size="size-9" tone="bg-accent-300/35" delay="2s" scrollSpeed={-0.03} />
+        <FloatingShape position="bottom-8 right-8" size="size-14" tone="bg-brand-300/35" delay="4s" scrollSpeed={0.06} />
         <div className="relative mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
             <Reveal variant="left">
@@ -94,7 +109,7 @@ export default function LandingPage() {
           <div className="grid items-stretch gap-8 sm:grid-cols-3">
             {STEPS.map((step, index) => (
               <Reveal key={step.number} delay={index * 100} className="h-full">
-                <StepCard number={step.number} title={step.title} body={step.body} />
+                <StepCard number={step.number} demoKey={step.demoKey} title={step.title} body={step.body} />
               </Reveal>
             ))}
           </div>
@@ -122,7 +137,7 @@ export default function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden border-t border-line bg-surface">
-        <FloatingShape position="right-10 top-8" size="size-8" tone="bg-brand-200/20" delay="1s" scrollSpeed={0.05} />
+        <FloatingShape position="right-10 top-8" size="size-8" tone="bg-brand-300/40" delay="1s" scrollSpeed={0.05} />
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           <Reveal variant="icon">
             <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">

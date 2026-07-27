@@ -14,10 +14,10 @@ const SHAPE_SHIFT = 14; // px — ambient shapes, a touch more than the backgrou
 // they read as organic drift, not a repeated pattern. `dir` flips which way
 // a shape parallaxes relative to the cursor (some with it, some against).
 const HERO_SHAPES = [
-  { id: "s1", position: "left-[8%] top-[18%]", size: "size-16", tone: "bg-brand-200/20", delay: "0s", dir: 1 },
-  { id: "s2", position: "right-[10%] top-[55%]", size: "size-11", tone: "bg-accent-200/15", delay: "1.5s", dir: -1 },
-  { id: "s3", position: "right-[20%] top-[12%]", size: "size-8", tone: "bg-brand-200/15", delay: "3s", dir: 1 },
-  { id: "s4", position: "left-[16%] top-[68%]", size: "size-9", tone: "bg-accent-200/20", delay: "4.5s", dir: -1 },
+  { id: "s1", position: "left-[8%] top-[18%]", size: "size-16", tone: "bg-brand-300/40", delay: "0s", dir: 1 },
+  { id: "s2", position: "right-[10%] top-[55%]", size: "size-11", tone: "bg-accent-300/35", delay: "1.5s", dir: -1 },
+  { id: "s3", position: "right-[20%] top-[12%]", size: "size-8", tone: "bg-brand-300/35", delay: "3s", dir: 1 },
+  { id: "s4", position: "left-[16%] top-[68%]", size: "size-9", tone: "bg-accent-300/40", delay: "4.5s", dir: -1 },
 ] as const;
 
 /**
