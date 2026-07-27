@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { useMouseTracking } from "@/hooks/useMouseTracking";
 import { StepNumber } from "@/components/StepNumber";
 import { Modal } from "@/components/ui/Modal";
@@ -59,9 +58,6 @@ export function StepCard({
           />
           <h3 className="mt-2 text-lg font-bold text-ink">{title}</h3>
           <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
-          <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-transform duration-200 group-hover:translate-x-1">
-            See it in action <ArrowRight weight="bold" className="size-3.5" />
-          </span>
         </button>
       </div>
 

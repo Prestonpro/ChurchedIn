@@ -95,8 +95,8 @@ export default function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden border-y border-line bg-surface">
-        <FloatingShape position="left-6 top-10" size="size-9" tone="bg-accent-300/35" delay="2s" scrollSpeed={-0.03} />
-        <FloatingShape position="bottom-8 right-8" size="size-14" tone="bg-brand-300/35" delay="4s" scrollSpeed={0.06} />
+        <FloatingShape position="left-10 top-16" size="size-9" tone="bg-accent-300/35" delay="2s" scrollSpeed={-0.06} />
+        <FloatingShape position="bottom-16 right-16" size="size-14" tone="bg-brand-300/35" delay="4s" scrollSpeed={0.09} />
         <div className="relative mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
             <Reveal variant="left">
@@ -137,7 +137,7 @@ export default function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden border-t border-line bg-surface">
-        <FloatingShape position="right-10 top-8" size="size-8" tone="bg-brand-300/40" delay="1s" scrollSpeed={0.05} />
+        <FloatingShape position="right-16 top-14" size="size-8" tone="bg-brand-300/40" delay="1s" scrollSpeed={0.08} />
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           <Reveal variant="icon">
             <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">

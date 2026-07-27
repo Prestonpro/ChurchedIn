@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, HandHeart, UsersThree, ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { CalendarPlus, HandHeart, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Reveal } from "@/components/Reveal";
@@ -102,9 +102,6 @@ function FeatureCard({
             </span>
             <h2 className="mt-4 text-lg font-bold text-ink">{title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-transform duration-200 group-hover:translate-x-1">
-              Learn more <ArrowRight weight="bold" className="size-3.5" />
-            </span>
           </button>
         </Card>
       </div>
