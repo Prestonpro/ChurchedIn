@@ -11,16 +11,14 @@ import {
   CalendarBlank,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
-import { getChurchProfile, listEventsForChurch, hasUserVouchedForChurch, isVerifiedElsewhere } from "@/lib/queries";
+import { getChurchProfile, listEventsForChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { VerificationBadge } from "@/components/VerificationBadge";
-import { VouchButton } from "@/components/VouchButton";
-import { PastorVerifyButton } from "@/components/PastorVerifyButton";
+import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
-import { VERIFICATION_STATUS, type EventCategory } from "@/lib/constants";
+import { type EventCategory } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
 import { FirstVisitRideForm } from "./FirstVisitRideForm";
 
@@ -41,17 +39,9 @@ export default async function ChurchProfilePage({
 
   const isMember = user.memberships.some((m) => m.churchId === id);
   const membership = user.memberships.find((m) => m.churchId === id);
-  const canManageSettings = membership?.role === "CHURCH_ADMIN" || !!membership?.isPastor;
-  const canVerifyAsPastor =
-    isMember &&
-    church.verificationStatus !== VERIFICATION_STATUS.PASTOR_VERIFIED &&
-    (membership?.isPastor || membership?.role === "CHURCH_ADMIN");
+  const canManageSettings = membership?.role === "CHURCH_ADMIN";
 
-  const [events, hasVouched, canVouch] = await Promise.all([
-    listEventsForChurch(id),
-    isMember ? Promise.resolve(false) : hasUserVouchedForChurch(user.id, id),
-    isMember ? Promise.resolve(false) : isVerifiedElsewhere(user.id, id),
-  ]);
+  const events = await listEventsForChurch(id);
   const upcoming = events.filter((e) => e.startsAt >= new Date());
 
   const languageList = church.languages
@@ -85,7 +75,7 @@ export default async function ChurchProfilePage({
                     Settings
                   </Link>
                 )}
-                <VerificationBadge status={church.verificationStatus} />
+                <MemberCountBadge memberCount={church.memberCount} />
               </div>
             </div>
 
@@ -119,21 +109,6 @@ export default async function ChurchProfilePage({
               )}
             </div>
 
-            {canVouch && !hasVouched && (
-              <div className="mt-4 border-t border-line pt-4">
-                <VouchButton churchId={id} />
-              </div>
-            )}
-            {hasVouched && (
-              <p className="mt-4 border-t border-line pt-4 text-sm font-medium text-success">
-                You&apos;ve vouched for this church. Thanks for helping build trust in the community.
-              </p>
-            )}
-            {canVerifyAsPastor && (
-              <div className="mt-4 border-t border-line pt-4">
-                <PastorVerifyButton churchId={id} />
-              </div>
-            )}
           </Card>
 
           <Card>

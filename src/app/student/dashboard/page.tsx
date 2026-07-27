@@ -42,17 +42,9 @@ export default async function StudentDashboardPage() {
             {user.activeMembership?.church.name}, {memberCount} {memberCount === 1 ? "member" : "members"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/discover"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:text-ink"
-          >
-            Discover churches
-          </Link>
-          <LinkButton href="/student/mentors">
-            <UsersThree weight="bold" className="size-4" /> Find a friend
-          </LinkButton>
-        </div>
+        <LinkButton href="/student/mentors">
+          <UsersThree weight="bold" className="size-4" /> Find a friend
+        </LinkButton>
       </div>
 
       <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">

@@ -43,17 +43,9 @@ export default async function VolunteerDashboardPage() {
             {user.activeMembership?.church.name}, {memberCount} {memberCount === 1 ? "member" : "members"}
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/discover"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:text-ink"
-          >
-            Discover churches
-          </Link>
-          <LinkButton href="/volunteer/events/new">
-            <Plus weight="bold" className="size-4" /> Plan a gathering
-          </LinkButton>
-        </div>
+        <LinkButton href="/volunteer/events/new">
+          <Plus weight="bold" className="size-4" /> Plan a gathering
+        </LinkButton>
       </div>
 
       <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">

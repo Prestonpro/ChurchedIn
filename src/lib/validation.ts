@@ -110,13 +110,6 @@ export const connectionRequestSchema = z.object({
   message: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
-export const reportSchema = z.object({
-  reason: z.string().trim().min(1, "Enter a reason").max(200),
-  details: z.string().trim().max(1000).optional().or(z.literal("")),
-  reportedUserId: z.string().optional(),
-  eventId: z.string().optional(),
-});
-
 export const rideRequestSchema = z.object({
   destination: z.string().trim().min(1, "Enter where you need to go").max(300),
   date: z.string().min(1, "Choose a date"),

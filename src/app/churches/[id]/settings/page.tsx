@@ -14,8 +14,7 @@ export default async function ChurchSettingsPage({ params }: { params: Promise<{
   const user = await requireUser();
   const membership = user.memberships.find((m) => m.churchId === id);
   const canManage = membership?.role === ROLES.CHURCH_ADMIN;
-  const canAssignPastor = canManage || !!membership?.isPastor;
-  if (!canManage && !canAssignPastor) {
+  if (!canManage) {
     notFound();
   }
 
@@ -51,7 +50,6 @@ export default async function ChurchSettingsPage({ params }: { params: Promise<{
               members={members}
               viewerUserId={user.id}
               canManage={canManage}
-              canAssignPastor={canAssignPastor}
             />
           </Card>
         </div>

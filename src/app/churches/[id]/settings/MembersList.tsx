@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Star, SealCheck } from "@phosphor-icons/react/dist/ssr";
+import { Star } from "@phosphor-icons/react/dist/ssr";
 import {
   promoteToAdminAction,
   demoteFromAdminAction,
-  setIsPastorAction,
   type ActionResult,
 } from "@/lib/actions/churches";
 import { Avatar } from "@/components/ui/Avatar";
@@ -18,27 +17,21 @@ type Member = {
   id: string;
   userId: string;
   role: string;
-  isPastor: boolean;
   user: { id: string; name: string; email: string };
 };
 
 /** Member list + role management for /churches/[id]/settings. `canManage`
- * (viewer is CHURCH_ADMIN) gates promote/demote; `canAssignPastor` (admin
- * OR an existing pastor) gates the pastor toggle — matching the brief's
- * "only PASTOR role can assign PASTOR to others," with CHURCH_ADMIN
- * included for the same bootstrap reason as elsewhere in this feature. */
+ * (viewer is CHURCH_ADMIN) gates promote/demote. */
 export function MembersList({
   churchId,
   members,
   viewerUserId,
   canManage,
-  canAssignPastor,
 }: {
   churchId: string;
   members: Member[];
   viewerUserId: string;
   canManage: boolean;
-  canAssignPastor: boolean;
 }) {
   const [pending, startTransition] = useTransition();
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
@@ -80,11 +73,6 @@ export function MembersList({
               <Badge tone={m.role === ROLES.CHURCH_ADMIN ? "brand" : "neutral"}>
                 {m.role === ROLES.CHURCH_ADMIN ? "Church leader" : m.role === ROLES.VOLUNTEER ? "Volunteer" : "Student"}
               </Badge>
-              {m.isPastor && (
-                <Badge tone="success">
-                  <SealCheck weight="fill" className="size-3" /> Pastor
-                </Badge>
-              )}
               {canManage && m.role !== ROLES.CHURCH_ADMIN && (
                 <Button
                   variant="secondary"
@@ -103,16 +91,6 @@ export function MembersList({
                   onClick={() => run(() => demoteFromAdminAction(churchId, m.userId), m.userId)}
                 >
                   Remove leadership
-                </Button>
-              )}
-              {canAssignPastor && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={isBusy}
-                  onClick={() => run(() => setIsPastorAction(churchId, m.userId, !m.isPastor), m.userId)}
-                >
-                  {m.isPastor ? "Remove pastor flag" : "Flag as pastor"}
                 </Button>
               )}
             </div>

@@ -22,12 +22,14 @@ export function MobileMenu({
   churchName,
   memberships,
   activeChurchId,
+  profilePath,
 }: {
   links: NavLink[];
   userName: string;
   churchName?: string;
   memberships: { churchId: string; church: { name: string } }[];
   activeChurchId?: string;
+  profilePath: string;
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
@@ -75,10 +77,26 @@ export function MobileMenu({
           >
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <div className="flex items-center gap-3">
-                <Avatar name={userName} size="sm" />
+                <Link href={profilePath} onClick={() => setOpen(false)}>
+                  <Avatar name={userName} size="sm" />
+                </Link>
                 <div>
-                  <p className="text-sm font-semibold text-ink">{userName}</p>
-                  {churchName && <p className="text-xs text-ink-muted">{churchName}</p>}
+                  <Link
+                    href={profilePath}
+                    onClick={() => setOpen(false)}
+                    className="text-sm font-semibold text-ink hover:underline"
+                  >
+                    {userName}
+                  </Link>
+                  {churchName && activeChurchId && (
+                    <Link
+                      href={`/churches/${activeChurchId}`}
+                      onClick={() => setOpen(false)}
+                      className="block text-xs text-ink-muted hover:underline"
+                    >
+                      {churchName}
+                    </Link>
+                  )}
                 </div>
               </div>
               <button

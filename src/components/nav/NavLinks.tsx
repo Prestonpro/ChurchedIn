@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SquaresFour, CalendarBlank, Flag, UserCircle, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree } from "@phosphor-icons/react/dist/ssr";
 
 // Server Components can't pass component/function references (like a Phosphor
 // icon) as props to Client Components — only plain serializable data crosses
 // that boundary. So the icon lookup lives here, keyed by a plain string that
 // AuthShell (a server component) can safely pass in.
 export const NAV_ICONS = {
+  home: House,
   dashboard: SquaresFour,
   events: CalendarBlank,
-  reports: Flag,
-  profile: UserCircle,
+  discover: Compass,
+  settings: GearSix,
   mentors: UsersThree,
 } as const;
 

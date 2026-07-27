@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UsersThree, CalendarBlank, Flag, Plus, Buildings, HandsClapping, HandHeart, GraduationCap, Star } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, CalendarBlank, Plus, Buildings, HandsClapping, HandHeart, GraduationCap, Star } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -12,9 +12,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { listPartnershipsForChurch } from "@/lib/queries";
-import { ROLES, VERIFICATION_STATUS, VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED, type EventCategory, type Role } from "@/lib/constants";
-import { VerificationBadge } from "@/components/VerificationBadge";
-import { PastorVerifyButton } from "@/components/PastorVerifyButton";
+import { ROLES, type EventCategory, type Role } from "@/lib/constants";
+import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { PartnershipManager } from "./PartnershipManager";
 
 const ROLE_META: Record<Role, { label: string; icon: typeof Star }> = {
@@ -27,11 +26,10 @@ export default async function AdminDashboardPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
   const churchId = user.activeMembership!.churchId;
 
-  const [church, memberCount, openReportCount, events, roleCounts, recentJoins, partnerships, vouchCount] =
+  const [church, memberCount, events, roleCounts, recentJoins, partnerships] =
     await Promise.all([
       prisma.church.findUnique({ where: { id: churchId } }),
       prisma.membership.count({ where: { churchId } }),
-      prisma.report.count({ where: { churchId, status: "OPEN" } }),
       prisma.event.findMany({
         where: { churchId },
         orderBy: { startsAt: "desc" },
@@ -46,7 +44,6 @@ export default async function AdminDashboardPage() {
         include: { user: { select: { name: true } } },
       }),
       listPartnershipsForChurch(churchId),
-      prisma.churchVouch.count({ where: { churchId } }),
     ]);
   const nextEvent = events
     .filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED")
@@ -59,53 +56,18 @@ export default async function AdminDashboardPage() {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold text-ink">{church?.name}</h1>
-            {church && <VerificationBadge status={church.verificationStatus} />}
+            <MemberCountBadge memberCount={memberCount} />
           </div>
           <p className="mt-1 text-sm text-ink-muted">
             {memberCount} {memberCount === 1 ? "member" : "members"} — church leader overview
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href="/discover"
-            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:text-ink"
-          >
-            Discover churches
-          </Link>
-          <Link
-            href={`/churches/${churchId}/settings`}
-            className="rounded-lg px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:text-ink"
-          >
-            Church settings
-          </Link>
-          <LinkButton href="/volunteer/events/new">
-            <Plus weight="bold" className="size-4" /> Plan a gathering
-          </LinkButton>
-        </div>
+        <LinkButton href="/volunteer/events/new">
+          <Plus weight="bold" className="size-4" /> Plan a gathering
+        </LinkButton>
       </div>
 
-      {church && church.verificationStatus !== VERIFICATION_STATUS.PASTOR_VERIFIED && (
-        <Card className="mb-6">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <h2 className="font-bold text-ink">Church verification</h2>
-              {church.verificationStatus === VERIFICATION_STATUS.UNVERIFIED ? (
-                <p className="text-sm text-ink-muted">
-                  {`${vouchCount} of ${VOUCHES_NEEDED_FOR_COMMUNITY_VERIFIED} community vouches received.`}{" "}
-                  Members of other verified churches can vouch for you from your church&apos;s discover page.
-                </p>
-              ) : (
-                <p className="text-sm text-ink-muted">
-                  Community verified. A recognized pastor can upgrade this further.
-                </p>
-              )}
-            </div>
-            <PastorVerifyButton churchId={churchId} />
-          </div>
-        </Card>
-      )}
-
-      <div className="mb-6 grid gap-4 sm:grid-cols-3">
+      <div className="mb-6 grid gap-4 sm:grid-cols-2">
         <StatCard
           icon={UsersThree}
           label="Members"
@@ -120,14 +82,6 @@ export default async function AdminDashboardPage() {
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
-        />
-        <StatCard
-          icon={Flag}
-          label="Open reports"
-          value={openReportCount}
-          tone="bg-warning-soft text-warning"
-          accent="border-l-warning"
-          href="/admin/reports"
         />
       </div>
 

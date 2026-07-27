@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Clock, Translate, UsersThree, MapPinLine, Car } from "@phosphor-icons/react/dist/ssr";
-import { VerificationBadge } from "@/components/VerificationBadge";
+import { MemberCountBadge } from "@/components/MemberCountBadge";
 import type { DiscoverableChurch } from "./DiscoverClient";
 
 /** Shared between the sidebar list and the map popup — same info either
@@ -15,12 +15,12 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
     <div className={compact ? "w-64" : ""}>
       <div className="flex items-start justify-between gap-2">
         <h3 className="font-bold text-ink">{church.name}</h3>
-        <VerificationBadge status={church.verificationStatus} />
+        <MemberCountBadge memberCount={church.memberCount} />
       </div>
       <p className="mt-1 text-xs text-ink-muted">
-        {church.denomination && <>{church.denomination} · </>}
-        {church.memberCount} {church.memberCount === 1 ? "member" : "members"}
-        {church.distanceMiles != null && <> · {church.distanceMiles.toFixed(1)} mi away</>}
+        {church.denomination}
+        {church.denomination && church.distanceMiles != null && " · "}
+        {church.distanceMiles != null && `${church.distanceMiles.toFixed(1)} mi away`}
       </p>
       {languageList.length > 0 && (
         <p className="mt-1.5 flex items-center gap-1 text-xs text-ink-soft">

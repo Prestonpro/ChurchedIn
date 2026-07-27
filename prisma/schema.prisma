@@ -73,12 +73,6 @@ enum RideRequestType {
   FIRST_VISIT
 }
 
-enum VerificationStatus {
-  UNVERIFIED
-  COMMUNITY_VERIFIED
-  PASTOR_VERIFIED
-}
-
 model Church {
   id        String   @id @default(cuid())
   name      String
@@ -86,13 +80,14 @@ model Church {
   joinCode  String   @unique
   createdAt DateTime @default(now())
 
-  // Added for church discovery/trust (Phase 4 of the "Church Discovery,
-  // Trust & First-Visit Rides" brief). `joinCode` above already covers the
-  // brief's "inviteCode" ask — same concept (shareable, human-friendly
-  // code), so there's no second code field. Community vouching and pastor
-  // self-verification are both trust-based (no external verification
-  // service) — see ChurchVouch and Membership.isPastor.
-  verificationStatus VerificationStatus @default(UNVERIFIED)
+  // Added for church discovery (Phase 4 of the "Church Discovery, Trust &
+  // First-Visit Rides" brief). `joinCode` above already covers the brief's
+  // "inviteCode" ask — same concept (shareable, human-friendly code), so
+  // there's no second code field. Trust originally had a verification-tier
+  // system (community vouching + pastor self-verification); it was removed
+  // after the pastor tier turned out to be self-grantable by any church's
+  // own creator with no real check — member count (computed on demand, see
+  // getChurchProfile/listDiscoverableChurches) is the trust signal now.
   denomination       String?
   languages          String?
   serviceTimes       String?
@@ -109,26 +104,6 @@ model Church {
   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
   rideRequests RideRequest[]
-  vouches ChurchVouch[]
-}
-
-/**
- * A community trust signal: any user who belongs to at least one already-
- * verified church can vouch for a different church ("I can confirm this
- * is a real church"). At 3 vouches, the church's verificationStatus
- * upgrades to COMMUNITY_VERIFIED (see requestVouchAction in
- * src/lib/actions/churches.ts). One vouch per user per church.
- */
-model ChurchVouch {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-
-  churchId String
-  church   Church @relation(fields: [churchId], references: [id])
-  userId   String
-  user     User   @relation(fields: [userId], references: [id])
-
-  @@unique([churchId, userId])
 }
 
 /**
@@ -208,7 +183,6 @@ model User {
   cohostedEvents       EventCohost[]
   rideRequestsAsStudent   RideRequest[] @relation("RideRequestsAsStudent")
   rideRequestsAsVolunteer RideRequest[] @relation("RideRequestsAsVolunteer")
-  churchVouches           ChurchVouch[]
 }
 
 model PasswordResetToken {
@@ -234,15 +208,6 @@ model Membership {
   // small "something's new" dot on the Events link by comparing against
   // Event.createdAt, without a dedicated read/unread tracking table.
   lastSeenEventsAt DateTime?
-  // Self-asserted, trust-based (per the discovery/trust brief: "for now,
-  // this simply upgrades the church... future enhancement: email domain
-  // verification"). A CHURCH_ADMIN is already the leadership tier
-  // everywhere else in this app; isPastor is the one narrow extra
-  // permission on top of that — triggering the church's
-  // PASTOR_VERIFIED status. Deliberately NOT a 4th Role value: Role
-  // determines RSVP bucket/dashboard/nav throughout the app, and a
-  // pastor fits the existing CHURCH_ADMIN/VOLUNTEER bucket exactly.
-  isPastor Boolean @default(false)
 
   userId   String
   user     User   @relation(fields: [userId], references: [id])

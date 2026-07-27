@@ -8,7 +8,6 @@ import {
   PARTNERSHIP_STATUS,
   RIDE_STATUS,
   RIDE_REQUEST_TYPE,
-  VERIFICATION_STATUS,
 } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
 import { rideContactVisible } from "@/lib/rideState";
@@ -308,63 +307,25 @@ export async function listDiscoverableChurches() {
   }));
 }
 
-/** Full profile details for a church, plus member/vouch counts computed on
- * demand (not cached — same "just count it" convention used everywhere
- * else in this app, e.g. the admin dashboard's memberCount). */
+/** Full profile details for a church, plus member count computed on demand
+ * (not cached — same "just count it" convention used everywhere else in
+ * this app, e.g. the admin dashboard's memberCount). Member count is the
+ * trust signal shown to visitors — see MemberCountBadge. */
 export async function getChurchProfile(churchId: string) {
-  const [church, memberCount, vouchCount] = await Promise.all([
+  const [church, memberCount] = await Promise.all([
     prisma.church.findUnique({ where: { id: churchId } }),
     prisma.membership.count({ where: { churchId } }),
-    prisma.churchVouch.count({ where: { churchId } }),
   ]);
   if (!church) return null;
-  return { ...church, memberCount, vouchCount };
+  return { ...church, memberCount };
 }
 
-/** All church ids this user has already vouched for — fetched once for
- * /discover's whole list instead of one query per card. */
-export async function listVouchedChurchIds(userId: string): Promise<Set<string>> {
-  const vouches = await prisma.churchVouch.findMany({ where: { userId }, select: { churchId: true } });
-  return new Set(vouches.map((v) => v.churchId));
-}
-
-export async function hasUserVouchedForChurch(userId: string, churchId: string): Promise<boolean> {
-  const vouch = await prisma.churchVouch.findUnique({
-    where: { churchId_userId: { churchId, userId } },
-  });
-  return !!vouch;
-}
-
-/** True if the user belongs to a verified church other than `churchId` —
- * the "verified user" bar for being allowed to vouch for a church (brief:
- * "any verified user... can vouch for another church"). */
-export async function isVerifiedElsewhere(userId: string, churchId: string): Promise<boolean> {
-  const membership = await prisma.membership.findFirst({
-    where: {
-      userId,
-      churchId: { not: churchId },
-      church: {
-        verificationStatus: { in: [VERIFICATION_STATUS.COMMUNITY_VERIFIED, VERIFICATION_STATUS.PASTOR_VERIFIED] },
-      },
-    },
-  });
-  return !!membership;
-}
-
-/** All members of a church with role/isPastor, for the admin settings
+/** All members of a church with their role, for the admin settings
  * page's member list — admins first, then by join date. */
 export function listMembersForChurch(churchId: string) {
   return prisma.membership.findMany({
     where: { churchId },
     include: { user: { select: { id: true, name: true, email: true } } },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
-  });
-}
-
-export function listReportsForChurch(churchId: string) {
-  return prisma.report.findMany({
-    where: { churchId },
-    include: { reportedBy: { select: { id: true, name: true } }, reportedUser: { select: { id: true, name: true } } },
-    orderBy: { createdAt: "desc" },
   });
 }

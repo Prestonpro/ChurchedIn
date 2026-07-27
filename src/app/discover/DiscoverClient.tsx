@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect, useMemo, useState } from "react";
 import { NavigationArrow, CalendarCheck } from "@phosphor-icons/react/dist/ssr";
-import { VERIFICATION_STATUS, type VerificationStatus } from "@/lib/constants";
 import { ChurchCard } from "./ChurchCard";
 
 const DiscoverMap = dynamic(() => import("./DiscoverMap").then((mod) => mod.DiscoverMap), {
@@ -16,7 +15,6 @@ const DiscoverMap = dynamic(() => import("./DiscoverMap").then((mod) => mod.Disc
 export type DiscoverableChurch = {
   id: string;
   name: string;
-  verificationStatus: VerificationStatus;
   denomination: string | null;
   languages: string | null;
   serviceTimes: string | null;
@@ -49,7 +47,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [denomination, setDenomination] = useState("");
   const [language, setLanguage] = useState("");
-  const [verification, setVerification] = useState("");
+  const [minMembers, setMinMembers] = useState(0);
   const [hasEventsOnly, setHasEventsOnly] = useState(false);
 
   useEffect(() => {
@@ -88,7 +86,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
     return withDistance
       .filter((c) => (denomination ? c.denomination === denomination : true))
       .filter((c) => (language ? (c.languages ?? "").toLowerCase().includes(language.toLowerCase()) : true))
-      .filter((c) => (verification ? c.verificationStatus === verification : true))
+      .filter((c) => c.memberCount >= minMembers)
       .filter((c) => (hasEventsOnly ? c.upcomingEventCount > 0 : true))
       .sort((a, b) => {
         if (a.distanceMiles != null && b.distanceMiles != null) return a.distanceMiles - b.distanceMiles;
@@ -96,7 +94,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
         if (b.distanceMiles != null) return 1;
         return 0;
       });
-  }, [withDistance, denomination, language, verification, hasEventsOnly]);
+  }, [withDistance, denomination, language, minMembers, hasEventsOnly]);
 
   return (
     <div className="grid h-full grid-rows-[auto_1fr] lg:grid-cols-[380px_1fr] lg:grid-rows-1">
@@ -121,14 +119,14 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             ))}
           </select>
           <select
-            value={verification}
-            onChange={(e) => setVerification(e.target.value)}
+            value={minMembers}
+            onChange={(e) => setMinMembers(Number(e.target.value))}
             className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink"
           >
-            <option value="">Any verification status</option>
-            <option value={VERIFICATION_STATUS.PASTOR_VERIFIED}>Pastor verified</option>
-            <option value={VERIFICATION_STATUS.COMMUNITY_VERIFIED}>Community verified</option>
-            <option value={VERIFICATION_STATUS.UNVERIFIED}>Unverified</option>
+            <option value={0}>Any size</option>
+            <option value={3}>3+ members</option>
+            <option value={10}>10+ members</option>
+            <option value={30}>30+ members</option>
           </select>
           <input
             type="text"

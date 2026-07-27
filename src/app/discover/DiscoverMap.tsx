@@ -5,7 +5,6 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import type L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { leafletPin } from "@/lib/leafletPin";
-import { VERIFICATION_STATUS } from "@/lib/constants";
 import { ChurchCard } from "./ChurchCard";
 import type { DiscoverableChurch } from "./DiscoverClient";
 
@@ -17,11 +16,14 @@ const TILE_ATTRIBUTION =
 // resolved) the viewer's location.
 const DEFAULT_CENTER: [number, number] = [39.5, -98.35];
 
-const PIN_COLOR: Record<string, string> = {
-  [VERIFICATION_STATUS.PASTOR_VERIFIED]: "#2563eb",
-  [VERIFICATION_STATUS.COMMUNITY_VERIFIED]: "#16a34a",
-  [VERIFICATION_STATUS.UNVERIFIED]: "#9ca3af",
-};
+// Pin color by member-count tier — matches MemberCountBadge's tiers, so the
+// map and the cards agree on what "an active, real community" looks like.
+function pinColorForMemberCount(memberCount: number): string {
+  if (memberCount >= 30) return "#2563eb";
+  if (memberCount >= 10) return "#16a34a";
+  if (memberCount >= 3) return "#63bbac";
+  return "#9ca3af";
+}
 
 function RecenterOnLocation({ center }: { center: [number, number] | null }) {
   const map = useMap();
@@ -70,7 +72,7 @@ export function DiscoverMap({
         <Marker
           key={church.id}
           position={[church.locationLat!, church.locationLng!]}
-          icon={leafletPin(PIN_COLOR[church.verificationStatus] ?? PIN_COLOR.UNVERIFIED, church.id === selectedId ? 26 : 20)}
+          icon={leafletPin(pinColorForMemberCount(church.memberCount), church.id === selectedId ? 26 : 20)}
           eventHandlers={{ click: () => onSelect(church.id) }}
           ref={(ref) => {
             markerRefs.current[church.id] = ref;

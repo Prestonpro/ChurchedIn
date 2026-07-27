@@ -10,7 +10,6 @@ export default async function DiscoverPage() {
   const churches: DiscoverableChurch[] = rawChurches.map((c) => ({
     id: c.id,
     name: c.name,
-    verificationStatus: c.verificationStatus,
     denomination: c.denomination,
     languages: c.languages,
     serviceTimes: c.serviceTimes,
