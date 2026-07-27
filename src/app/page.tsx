@@ -2,13 +2,13 @@ import Link from "next/link";
 import {
   UsersThree,
   ArrowRight,
-  ShieldCheck,
   ChatCircleDots,
   ForkKnife,
   Sparkle,
 } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
 import { FeatureCards } from "./FeatureCards";
+import { HeroSection } from "./HeroSection";
 
 // Icon keyed by a plain string, not the component itself — Server
 // Components can't pass function/component references as props to Client
@@ -67,43 +67,7 @@ export default function LandingPage() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden bg-hero-mesh">
-        <div className="mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
-          <span
-            className="inline-flex animate-fade-up items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700"
-            style={{ animationDelay: "0ms" }}
-          >
-            <ShieldCheck weight="fill" className="size-3.5" />
-            Built for church-based international student ministry
-          </span>
-          <h1
-            className="mt-6 animate-fade-up text-4xl font-extrabold tracking-tight text-ink sm:text-5xl md:text-6xl"
-            style={{ animationDelay: "80ms" }}
-          >
-            Your church community,{" "}
-            <span className="text-brand-600">gathered in one place</span>.
-          </h1>
-          <p
-            className="mx-auto mt-6 max-w-2xl animate-fade-up text-lg leading-relaxed text-ink-soft"
-            style={{ animationDelay: "160ms" }}
-          >
-            Volunteers plan dinners, coffee chats, and friend meetups. Other
-            volunteers join in to help. International students RSVP and find
-            a friend — all in one place, per church.
-          </p>
-          <div
-            className="mt-9 flex animate-fade-up flex-col items-center justify-center gap-3 sm:flex-row"
-            style={{ animationDelay: "240ms" }}
-          >
-            <LinkButton href="/signup" size="lg">
-              Start your church&apos;s space <ArrowRight weight="bold" className="size-4" />
-            </LinkButton>
-            <LinkButton href="/join" variant="secondary" size="lg">
-              Join with a code
-            </LinkButton>
-          </div>
-        </div>
-      </section>
+      <HeroSection />
 
       <section className="mx-auto max-w-6xl px-6 pb-24">
         <FeatureCards features={FEATURES} />
@@ -117,8 +81,13 @@ export default function LandingPage() {
           </div>
           <div className="grid gap-8 sm:grid-cols-3">
             {STEPS.map((step) => (
-              <div key={step.number} className="relative">
-                <span className="text-4xl font-extrabold text-brand-100">{step.number}</span>
+              <div
+                key={step.number}
+                className="group relative rounded-2xl border border-line bg-paper p-6 shadow-card transition-brand hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lifted"
+              >
+                <span className="text-4xl font-extrabold text-brand-100 transition-brand group-hover:text-brand-400">
+                  {step.number}
+                </span>
                 <h3 className="mt-2 text-lg font-bold text-ink">{step.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-ink-soft">{step.body}</p>
               </div>

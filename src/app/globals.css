@@ -142,6 +142,19 @@
   .animate-pulse-gentle {
     animation: pulse-gentle 2.4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
+
+  /* Ambient drift for the hero's decorative background shapes — a slow,
+     barely-there loop, layered under a JS-driven mouse-parallax offset on
+     the same element's wrapper (kept on a separate transform so the two
+     don't fight over one `transform` declaration). */
+  .animate-float-gentle {
+    animation: float-gentle 6s ease-in-out infinite;
+  }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
 }
 
 @keyframes fade-up {
