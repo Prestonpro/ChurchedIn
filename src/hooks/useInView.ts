@@ -11,13 +11,17 @@ import { useEffect, useRef, useState } from "react";
 export function useInView<T extends HTMLElement>() {
   const ref = useRef<T>(null);
   const [isInView, setIsInView] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      const timeout = setTimeout(() => setIsInView(true), 0);
+      const timeout = setTimeout(() => {
+        setPrefersReducedMotion(true);
+        setIsInView(true);
+      }, 0);
       return () => clearTimeout(timeout);
     }
 
@@ -34,5 +38,5 @@ export function useInView<T extends HTMLElement>() {
     return () => observer.disconnect();
   }, []);
 
-  return { ref, isInView };
+  return { ref, isInView, prefersReducedMotion };
 }

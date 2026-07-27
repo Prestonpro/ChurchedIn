@@ -17,11 +17,15 @@ export function Modal({
   open,
   onClose,
   title,
+  maxWidthClassName = "max-w-md",
   children,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
+  /** Defaults to a compact dialog width; widen (e.g. "max-w-xl") for
+   * content-rich panels like the feature demos. */
+  maxWidthClassName?: string;
   children: React.ReactNode;
 }) {
   const [mounted, setMounted] = useState(false);
@@ -82,7 +86,7 @@ export function Modal({
       <div className="animate-fade-in absolute inset-0 bg-ink/50 backdrop-blur-sm" onClick={onClose} aria-hidden />
       <div
         ref={dialogRef}
-        className="animate-modal-pop relative w-full max-w-md rounded-2xl bg-surface p-6 shadow-lifted"
+        className={`animate-modal-pop relative w-full rounded-2xl bg-surface p-6 shadow-lifted ${maxWidthClassName}`}
       >
         <button
           ref={closeButtonRef}

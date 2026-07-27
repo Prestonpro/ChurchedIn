@@ -8,6 +8,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
 import { Reveal } from "@/components/Reveal";
+import { FloatingShape } from "@/components/FloatingShape";
+import { StepNumber } from "@/components/StepNumber";
 import { FeatureCards } from "./FeatureCards";
 import { HeroSection } from "./HeroSection";
 
@@ -71,27 +73,32 @@ export default function LandingPage() {
       <HeroSection />
 
       <section className="relative overflow-hidden">
-        <div aria-hidden className="pointer-events-none absolute -right-4 top-4 size-10 animate-float-gentle rounded-full bg-brand-200/15" />
+        <FloatingShape position="-right-4 top-4" size="size-10" tone="bg-brand-200/15" scrollSpeed={0.04} />
         <div className="relative mx-auto max-w-6xl px-6 pb-24">
           <FeatureCards features={FEATURES} />
         </div>
       </section>
 
       <section className="relative overflow-hidden border-y border-line bg-surface">
-        <div aria-hidden className="pointer-events-none absolute left-6 top-10 size-9 animate-float-gentle rounded-full bg-accent-200/15" style={{ animationDelay: "2s" }} />
-        <div aria-hidden className="pointer-events-none absolute bottom-8 right-8 size-14 animate-float-gentle rounded-full bg-brand-200/15" style={{ animationDelay: "4s" }} />
+        <FloatingShape position="left-6 top-10" size="size-9" tone="bg-accent-200/15" delay="2s" scrollSpeed={-0.03} />
+        <FloatingShape position="bottom-8 right-8" size="size-14" tone="bg-brand-200/15" delay="4s" scrollSpeed={0.06} />
         <div className="relative mx-auto max-w-6xl px-6 py-20">
-          <Reveal className="mb-12 text-center">
-            <h2 className="text-3xl font-extrabold text-ink">People, doing this together</h2>
-            <p className="mt-2 text-ink-muted">Not a program to manage — just your church family, showing up for each other.</p>
-          </Reveal>
+          <div className="mb-12 text-center">
+            <Reveal variant="left">
+              <h2 className="text-3xl font-extrabold text-ink">People, doing this together</h2>
+            </Reveal>
+            <Reveal delay={100}>
+              <p className="mt-2 text-ink-muted">Not a program to manage — just your church family, showing up for each other.</p>
+            </Reveal>
+          </div>
           <div className="grid gap-8 sm:grid-cols-3">
             {STEPS.map((step, index) => (
               <Reveal key={step.number} delay={index * 100}>
                 <div className="group relative rounded-2xl border border-line bg-paper p-6 shadow-card transition-brand hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lifted">
-                  <span className="text-4xl font-extrabold text-brand-100 transition-brand group-hover:text-brand-400">
-                    {step.number}
-                  </span>
+                  <StepNumber
+                    value={step.number}
+                    className="block text-4xl font-extrabold tabular-nums text-brand-100 transition-brand group-hover:text-brand-400"
+                  />
                   <h3 className="mt-2 text-lg font-bold text-ink">{step.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-ink-soft">{step.body}</p>
                 </div>
@@ -102,13 +109,17 @@ export default function LandingPage() {
       </section>
 
       <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-        <Reveal>
+        <Reveal variant="icon">
           <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-accent-50 text-accent-600">
             <ChatCircleDots weight="fill" className="size-6" />
           </span>
+        </Reveal>
+        <Reveal variant="left" delay={100}>
           <h2 className="mt-5 text-2xl font-extrabold text-ink sm:text-3xl">
             Contact info stays private until a friend says yes.
           </h2>
+        </Reveal>
+        <Reveal delay={200}>
           <p className="mx-auto mt-3 max-w-xl text-ink-soft">
             Every reach-out goes through an accept step first — no student or
             volunteer&apos;s email is ever shown before both sides have agreed
@@ -118,15 +129,19 @@ export default function LandingPage() {
       </section>
 
       <section className="relative overflow-hidden border-t border-line bg-surface">
-        <div aria-hidden className="pointer-events-none absolute right-10 top-8 size-8 animate-float-gentle rounded-full bg-brand-200/20" style={{ animationDelay: "1s" }} />
+        <FloatingShape position="right-10 top-8" size="size-8" tone="bg-brand-200/20" delay="1s" scrollSpeed={0.05} />
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
-          <Reveal>
+          <Reveal variant="icon">
             <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
               <Sparkle weight="fill" className="size-6" />
             </span>
+          </Reveal>
+          <Reveal variant="left" delay={100}>
             <h2 className="mt-5 text-2xl font-extrabold text-ink sm:text-3xl">
               You don&apos;t have to be a pastor.
             </h2>
+          </Reveal>
+          <Reveal delay={200}>
             <p className="mx-auto mt-3 max-w-xl text-ink-soft">
               If you and a friend want to start welcoming international
               students, you can set it up together — no official title needed,

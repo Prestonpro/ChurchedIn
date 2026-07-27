@@ -4,6 +4,7 @@ import { ShieldCheck, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
 import { MagneticButton } from "@/components/MagneticButton";
 import { useMouseTracking } from "@/hooks/useMouseTracking";
+import { useScrollOffset } from "@/hooks/useScrollOffset";
 
 const BG_SHIFT = 10; // px — background mesh, slowest layer
 const BADGE_SHIFT = 5; // px — badge, opposite direction from the background
@@ -27,6 +28,7 @@ const HERO_SHAPES = [
  */
 export function HeroSection() {
   const { ref, x, y, isHovering } = useMouseTracking<HTMLElement>();
+  const scrollOffset = useScrollOffset(0.04, 30);
   const bgX = isHovering ? x * BG_SHIFT : 0;
   const bgY = isHovering ? y * BG_SHIFT : 0;
   const badgeX = isHovering ? -x * BADGE_SHIFT : 0;
@@ -46,7 +48,7 @@ export function HeroSection() {
           aria-hidden
           className={`pointer-events-none absolute ${shape.position} transition-transform duration-300 ease-out`}
           style={{
-            transform: `translate(${isHovering ? x * SHAPE_SHIFT * shape.dir : 0}px, ${isHovering ? y * SHAPE_SHIFT * shape.dir : 0}px)`,
+            transform: `translate(${isHovering ? x * SHAPE_SHIFT * shape.dir : 0}px, ${(isHovering ? y * SHAPE_SHIFT * shape.dir : 0) + scrollOffset * shape.dir}px)`,
           }}
         >
           <div

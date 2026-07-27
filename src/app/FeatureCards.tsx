@@ -5,6 +5,7 @@ import { CalendarPlus, HandHeart, UsersThree, ArrowRight } from "@phosphor-icons
 import { Card } from "@/components/ui/Card";
 import { Modal } from "@/components/ui/Modal";
 import { Reveal } from "@/components/Reveal";
+import { FeatureDemo } from "@/components/FeatureDemo";
 import { useMouseTracking } from "@/hooks/useMouseTracking";
 
 const MAX_TILT = 8; // deg
@@ -94,7 +95,7 @@ function FeatureCard({
             type="button"
             onClick={onOpen}
             aria-haspopup="dialog"
-            className="w-full text-left"
+            className="w-full cursor-pointer text-left"
           >
             <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-brand group-hover:bg-brand-600 group-hover:text-white">
               <IconComponent weight="duotone" className="size-6" />
@@ -108,8 +109,11 @@ function FeatureCard({
         </Card>
       </div>
 
-      <Modal open={isOpen} onClose={onClose} title={title}>
-        <p>{details}</p>
+      <Modal open={isOpen} onClose={onClose} title={title} maxWidthClassName="max-w-xl">
+        {/* The demo is entirely visual — this keeps the same information
+         * available to screen reader users. */}
+        <p className="sr-only">{details}</p>
+        <FeatureDemo demoKey={iconKey} />
       </Modal>
     </div>
   );
