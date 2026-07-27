@@ -3,10 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Reports whether an element has entered the viewport, for scroll-triggered
- * reveal animations. Fires once (unobserves after the first reveal) — a
- * section shouldn't flicker in/out every time the user scrolls past it
- * again. Reveals immediately (no observer) under prefers-reduced-motion.
+ * Reports whether an element is currently in the viewport, for
+ * scroll-triggered reveal animations. Replays every time — leaving the
+ * viewport resets it, so scrolling back re-triggers the reveal, matching
+ * how these animations read on most sites. Reveals immediately (no
+ * observer) under prefers-reduced-motion.
  */
 export function useInView<T extends HTMLElement>() {
   const ref = useRef<T>(null);
@@ -26,12 +27,7 @@ export function useInView<T extends HTMLElement>() {
     }
 
     const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsInView(true);
-          observer.unobserve(el);
-        }
-      },
+      ([entry]) => setIsInView(entry.isIntersecting),
       { threshold: 0.15, rootMargin: "0px 0px -80px 0px" },
     );
     observer.observe(el);

@@ -9,7 +9,7 @@ import {
 import { LinkButton } from "@/components/ui/Button";
 import { Reveal } from "@/components/Reveal";
 import { FloatingShape } from "@/components/FloatingShape";
-import { StepNumber } from "@/components/StepNumber";
+import { StepCard } from "@/components/StepCard";
 import { FeatureCards } from "./FeatureCards";
 import { HeroSection } from "./HeroSection";
 
@@ -91,17 +91,10 @@ export default function LandingPage() {
               <p className="mt-2 text-ink-muted">Not a program to manage — just your church family, showing up for each other.</p>
             </Reveal>
           </div>
-          <div className="grid gap-8 sm:grid-cols-3">
+          <div className="grid items-stretch gap-8 sm:grid-cols-3">
             {STEPS.map((step, index) => (
-              <Reveal key={step.number} delay={index * 100}>
-                <div className="group relative rounded-2xl border border-line bg-paper p-6 shadow-card transition-brand hover:-translate-y-1 hover:scale-[1.02] hover:shadow-lifted">
-                  <StepNumber
-                    value={step.number}
-                    className="block text-4xl font-extrabold tabular-nums text-brand-100 transition-brand group-hover:text-brand-400"
-                  />
-                  <h3 className="mt-2 text-lg font-bold text-ink">{step.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-soft">{step.body}</p>
-                </div>
+              <Reveal key={step.number} delay={index * 100} className="h-full">
+                <StepCard number={step.number} title={step.title} body={step.body} />
               </Reveal>
             ))}
           </div>
@@ -110,7 +103,7 @@ export default function LandingPage() {
 
       <section className="mx-auto max-w-4xl px-6 py-20 text-center">
         <Reveal variant="icon">
-          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-accent-50 text-accent-600">
+          <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
             <ChatCircleDots weight="fill" className="size-6" />
           </span>
         </Reveal>
