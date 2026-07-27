@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarPlus, HandHeart, UsersThree, CaretDown } from "@phosphor-icons/react/dist/ssr";
+import { CalendarPlus, HandHeart, UsersThree, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { Card } from "@/components/ui/Card";
+import { Modal } from "@/components/ui/Modal";
+import { Reveal } from "@/components/Reveal";
 import { useMouseTracking } from "@/hooks/useMouseTracking";
 
 const MAX_TILT = 8; // deg
@@ -10,7 +12,8 @@ const MAX_TILT = 8; // deg
 // Server Components can't pass component/function references as props to
 // Client Components, only serializable data — so page.tsx passes a plain
 // string key and this lookup resolves it on the client (same pattern as
-// NAV_ICONS in src/components/nav/NavLinks.tsx).
+// NAV_ICONS in src/components/nav/NavLinks.tsx). FeatureCards looks the icon
+// back up from this key on the client side.
 const FEATURE_ICONS = {
   calendar: CalendarPlus,
   hand: HandHeart,
@@ -21,40 +24,31 @@ export type Feature = {
   iconKey: keyof typeof FEATURE_ICONS;
   title: string;
   body: string;
-  /** Extra depth shown when the card is expanded — concrete specifics,
-   * not a restatement of `body`. */
+  /** Shown in the detail modal — concrete specifics, not a restatement of
+   * `body`. */
   details: string;
 };
 
-/** Click-to-expand feature cards for the landing page. Independently
- * expandable (not accordion-exclusive) since these are peer features, not
- * mutually exclusive options. Click-based rather than hover-based so
- * touch and desktop behave identically. */
+/**
+ * Feature cards for the landing page. Clicking one pops it open into a
+ * modal with the full detail (rather than expanding text inline) — only one
+ * open at a time, tracked by index at this level so opening a second card
+ * cleanly replaces the first instead of both being open simultaneously.
+ */
 export function FeatureCards({ features }: { features: Feature[] }) {
-  const [openIndexes, setOpenIndexes] = useState<Set<number>>(new Set());
-
-  function toggle(index: number) {
-    setOpenIndexes((prev) => {
-      const next = new Set(prev);
-      if (next.has(index)) {
-        next.delete(index);
-      } else {
-        next.add(index);
-      }
-      return next;
-    });
-  }
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   return (
     <div className="grid gap-6 sm:grid-cols-3">
       {features.map((feature, index) => (
-        <FeatureCard
-          key={feature.title}
-          feature={feature}
-          isOpen={openIndexes.has(index)}
-          onToggle={() => toggle(index)}
-          detailId={`feature-detail-${index}`}
-        />
+        <Reveal key={feature.title} delay={index * 100}>
+          <FeatureCard
+            feature={feature}
+            isOpen={openIndex === index}
+            onOpen={() => setOpenIndex(index)}
+            onClose={() => setOpenIndex(null)}
+          />
+        </Reveal>
       ))}
     </div>
   );
@@ -65,13 +59,13 @@ export function FeatureCards({ features }: { features: Feature[] }) {
 function FeatureCard({
   feature: { iconKey, title, body, details },
   isOpen,
-  onToggle,
-  detailId,
+  onOpen,
+  onClose,
 }: {
   feature: Feature;
   isOpen: boolean;
-  onToggle: () => void;
-  detailId: string;
+  onOpen: () => void;
+  onClose: () => void;
 }) {
   const IconComponent = FEATURE_ICONS[iconKey];
   const { ref, x, y, isHovering } = useMouseTracking<HTMLDivElement>();
@@ -98,38 +92,25 @@ function FeatureCard({
           />
           <button
             type="button"
-            onClick={onToggle}
-            aria-expanded={isOpen}
-            aria-controls={detailId}
+            onClick={onOpen}
+            aria-haspopup="dialog"
             className="w-full text-left"
           >
-            <div className="flex items-start justify-between gap-2">
-              <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-brand group-hover:bg-brand-600 group-hover:text-white">
-                <IconComponent weight="duotone" className="size-6" />
-              </span>
-              <CaretDown
-                weight="bold"
-                className={`mt-2 size-4 shrink-0 text-ink-faint transition-transform duration-300 ${
-                  isOpen ? "rotate-180" : ""
-                }`}
-              />
-            </div>
+            <span className="flex size-11 items-center justify-center rounded-xl bg-brand-50 text-brand-600 transition-brand group-hover:bg-brand-600 group-hover:text-white">
+              <IconComponent weight="duotone" className="size-6" />
+            </span>
             <h2 className="mt-4 text-lg font-bold text-ink">{title}</h2>
             <p className="mt-2 text-sm leading-relaxed text-ink-soft">{body}</p>
+            <span className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-brand-600 transition-transform duration-200 group-hover:translate-x-1">
+              Learn more <ArrowRight weight="bold" className="size-3.5" />
+            </span>
           </button>
-          <div
-            id={detailId}
-            className="grid transition-[grid-template-rows] duration-300 ease-out"
-            style={{ gridTemplateRows: isOpen ? "1fr" : "0fr" }}
-          >
-            <div className="overflow-hidden">
-              <p className="mt-3 border-t border-line pt-3 text-sm leading-relaxed text-ink-muted">
-                {details}
-              </p>
-            </div>
-          </div>
         </Card>
       </div>
+
+      <Modal open={isOpen} onClose={onClose} title={title}>
+        <p>{details}</p>
+      </Modal>
     </div>
   );
 }
