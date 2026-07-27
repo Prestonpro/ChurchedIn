@@ -9,6 +9,16 @@ const BG_SHIFT = 10; // px — background mesh, slowest layer
 const BADGE_SHIFT = 5; // px — badge, opposite direction from the background
 const SHAPE_SHIFT = 14; // px — ambient shapes, a touch more than the background
 
+// Small floating circles, purely decorative — varied size/position/delay so
+// they read as organic drift, not a repeated pattern. `dir` flips which way
+// a shape parallaxes relative to the cursor (some with it, some against).
+const HERO_SHAPES = [
+  { id: "s1", position: "left-[8%] top-[18%]", size: "size-16", tone: "bg-brand-200/20", delay: "0s", dir: 1 },
+  { id: "s2", position: "right-[10%] top-[55%]", size: "size-11", tone: "bg-accent-200/15", delay: "1.5s", dir: -1 },
+  { id: "s3", position: "right-[20%] top-[12%]", size: "size-8", tone: "bg-brand-200/15", delay: "3s", dir: 1 },
+  { id: "s4", position: "left-[16%] top-[68%]", size: "size-9", tone: "bg-accent-200/20", delay: "4.5s", dir: -1 },
+] as const;
+
 /**
  * The landing hero, extracted from page.tsx (a Server Component) so it can
  * track the cursor for a barely-noticeable parallax: the background mesh
@@ -30,22 +40,21 @@ export function HeroSection() {
       />
 
       {/* Ambient decorative shapes — pure warmth, not focal points. */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute left-[8%] top-[18%] transition-transform duration-300 ease-out"
-        style={{ transform: `translate(${isHovering ? x * SHAPE_SHIFT : 0}px, ${isHovering ? y * SHAPE_SHIFT : 0}px)` }}
-      >
-        <div className="size-16 animate-float-gentle rounded-full bg-brand-200/20" />
-      </div>
-      <div
-        aria-hidden
-        className="pointer-events-none absolute right-[10%] top-[55%] transition-transform duration-300 ease-out"
-        style={{
-          transform: `translate(${isHovering ? -x * SHAPE_SHIFT : 0}px, ${isHovering ? -y * SHAPE_SHIFT : 0}px)`,
-        }}
-      >
-        <div className="size-11 animate-float-gentle rounded-2xl bg-accent-200/15" style={{ animationDelay: "1.5s" }} />
-      </div>
+      {HERO_SHAPES.map((shape) => (
+        <div
+          key={shape.id}
+          aria-hidden
+          className={`pointer-events-none absolute ${shape.position} transition-transform duration-300 ease-out`}
+          style={{
+            transform: `translate(${isHovering ? x * SHAPE_SHIFT * shape.dir : 0}px, ${isHovering ? y * SHAPE_SHIFT * shape.dir : 0}px)`,
+          }}
+        >
+          <div
+            className={`${shape.size} animate-float-gentle rounded-full ${shape.tone}`}
+            style={{ animationDelay: shape.delay }}
+          />
+        </div>
+      ))}
 
       <div className="relative mx-auto max-w-4xl px-6 pb-20 pt-20 text-center sm:pt-28">
         <div

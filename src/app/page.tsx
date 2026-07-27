@@ -69,12 +69,17 @@ export default function LandingPage() {
 
       <HeroSection />
 
-      <section className="mx-auto max-w-6xl px-6 pb-24">
-        <FeatureCards features={FEATURES} />
+      <section className="relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute -right-4 top-4 size-10 animate-float-gentle rounded-full bg-brand-200/15" />
+        <div className="relative mx-auto max-w-6xl px-6 pb-24">
+          <FeatureCards features={FEATURES} />
+        </div>
       </section>
 
-      <section className="border-y border-line bg-surface">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+      <section className="relative overflow-hidden border-y border-line bg-surface">
+        <div aria-hidden className="pointer-events-none absolute left-6 top-10 size-9 animate-float-gentle rounded-full bg-accent-200/15" style={{ animationDelay: "2s" }} />
+        <div aria-hidden className="pointer-events-none absolute bottom-8 right-8 size-14 animate-float-gentle rounded-full bg-brand-200/15" style={{ animationDelay: "4s" }} />
+        <div className="relative mx-auto max-w-6xl px-6 py-20">
           <div className="mb-12 text-center">
             <h2 className="text-3xl font-extrabold text-ink">People, doing this together</h2>
             <p className="mt-2 text-ink-muted">Not a program to manage — just your church family, showing up for each other.</p>
@@ -110,8 +115,9 @@ export default function LandingPage() {
         </p>
       </section>
 
-      <section className="border-t border-line bg-surface">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+      <section className="relative overflow-hidden border-t border-line bg-surface">
+        <div aria-hidden className="pointer-events-none absolute right-10 top-8 size-8 animate-float-gentle rounded-full bg-brand-200/20" style={{ animationDelay: "1s" }} />
+        <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
             <Sparkle weight="fill" className="size-6" />
           </span>
