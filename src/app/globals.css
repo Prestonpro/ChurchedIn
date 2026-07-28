@@ -235,20 +235,47 @@
 /* Strips Leaflet's default white popup chrome so EventPopupCard's own
    glassmorphism card (bg-ink/85 + backdrop-blur) shows through cleanly,
    instead of sitting inside a second, clashing white rounded box. Scoped
-   to .leaflet-container so it never touches anything outside the map. */
-.leaflet-container .leaflet-popup-content-wrapper {
+   to .leaflet-popup-dark (the events map) so it never touches other maps —
+   it used to be scoped to .leaflet-container, which is Leaflet's own
+   class on every map, so it was silently making every OTHER map's popup
+   (e.g. the discover map's church cards) transparent too. */
+.leaflet-popup-dark .leaflet-popup-content-wrapper {
   background: transparent;
   box-shadow: none;
   border-radius: 0;
   padding: 0;
 }
-.leaflet-container .leaflet-popup-content {
+.leaflet-popup-dark .leaflet-popup-content {
   margin: 0;
   width: auto !important;
 }
-.leaflet-container .leaflet-popup-tip {
+.leaflet-popup-dark .leaflet-popup-tip {
   background: rgba(37, 34, 30, 0.85);
 }
-.leaflet-container a.leaflet-popup-close-button {
+.leaflet-popup-dark a.leaflet-popup-close-button {
   display: none;
+}
+
+/* The discover map's church-card popups get the app's normal card look
+   (see Card.tsx) instead of Leaflet's plain default box + gray tip, which
+   read as flat/generic against the warm paper theme. */
+.leaflet-popup-card .leaflet-popup-content-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 1rem;
+  box-shadow: var(--shadow-card);
+  padding: 0;
+}
+.leaflet-popup-card .leaflet-popup-content {
+  margin: 0.85rem 1rem;
+  width: auto !important;
+  line-height: 1.4;
+}
+.leaflet-popup-card .leaflet-popup-tip-container {
+  width: 22px;
+  height: 11px;
+}
+.leaflet-popup-card .leaflet-popup-tip {
+  background: var(--color-surface);
+  box-shadow: var(--shadow-soft);
 }

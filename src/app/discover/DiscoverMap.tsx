@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import type L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { leafletPin } from "@/lib/leafletPin";
@@ -16,43 +16,22 @@ const TILE_ATTRIBUTION =
 // resolved) the viewer's location.
 const DEFAULT_CENTER: [number, number] = [39.5, -98.35];
 
-// Pin color by member-count tier — matches MemberCountBadge's tiers, so the
-// map and the cards agree on what "an active, real community" looks like.
-function pinColorForMemberCount(memberCount: number): string {
-  if (memberCount >= 30) return "#2563eb";
-  if (memberCount >= 10) return "#16a34a";
-  if (memberCount >= 3) return "#63bbac";
-  return "#9ca3af";
+// Pins scale with member count (bigger community = bigger dot) instead of
+// being sorted into discrete color tiers — sqrt so a handful of huge
+// churches don't make everything else invisible by comparison.
+const MIN_PIN_SIZE = 14;
+const MAX_PIN_SIZE = 38;
+function pinSizeForMemberCount(memberCount: number): number {
+  const size = MIN_PIN_SIZE + Math.sqrt(Math.min(memberCount, 4000)) * 1.1;
+  return Math.round(Math.min(size, MAX_PIN_SIZE));
 }
 
-// Same tiers/order as MemberCountBadge, so the legend, the pins, and the
-// badge text all agree on what each color means.
-const LEGEND_TIERS = [
-  { color: "#2563eb", label: "Large community", sublabel: "30+ members" },
-  { color: "#16a34a", label: "Established", sublabel: "10–29 members" },
-  { color: "#63bbac", label: "Growing", sublabel: "3–9 members" },
-  { color: "#9ca3af", label: "New", sublabel: "0–2 members" },
-] as const;
-
-function MapLegend() {
-  return (
-    <div className="absolute bottom-3 left-3 z-[1000] rounded-xl border border-line bg-surface/95 p-3 text-xs shadow-card backdrop-blur-sm">
-      <p className="mb-1.5 font-bold text-ink">Pin size = community size</p>
-      <div className="space-y-1">
-        {LEGEND_TIERS.map((tier) => (
-          <div key={tier.label} className="flex items-center gap-2">
-            <span
-              className="inline-block size-3 shrink-0 rounded-full border border-white shadow-sm"
-              style={{ background: tier.color }}
-            />
-            <span className="text-ink-soft">
-              {tier.label} <span className="text-ink-faint">· {tier.sublabel}</span>
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
+// Brand teal for "member count is a map-seed estimate"; accent gold for a
+// church with at least one real, signed-up member (see
+// listDiscoverableChurches' hasRealMembers) — a simple, self-explanatory
+// signal that doesn't need a separate legend.
+function pinColor(hasRealMembers: boolean): string {
+  return hasRealMembers ? "#e3ab3b" : "#49ab9b";
 }
 
 function RecenterOnLocation({ center }: { center: [number, number] | null }) {
@@ -77,7 +56,21 @@ export function DiscoverMap({
   userLocation: [number, number] | null;
 }) {
   const markerRefs = useRef<Record<string, L.Marker | null>>({});
+  // Hovering a marker opens its popup immediately; leaving it (the marker
+  // OR the popup content itself) schedules a close a beat later, so
+  // moving the cursor from the pin into the popup to click something
+  // doesn't slam it shut first.
+  const closeTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const withPins = churches.filter((c) => c.locationLat !== null && c.locationLng !== null);
+
+  function openNow(id: string) {
+    clearTimeout(closeTimers.current[id]);
+    markerRefs.current[id]?.openPopup();
+  }
+  function closeSoon(id: string) {
+    clearTimeout(closeTimers.current[id]);
+    closeTimers.current[id] = setTimeout(() => markerRefs.current[id]?.closePopup(), 200);
+  }
 
   useEffect(() => {
     if (selectedId && markerRefs.current[selectedId]) {
@@ -89,36 +82,39 @@ export function DiscoverMap({
   const center: [number, number] = userLocation ?? (first ? [first.locationLat!, first.locationLng!] : DEFAULT_CENTER);
 
   return (
-    <div className="relative h-full w-full">
-      <MapContainer center={center} zoom={userLocation ? 11 : first ? 8 : 4} className="h-full w-full">
-        <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
-        <RecenterOnLocation center={userLocation} />
-        {userLocation && (
-          <Marker
-            position={userLocation}
-            icon={leafletPin("#111827", 14)}
-          />
-        )}
-        {withPins.map((church) => (
-          <Marker
-            key={church.id}
-            position={[church.locationLat!, church.locationLng!]}
-            icon={leafletPin(pinColorForMemberCount(church.memberCount), church.id === selectedId ? 26 : 20)}
-            eventHandlers={{ click: () => onSelect(church.id) }}
-            ref={(ref) => {
-              markerRefs.current[church.id] = ref;
-            }}
-          >
-            <Tooltip direction="top" offset={[0, -10]} opacity={0.95}>
-              {church.name}
-            </Tooltip>
-            <Popup minWidth={220}>
+    <MapContainer center={center} zoom={userLocation ? 11 : first ? 8 : 4} className="h-full w-full leaflet-popup-card">
+      <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
+      <RecenterOnLocation center={userLocation} />
+      {userLocation && (
+        <Marker
+          position={userLocation}
+          icon={leafletPin("#111827", 14)}
+        />
+      )}
+      {withPins.map((church) => (
+        <Marker
+          key={church.id}
+          position={[church.locationLat!, church.locationLng!]}
+          icon={leafletPin(
+            pinColor(church.hasRealMembers),
+            pinSizeForMemberCount(church.memberCount) + (church.id === selectedId ? 6 : 0),
+          )}
+          eventHandlers={{
+            click: () => onSelect(church.id),
+            mouseover: () => openNow(church.id),
+            mouseout: () => closeSoon(church.id),
+          }}
+          ref={(ref) => {
+            markerRefs.current[church.id] = ref;
+          }}
+        >
+          <Popup minWidth={220} closeButton={false}>
+            <div onMouseEnter={() => openNow(church.id)} onMouseLeave={() => closeSoon(church.id)}>
               <ChurchCard church={church} compact />
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
-      <MapLegend />
-    </div>
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
   );
 }

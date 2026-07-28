@@ -52,7 +52,7 @@ export function LeafletMap({
     <MapContainer
       center={center}
       zoom={first ? 12 : 4}
-      className="h-full w-full"
+      className="h-full w-full leaflet-popup-dark"
       scrollWheelZoom
       style={{ background: "#1a1a1a" }}
     >

@@ -26,6 +26,7 @@ export type DiscoverableChurch = {
   memberCount: number;
   upcomingEventCount: number;
   isClaimed: boolean;
+  hasRealMembers: boolean;
   distanceMiles: number | null;
 };
 

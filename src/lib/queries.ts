@@ -298,12 +298,24 @@ export async function listDiscoverableChurches() {
     orderBy: { createdAt: "desc" },
     include: {
       _count: { select: { memberships: true, events: { where: { status: EVENT_STATUS.PUBLISHED, startsAt: { gte: new Date() } } } } },
+      // At most one matching row, just to check "does a real (non-seed)
+      // member exist" — distinguishes a church with at least one real,
+      // signed-up member from one whose member count is still just a
+      // map-seed estimate (see the Bryan/College Station seed's
+      // placeholder accounts). Shown on the discover map as a different
+      // pin color.
+      memberships: {
+        where: { user: { email: { not: { endsWith: "@seed.churchedin.internal" } } } },
+        select: { id: true },
+        take: 1,
+      },
     },
   });
   return churches.map((c) => ({
     ...c,
     memberCount: c._count.memberships,
     upcomingEventCount: c._count.events,
+    hasRealMembers: c.memberships.length > 0,
   }));
 }
 

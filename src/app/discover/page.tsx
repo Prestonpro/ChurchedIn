@@ -21,6 +21,7 @@ export default async function DiscoverPage() {
     memberCount: c.memberCount,
     upcomingEventCount: c.upcomingEventCount,
     isClaimed: c.claimedAt !== null,
+    hasRealMembers: c.hasRealMembers,
     distanceMiles: null,
   }));
 
