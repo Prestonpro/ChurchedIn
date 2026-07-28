@@ -23,7 +23,11 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
         {church.denomination && church.distanceMiles != null && " · "}
         {church.distanceMiles != null && `${church.distanceMiles.toFixed(1)} mi away`}
       </p>
-      {!church.isClaimed && <Badge className="mt-1.5">Not yet claimed</Badge>}
+      {!church.isClaimed && (
+        <Badge tone="warning" className="mt-1.5">
+          Not yet claimed
+        </Badge>
+      )}
       {languageList.length > 0 && (
         <p className="mt-1.5 flex items-center gap-1 text-xs text-ink-soft">
           <Translate weight="bold" className="size-3.5 shrink-0 text-ink-faint" />
@@ -59,7 +63,7 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
         </Link>
         <Link
           href={`/churches/${church.id}?ride=1`}
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-line-strong px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-accent-300 bg-accent-50 px-2.5 py-1.5 text-xs font-semibold text-accent-800 transition-brand hover:border-accent-400 hover:bg-accent-100"
         >
           <Car weight="bold" className="size-3.5" /> Need a ride?
         </Link>
@@ -69,7 +73,7 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
           href={`https://www.google.com/maps/dir/?api=1&destination=${church.locationLat},${church.locationLng}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-line-strong px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+          className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100"
         >
           <NavigationArrow weight="bold" className="size-3.5" /> Get directions
         </a>
