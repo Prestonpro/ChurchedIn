@@ -47,6 +47,7 @@ export async function createChurchProfileAction(
       data: {
         name: data.name,
         joinCode: generateJoinCode(),
+        claimedAt: new Date(),
         denomination: data.denomination || null,
         address: data.address || null,
         serviceTimes: data.serviceTimes || null,
@@ -107,6 +108,49 @@ export async function joinDiscoveredChurchAction(
   await setSessionCookie(token);
 
   redirect(dashboardPathForRole(role as Role));
+}
+
+/**
+ * Claims an unclaimed "premade" church listing (e.g. the Bryan/College
+ * Station map seed) — the claimer must already be a member (join first,
+ * same as anyone else) and the church must not already have a real
+ * leader. Promotes their existing membership to CHURCH_ADMIN and marks
+ * the church claimed. There's no real identity check yet — "first
+ * already-joined member to ask" — same trust-it-for-now spirit as the
+ * rest of this MVP; a church-email verification step is the planned
+ * next step once this is validated with real users.
+ */
+export async function claimChurchAdminAction(churchId: string): Promise<ActionResult> {
+  const user = await requireUser();
+  const membership = user.memberships.find((m) => m.churchId === churchId);
+  if (!membership) {
+    return { error: "Join this church first, then you can claim it as its leader." };
+  }
+  if (membership.role === ROLES.CHURCH_ADMIN) {
+    return { error: "You're already a leader here." };
+  }
+
+  const church = await prisma.church.findUnique({ where: { id: churchId } });
+  if (!church) {
+    return { error: "That church no longer exists." };
+  }
+  if (church.claimedAt) {
+    return { error: "This church already has a leader." };
+  }
+
+  await prisma.$transaction([
+    prisma.membership.update({
+      where: { userId_churchId: { userId: user.id, churchId } },
+      data: { role: ROLES.CHURCH_ADMIN },
+    }),
+    prisma.church.update({ where: { id: churchId }, data: { claimedAt: new Date() } }),
+  ]);
+
+  const token = await createSessionToken({ userId: user.id, activeChurchId: churchId });
+  await setSessionCookie(token);
+
+  revalidatePath(`/churches/${churchId}`);
+  redirect(dashboardPathForRole(ROLES.CHURCH_ADMIN));
 }
 
 async function requireChurchAdmin(churchId: string) {

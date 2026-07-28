@@ -25,6 +25,7 @@ export type DiscoverableChurch = {
   website: string | null;
   memberCount: number;
   upcomingEventCount: number;
+  isClaimed: boolean;
   distanceMiles: number | null;
 };
 

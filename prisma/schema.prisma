@@ -97,6 +97,16 @@ model Church {
   address            String?
   website            String?
 
+  // Null means this listing has no real leader yet — e.g. a church seeded
+  // directly onto the discovery map so international students can see it
+  // exists, before anyone from that church has an account here. Set at
+  // creation for every church made through the normal signup/"add a
+  // church" flows (its creator is already its CHURCH_ADMIN), and by
+  // claimChurchAdminAction the first time an already-joined member claims
+  // an unclaimed listing. No real verification yet (see that action's doc
+  // comment) — a church-email check is the planned next step.
+  claimedAt          DateTime?
+
   memberships Membership[]
   events      Event[]
   reports     Report[]

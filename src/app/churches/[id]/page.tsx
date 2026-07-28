@@ -17,9 +17,11 @@ import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { MemberCountBadge } from "@/components/MemberCountBadge";
+import { Badge } from "@/components/ui/Badge";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
 import { type EventCategory } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
+import { ClaimAdminButton } from "./ClaimAdminButton";
 import { FirstVisitRideForm } from "./FirstVisitRideForm";
 
 export default async function ChurchProfilePage({
@@ -59,7 +61,12 @@ export default async function ChurchProfilePage({
                   <Buildings weight="fill" className="size-5.5" />
                 </span>
                 <div>
-                  <h1 className="text-2xl font-extrabold text-ink">{church.name}</h1>
+                  <h1 className="flex items-center gap-2 text-2xl font-extrabold text-ink">
+                    {church.name}
+                    {!church.claimedAt && (
+                      <Badge tone="neutral">Not yet claimed</Badge>
+                    )}
+                  </h1>
                   <p className="text-sm text-ink-muted">
                     {church.memberCount} {church.memberCount === 1 ? "member" : "members"}
                     {church.denomination && <> · {church.denomination}</>}
@@ -170,6 +177,19 @@ export default async function ChurchProfilePage({
                 <UsersThree weight="bold" className="size-4 text-brand-600" /> Join this church
               </h2>
               <JoinChurchForm churchId={id} />
+            </Card>
+          )}
+
+          {isMember && !canManageSettings && !church.claimedAt && (
+            <Card>
+              <h2 className="mb-2 flex items-center gap-1.5 font-bold text-ink">
+                <Buildings weight="bold" className="size-4 text-brand-600" /> Claim this church
+              </h2>
+              <p className="mb-3 text-sm text-ink-soft">
+                This listing doesn&apos;t have a leader yet. If you help lead {church.name}, you can claim it to
+                manage its profile, gatherings, and members.
+              </p>
+              <ClaimAdminButton churchId={id} />
             </Card>
           )}
 

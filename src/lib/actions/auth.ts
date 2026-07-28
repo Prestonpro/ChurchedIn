@@ -46,6 +46,7 @@ export async function createChurchAction(
         name: churchName,
         city: churchCity || null,
         joinCode: generateJoinCode(),
+        claimedAt: new Date(),
       },
     });
     const user = await tx.user.create({

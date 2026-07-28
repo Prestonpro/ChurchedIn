@@ -20,6 +20,7 @@ export default async function DiscoverPage() {
     website: c.website,
     memberCount: c.memberCount,
     upcomingEventCount: c.upcomingEventCount,
+    isClaimed: c.claimedAt !== null,
     distanceMiles: null,
   }));
 
