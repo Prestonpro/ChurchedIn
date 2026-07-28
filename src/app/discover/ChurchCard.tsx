@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, Translate, UsersThree, MapPinLine, Car } from "@phosphor-icons/react/dist/ssr";
+import { Clock, Translate, UsersThree, MapPinLine, Car, NavigationArrow } from "@phosphor-icons/react/dist/ssr";
 import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { Badge } from "@/components/ui/Badge";
 import type { DiscoverableChurch } from "./DiscoverClient";
@@ -64,6 +64,16 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
           <Car weight="bold" className="size-3.5" /> Need a ride?
         </Link>
       </div>
+      {church.locationLat !== null && church.locationLng !== null && (
+        <a
+          href={`https://www.google.com/maps/dir/?api=1&destination=${church.locationLat},${church.locationLng}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-line-strong px-2.5 py-1.5 text-xs font-semibold text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
+        >
+          <NavigationArrow weight="bold" className="size-3.5" /> Get directions
+        </a>
+      )}
     </div>
   );
 }
