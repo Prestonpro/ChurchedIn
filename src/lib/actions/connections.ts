@@ -119,6 +119,30 @@ export async function requestConnectionAction(
   revalidatePath("/volunteer/dashboard");
 }
 
+/** Withdraws a still-pending request before the other side has responded —
+ * distinct from endConnectionAction (which only applies to an ACCEPTED
+ * connection). Deletes the row outright rather than adding a new terminal
+ * status, so the mentor's dashboard simply stops showing it, same as if
+ * it had never been sent. */
+export async function cancelConnectionRequestAction(connectionId: string): Promise<ActionResult> {
+  const user = await requireUser();
+  const connection = await prisma.mentorConnection.findUnique({ where: { id: connectionId } });
+  if (!connection) {
+    return { error: "That request no longer exists." };
+  }
+  if (connection.studentId !== user.id) {
+    return { error: "Only the person who sent the request can cancel it." };
+  }
+  if (connection.status !== CONNECTION_STATUS.PENDING) {
+    return { error: "Only a pending request can be cancelled." };
+  }
+
+  await prisma.mentorConnection.delete({ where: { id: connectionId } });
+
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/student/mentors");
+}
+
 async function requireConnectionParticipant(connectionId: string) {
   const user = await requireUser();
   const connection = await prisma.mentorConnection.findUnique({

@@ -18,12 +18,17 @@ export function listEventsForChurch(churchId: string) {
     orderBy: { startsAt: "asc" },
     include: {
       createdBy: { select: { id: true, name: true } },
-      // `user` selected (name only) so the feed can show a handful of
+      // `user` selected (id + name) so the feed can show a handful of
       // avatar circles for "who's going" — a plain count doesn't give
-      // that same at-a-glance social-proof read.
+      // that same at-a-glance social-proof read. `id` is also needed to
+      // de-dupe against `cohosts` below (a cohost who never separately
+      // RSVP'd as a helper shouldn't be silently dropped from the count).
       rsvps: {
         where: { status: { not: RSVP_STATUS.CANCELLED } },
-        include: { user: { select: { name: true } } },
+        include: { user: { select: { id: true, name: true } } },
+      },
+      cohosts: {
+        include: { user: { select: { id: true, name: true } } },
       },
     },
   });
@@ -79,15 +84,18 @@ export async function isBlockedPair(userAId: string, userBId: string): Promise<b
   return blocked.has(userBId);
 }
 
+/** A mentor shows up if they're currently open to mentoring, OR the viewer
+ * already has a connection with them (any status) — otherwise a mentor
+ * closing themselves off would make an existing pending/accepted/ended
+ * connection vanish from the student's own page with no way to see or
+ * cancel it. */
 export async function listMentorsForChurch(churchId: string, viewerId: string) {
   const excluded = await blockedPairUserIds(viewerId);
 
   const mentors = await prisma.mentorProfile.findMany({
     where: {
-      openToMentor: true,
-      user: {
-        memberships: { some: { churchId } },
-      },
+      user: { memberships: { some: { churchId } } },
+      OR: [{ openToMentor: true }, { user: { connectionsAsMentor: { some: { studentId: viewerId } } } }],
     },
     include: { user: { select: { id: true, name: true, bio: true, photoUrl: true } } },
   });

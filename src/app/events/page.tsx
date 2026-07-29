@@ -18,13 +18,22 @@ import { DateBadge } from "@/components/ui/DateBadge";
 import { AttendeeAvatars } from "@/components/ui/AttendeeAvatars";
 import { ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
 
-function attendeeInfo(event: { rsvps: { role: string; status: string; user: { name: string } }[] }) {
+function attendeeInfo(event: {
+  rsvps: { role: string; status: string; user: { id: string; name: string } }[];
+  cohosts: { user: { id: string; name: string } }[];
+}) {
   const confirmed = event.rsvps.filter((r) => r.status === RSVP_STATUS.CONFIRMED);
-  const helpers = confirmed.filter((r) => r.role === RSVP_ROLE.HELPER).length;
+  const confirmedHelperIds = new Set(confirmed.filter((r) => r.role === RSVP_ROLE.HELPER).map((r) => r.user.id));
   const attendees = confirmed.filter((r) => r.role === RSVP_ROLE.ATTENDEE).length;
+  // A co-host is helping run the event whether or not they separately
+  // RSVP'd as a helper — without this, an org-hosted event with several
+  // invited mentors could misleadingly read as "no one helping".
+  const cohostOnlyIds = event.cohosts.map((c) => c.user.id).filter((id) => !confirmedHelperIds.has(id));
+  const helpers = confirmedHelperIds.size + cohostOnlyIds.length;
   // Names cover both roles so the list's length always matches totalCount —
   // otherwise a helper-only RSVP would show "0 + N more going".
-  return { helpers, attendees, attendeeNames: confirmed.map((r) => r.user.name) };
+  const cohostOnlyNames = event.cohosts.filter((c) => cohostOnlyIds.includes(c.user.id)).map((c) => c.user.name);
+  return { helpers, attendees, attendeeNames: [...confirmed.map((r) => r.user.name), ...cohostOnlyNames] };
 }
 
 export default async function EventsPage() {

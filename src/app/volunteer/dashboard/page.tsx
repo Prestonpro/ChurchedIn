@@ -19,8 +19,11 @@ export default async function VolunteerDashboardPage() {
   const churchId = user.activeMembership!.churchId;
 
   const [myEvents, memberCount, openRides] = await Promise.all([
+    // Includes events this volunteer is cohosting, not just ones they
+    // created — otherwise an invited mentor has no way to see their own
+    // upcoming commitment from their own dashboard.
     prisma.event.findMany({
-      where: { createdById: user.id },
+      where: { OR: [{ createdById: user.id }, { cohosts: { some: { userId: user.id } } }] },
       orderBy: { startsAt: "desc" },
       take: 10,
     }),
@@ -130,7 +133,7 @@ export default async function VolunteerDashboardPage() {
       )}
 
       <Card>
-        <h2 className="mb-3 font-bold text-ink">Gatherings you&apos;re planning</h2>
+        <h2 className="mb-3 font-bold text-ink">Gatherings you&apos;re planning or helping with</h2>
         {myEvents.length === 0 ? (
           <EmptyState
             icon={CalendarBlank}
@@ -158,6 +161,7 @@ export default async function VolunteerDashboardPage() {
                       <Icon weight="fill" className="size-4.5" />
                     </span>
                     <span className="text-sm font-semibold text-ink">{event.title}</span>
+                    {event.createdById !== user.id && <Badge tone="brand">Co-hosting</Badge>}
                   </div>
                   <span className="flex items-center gap-2 text-xs text-ink-muted">
                     {event.startsAt.toLocaleDateString()}

@@ -57,6 +57,12 @@ export default async function EventDetailPage({
   const attendees = event.rsvps.filter((r) => r.role === RSVP_ROLE.ATTENDEE);
   const confirmedHelpers = helpers.filter((r) => r.status === RSVP_STATUS.CONFIRMED).length;
   const confirmedAttendees = attendees.filter((r) => r.status === RSVP_STATUS.CONFIRMED).length;
+  // Co-hosts are helping run the event whether or not they separately
+  // RSVP'd as a helper — merge them into the same "Helping" list (deduped
+  // by user id) so an invited mentor never reads as invisible next to the
+  // "Hosted by ... with ..." line above.
+  const helperIds = new Set(helpers.map((r) => r.userId));
+  const cohostOnlyHelpers = event.cohosts.filter((c) => !helperIds.has(c.userId));
 
   const isCreator = event.createdById === user.id;
   const isCohost = event.cohosts.some((c) => c.userId === user.id);
@@ -156,7 +162,7 @@ export default async function EventDetailPage({
           <Card>
             <div className="mb-4 grid grid-cols-2 gap-4">
               <CapacityBar label="Attending" count={confirmedAttendees} cap={event.studentCap} />
-              <CapacityBar label="Helping" count={confirmedHelpers} cap={event.volunteerCap} />
+              <CapacityBar label="Helping" count={confirmedHelpers + cohostOnlyHelpers.length} cap={event.volunteerCap} />
             </div>
 
             <h2 className="flex items-center gap-1.5 text-sm font-bold text-ink">
@@ -176,11 +182,19 @@ export default async function EventDetailPage({
               <HandHeart weight="bold" className="size-4 text-accent-600" /> Helping
             </h2>
             <ul className="mt-2 space-y-1.5 text-sm text-ink-soft">
-              {helpers.length === 0 && <li className="text-ink-faint">No one yet.</li>}
+              {helpers.length === 0 && cohostOnlyHelpers.length === 0 && (
+                <li className="text-ink-faint">No one yet.</li>
+              )}
               {helpers.map((r) => (
                 <li key={r.id} className="flex items-center justify-between">
                   <span>{r.user.name}</span>
                   {r.status === RSVP_STATUS.WAITLISTED && <Badge tone="warning">Waitlist</Badge>}
+                </li>
+              ))}
+              {cohostOnlyHelpers.map((c) => (
+                <li key={c.id} className="flex items-center justify-between">
+                  <span>{c.user.name}</span>
+                  <Badge tone="brand">Co-host</Badge>
                 </li>
               ))}
             </ul>

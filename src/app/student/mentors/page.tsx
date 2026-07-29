@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BlockButton } from "@/components/BlockButton";
-import { EndConnectionButton } from "@/components/ConnectionActions";
+import { EndConnectionButton, CancelRequestButton } from "@/components/ConnectionActions";
 import { ConnectionRequestForm } from "./ConnectionRequestForm";
 import { CONNECTION_STATUS, ROLES } from "@/lib/constants";
 
@@ -94,7 +94,10 @@ export default async function MentorDirectoryPage() {
                 <div className="mt-4 flex-1 border-t border-line pt-4">
                   {!connection && <ConnectionRequestForm mentorId={m.userId} />}
                   {connection?.status === CONNECTION_STATUS.PENDING && (
-                    <Badge tone="warning">Request pending</Badge>
+                    <div className="space-y-2">
+                      <Badge tone="warning">Request pending</Badge>
+                      <CancelRequestButton connectionId={connection.id} />
+                    </div>
                   )}
                   {connection?.status === CONNECTION_STATUS.ACCEPTED && (
                     <div className="space-y-2.5">
