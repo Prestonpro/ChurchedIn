@@ -1,0 +1,3542 @@
+From ad7a615ebca8815cfafcde7434caca0e2d5d814e Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Wed, 29 Jul 2026 22:30:26 +0000
+Subject: [PATCH] feat: add the Readiness Pathway, volunteer stories, and a
+ demo seed
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Implements the actionable suggestions from the Pod 2 Demo Day feedback
+synthesis. docs/POD2_FEEDBACK_RESPONSE.md tracks every piece of feedback to
+what answers it, including what deliberately wasn't done.
+
+- Readiness Pathway (/readiness): a public four-tier self-assessment whose
+  tiers are the three church types a reviewer named — newly aware; willing
+  leadership, unready congregation; ready but directionless — plus an
+  "already going" graduation state. This is the answer to "church isn't a
+  persona". Readiness is scored as a floor rather than an average
+  (src/lib/readiness.ts): a church sits at the earliest gate it hasn't
+  cleared, so an enthusiastic congregation that has never met an
+  international student is still tier one. Leadership is measured but never
+  gates a tier — "you don't have to be a pastor" is a stance the scoring has
+  to respect. Only the two ready tiers get a ChurchedIn call-to-action, with
+  a unit test pinning that so it can't drift. Runs client-side and persists
+  nothing; a church shouldn't need an account to learn it doesn't need one.
+
+- Volunteer stories + activity feed (/stories): a first-person account from
+  someone who already hosted, because a hesitant congregation is recruited
+  by the volunteers who said yes, not by announcements. Church-scoped by
+  default; an author can opt a story onto their church's profile page, where
+  it appears with their first name only — enforced in
+  listPublicVolunteerStories, the same query-layer rule first-visit rides
+  use. Alongside it an activity feed derived from existing data
+  (src/lib/churchActivity.ts) so a church space never looks abandoned.
+  Mentor connections and rides are deliberately not feed sources: both are
+  one-to-one relationships behind an accept step. Authorship is limited to
+  volunteers and leaders — student stories need their own consent design.
+
+- Landing page: lead with the three things a group chat structurally can't
+  do (auto-waitlists, a privacy-gated friend directory, a per-church space
+  with a join code), framed as "keep your WhatsApp group" rather than asking
+  anyone to switch, plus a route into the pathway for churches that aren't
+  ready. Extracted PublicHeader so the landing and readiness pages share it.
+
+- npm run db:seed (prisma/seed.ts): a demo church with 10 people and 3
+  gatherings — one past, one deliberately over capacity so the waitlist is
+  real, one with room. Re-runnable, and it refuses to touch a church that
+  isn't unmistakably its own, so a join-code collision can't wipe real data.
+
+- /stories is added to the proxy matcher: it has a loading.tsx, so without
+  that an anonymous request gets a 200 and a shell with a client-side
+  redirect instead of a clean bounce to /login.
+
+The ISM-in-a-box gap analysis has its framework and one-sentence gap
+statement written, but its comparison table is deliberately left unfilled —
+nobody has read the source material yet, and every claim about what it
+contains is marked UNVERIFIED rather than guessed at.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01WahhvP9ETh1rQaNUoi1vrE
+---
+ README.md                                     |  95 +++-
+ docs/ISM_IN_A_BOX_GAP_ANALYSIS.md             |  96 ++++
+ docs/POD2_FEEDBACK_RESPONSE.md                |  48 ++
+ package-lock.json                             |  21 +
+ package.json                                  |   3 +
+ prisma.config.ts                              |   4 +
+ .../migration.sql                             |  20 +
+ prisma/schema.prisma                          |  44 ++
+ prisma/seed.ts                                | 538 ++++++++++++++++++
+ .../readiness/ReadinessAssessment.tsx         | 278 +++++++++
+ src/app/(public)/readiness/page.tsx           | 115 ++++
+ src/app/BeyondGroupChat.tsx                   | 107 ++++
+ src/app/churches/[id]/page.tsx                |  45 +-
+ src/app/page.tsx                              |  69 ++-
+ src/app/sitemap.ts                            |   2 +-
+ src/app/stories/StoryActions.tsx              |  88 +++
+ src/app/stories/StoryForm.tsx                 |  43 ++
+ src/app/stories/loading.tsx                   |   5 +
+ src/app/stories/page.tsx                      | 187 ++++++
+ src/app/volunteer/dashboard/page.tsx          |  31 +-
+ src/components/nav/AuthShell.tsx              |   6 +
+ src/components/nav/NavLinks.tsx               |   3 +-
+ src/components/nav/PublicHeader.tsx           |  43 ++
+ src/lib/actions/stories.ts                    | 102 ++++
+ src/lib/churchActivity.test.ts                | 213 +++++++
+ src/lib/churchActivity.ts                     | 187 ++++++
+ src/lib/queries.ts                            |  82 +++
+ src/lib/readiness.test.ts                     | 168 ++++++
+ src/lib/readiness.ts                          | 314 ++++++++++
+ src/lib/validation.ts                         |  15 +
+ src/proxy.ts                                  |  14 +-
+ 31 files changed, 2949 insertions(+), 37 deletions(-)
+ create mode 100644 docs/ISM_IN_A_BOX_GAP_ANALYSIS.md
+ create mode 100644 docs/POD2_FEEDBACK_RESPONSE.md
+ create mode 100644 prisma/migrations/20260729220000_add_volunteer_story/migration.sql
+ create mode 100644 prisma/seed.ts
+ create mode 100644 src/app/(public)/readiness/ReadinessAssessment.tsx
+ create mode 100644 src/app/(public)/readiness/page.tsx
+ create mode 100644 src/app/BeyondGroupChat.tsx
+ create mode 100644 src/app/stories/StoryActions.tsx
+ create mode 100644 src/app/stories/StoryForm.tsx
+ create mode 100644 src/app/stories/loading.tsx
+ create mode 100644 src/app/stories/page.tsx
+ create mode 100644 src/components/nav/PublicHeader.tsx
+ create mode 100644 src/lib/actions/stories.ts
+ create mode 100644 src/lib/churchActivity.test.ts
+ create mode 100644 src/lib/churchActivity.ts
+ create mode 100644 src/lib/readiness.test.ts
+ create mode 100644 src/lib/readiness.ts
+
+diff --git a/README.md b/README.md
+index 1d739cb..853d929 100644
+--- a/README.md
++++ b/README.md
+@@ -58,6 +58,32 @@ this pass (see "What's not done yet" below before assuming something exists).
+ - **Unseen-events nav badge**: `Membership.lastSeenEventsAt` + a small dot
+   on the Events nav link when the church has events created since the
+   member's last visit — clears the next time they visit `/events`.
++- **Readiness Pathway** (`/readiness`): a public, four-tier self-assessment
++  that tells a church which of four places it's actually in before it signs up
++  for anything. The tiers are the three church types a Demo Day reviewer
++  named — newly aware; willing leadership, unready congregation; ready but
++  directionless — plus an "already going" graduation state. Readiness is
++  scored as a *floor*, not an average (`src/lib/readiness.ts`): a church sits
++  at the earliest gate it hasn't cleared, so an enthusiastic congregation that
++  has never met an international student is still tier one. Leadership is
++  measured but deliberately never gates a tier — "you don't have to be a
++  pastor" is a stance the scoring has to respect. Only the two ready tiers get
++  a ChurchedIn call-to-action; the others are told plainly that we're not much
++  use to them yet. Runs client-side and persists nothing — a church shouldn't
++  need an account to find out it doesn't need one.
++- **Volunteer stories & activity feed** (`/stories`): a first-person account
++  from a volunteer who already hosted (`VolunteerStory`,
++  `src/lib/actions/stories.ts`), because a hesitant congregation is recruited
++  by the people who said yes, not by announcements. Church-scoped by default;
++  the author can opt a story into their church's profile page, where it
++  appears with their **first name only** — enforced in
++  `listPublicVolunteerStories`, the same query-layer rule
++  `listOpenRideRequestsForChurch` applies to first-visit rides. Alongside it,
++  an activity feed derived from existing data (`src/lib/churchActivity.ts`) so
++  a church space never looks abandoned. Mentor connections and rides are
++  deliberately *not* feed sources: both are one-to-one relationships behind an
++  accept step. Writing is limited to volunteers and church leaders — student
++  stories need their own consent design first.
+ - **Rides board**: students ask for a ride (`RideRequest`, `/student/rides`)
+   and any volunteer at the same church can claim it (`/volunteer/rides`,
+   `src/lib/actions/rides.ts`). Same contact-reveal-only-after-claim safety
+@@ -112,9 +138,11 @@ this pass (see "What's not done yet" below before assuming something exists).
+   confirmation/waitlist/promotion, event cancellation, the full mentor
+   connection lifecycle, password reset, new-event notifications, and
+   co-admin invites.
+-- **Tests**: Vitest for the RSVP capacity/waitlist logic and the mentor
+-  connection state machine (`src/lib/rsvp.test.ts`,
+-  `src/lib/connectionState.test.ts`), plus Playwright e2e tests for the
++- **Tests**: Vitest for the pure logic — RSVP capacity/waitlist, the mentor
++  connection state machine, readiness tier classification, and the activity
++  feed's merge/cap rules (`src/lib/rsvp.test.ts`,
++  `src/lib/connectionState.test.ts`, `src/lib/readiness.test.ts`,
++  `src/lib/churchActivity.test.ts`) — plus Playwright e2e tests for the
+   critical flows against a dedicated Postgres schema (`e2e/` — see Testing
+   below).
+ - Route protection via `src/proxy.ts` (Next 16's renamed `middleware.ts`) plus
+@@ -161,8 +189,31 @@ The Prisma schema lives in `prisma/schema.prisma`, Postgres-only:
+ ```bash
+ npx prisma migrate dev     # apply migrations + regenerate the client
+ npx prisma studio          # inspect data
++npm run db:seed            # add the demo church (see below)
+ ```
+ 
++### Seeding a demo church
++
++`npm run db:seed` (`prisma/seed.ts`) creates one demo church — **Maple Street
++Fellowship**, join code `DEMO24` — with ten people, three gatherings, and
++enough state to actually demo the app: one gathering already happened, one is
++deliberately over capacity so there's a real waitlist to promote someone off,
++friend connections sit in accepted/pending/declined, and there's an open ride
++plus a claimed one. Every account uses the password `demo-password-1234`, and
++the script prints the full list of logins when it finishes.
++
++This exists because the app is impossible to demo from an empty database —
++every screen is an empty state, which shows a reviewer nothing. Re-running it
++resets the demo church to the same known state, and it refuses to touch a
++church that isn't unmistakably its own (right join code *and* every member on
++an `@demo.churchedin.internal` address), so a join-code collision can't wipe a
++real congregation's data.
++
++Note the deliberate distinction from the `@seed.churchedin.internal` addresses
++used by the Bryan/College Station map listings: those mark placeholder
++accounts that `listDiscoverableChurches` greys out on the map, whereas the
++demo church is supposed to look alive.
++
+ Migrations from before this app ran on Postgres are preserved for reference
+ under `prisma/migrations.sqlite-archive/` — not applied by anything, just
+ history.
+@@ -294,8 +345,10 @@ the data ever reaches a page component, using `contactInfoVisible()` in
+ e2e/                                    Playwright specs + helpers (own Postgres schema, own port)
+ src/
+   app/
+-    (public)/          landing, signup, login, join, join/[code], join-as-admin/[token],
+-                        forgot-password, reset-password/[token]
++    (public)/          landing, readiness (the Readiness Pathway self-assessment), signup,
++                        login, join, join/[code], join-as-admin/[token], forgot-password,
++                        reset-password/[token]
++    stories/            volunteer stories + the derived church activity feed
+     admin/               church admin dashboard, welcome (co-leader invite prompt), reports
+     volunteer/           dashboard, profile (mentor toggle), events/new (preset picker + cohost
+                         invite + location picker), rides (rides board)
+@@ -317,7 +370,8 @@ src/
+     nav/                    AuthShell (authenticated layout + top nav — async, computes the
+                             unseen-events nav badge; `fullBleed` prop for the map/discover pages),
+                             MobileMenu (hamburger/drawer below lg), AuthPageLayout (split-panel
+-                            auth screens), NavLinks, ChurchSwitcher
++                            auth screens), PublicHeader (shared signed-out header — landing +
++                            readiness), NavLinks, ChurchSwitcher
+     ConnectionActions.tsx    accept/decline/end buttons for mentor connections
+     RideActionButton.tsx    shared claim/complete/cancel button for the rides pages
+     BlockButton.tsx
+@@ -330,7 +384,8 @@ src/
+   lib/
+     actions/               server actions (auth, events, rsvps, mentors, connections, reports,
+                            blocks, passwordReset, churchInvites, churchPartnerships, rides,
+-                           churches — creation, vouching, pastor verification, settings/roles)
++                           stories, churches — creation, vouching, pastor verification,
++                           settings/roles)
+     auth.ts                 session + role/membership guards
+     session.ts                JWT cookie signing/verification
+     password.ts                bcrypt hashing
+@@ -342,6 +397,8 @@ src/
+     prisma.ts                     Prisma client singleton (Postgres via @prisma/adapter-pg)
+     queries.ts                     shared read helpers (events, mentors, connections, reports,
+                                     cohost candidates, ride requests, mapped events)
++    readiness.ts                    pure readiness tiers/questions/scoring (unit tested)
++    churchActivity.ts                pure activity-feed merge/cap + relative time (unit tested)
+     rsvp.ts                         pure capacity/waitlist decision logic (unit tested)
+     connectionState.ts               pure connection state machine (unit tested)
+     rideState.ts                      pure ride-request state machine (unit tested)
+@@ -351,12 +408,36 @@ src/
+     validation.ts                        zod schemas
+   generated/prisma/                    Prisma client output
+ proxy.ts                                route protection middleware
++docs/
++  POD2_FEEDBACK_RESPONSE.md             Demo Day feedback → what changed, and what didn't
++  ISM_IN_A_BOX_GAP_ANALYSIS.md          differentiation framework (empirical claims UNVERIFIED)
++prisma/seed.ts                          demo church seed (npm run db:seed)
+ ```
+ 
+ ## What's not done yet
+ 
+ Called out explicitly so a future session doesn't assume these exist:
+ 
++- **From the Pod 2 Demo Day feedback pass** (see
++  [docs/POD2_FEEDBACK_RESPONSE.md](./docs/POD2_FEEDBACK_RESPONSE.md)):
++  - The ISM-in-a-box gap analysis
++    ([docs/ISM_IN_A_BOX_GAP_ANALYSIS.md](./docs/ISM_IN_A_BOX_GAP_ANALYSIS.md))
++    has its framework and one-sentence gap statement written, but **every
++    claim about what ISM-in-a-box or IFI's existing toolkit actually contains
++    is unverified** and marked as such. Its comparison table is deliberately
++    left unfilled — somebody has to read the source material. Don't present it
++    as finished analysis.
++  - `/readiness` and `/stories` have unit tests for their pure logic but no
++    Playwright coverage yet, including the one rule most worth protecting:
++    that a story marked private never reaches the church profile page. That's
++    currently guaranteed only by `listPublicVolunteerStories` and was verified
++    by hand.
++  - Stories have no edit flow and no reporting flow — an author can delete and
++    repost, and a church admin can remove a story they're uncomfortable with.
++    That's the whole moderation story for now.
++  - The Playbook Exchange and the Campus Coordination Network are *not* built.
++    Both are named in the feedback docs as directions; only the Readiness
++    Pathway and the stories/activity work shipped.
+ - The rides board, calendar view, and interactive event map (see PLAN.md's
+   build-phases section) aren't yet covered by the Playwright e2e suite —
+   verified with ad hoc smoke scripts during development instead. Add
+diff --git a/docs/ISM_IN_A_BOX_GAP_ANALYSIS.md b/docs/ISM_IN_A_BOX_GAP_ANALYSIS.md
+new file mode 100644
+index 0000000..2ee53aa
+--- /dev/null
++++ b/docs/ISM_IN_A_BOX_GAP_ANALYSIS.md
+@@ -0,0 +1,96 @@
++# ISM-in-a-box gap analysis
++
++**Status: framework complete, empirical claims unverified.**
++Owner: Preston & Ranjita · Prepared for the next Joyce/Aaron check-in
++
++This is Aaron's explicit ask from Ideation Demo Day: what does ISM-in-a-box
++already cover, what remains uncovered, and can we state our gap in one
++sentence. Thanh raised the same question about IFI's existing toolkit.
++
++Read the honesty note before using any of this in a room with Aaron.
++
++---
++
++## The one-sentence gap
++
++> **ISM-in-a-box helps a church design a ministry. The Playbook Exchange
++> helps churches copy what already worked at another church.**
++
++The distinction we're claiming is **prescriptive vs. peer-produced**: a
++curriculum is authored once by people with expertise and handed down, while an
++exchange is written continuously by practitioners and passed sideways. If that
++distinction turns out not to hold — if ISM-in-a-box already contains a living
++library of church-contributed practice — the Playbook Exchange has no reason
++to exist as a separate thing and should be folded into the Readiness Pathway
++as content rather than built as a product.
++
++We should be willing to say that out loud at the check-in.
++
++---
++
++## Honesty note — read before the check-in
++
++Nobody on the pod has done a page-by-page review of ISM-in-a-box or of IFI's
++existing toolkit. The framework below is complete and the questions are the
++right ones, but **every claim about what those resources contain is currently
++an assumption**, marked `[UNVERIFIED]`.
++
++Walking into a check-in with a filled-in comparison table we guessed at is
++worse than walking in with the empty one and a plan, because Aaron will know
++which cells we made up. The table below is deliberately left unfilled.
++
++**Before the check-in, someone has to actually read the source material.**
++That is a two-hour job, not a research project:
++
++1. Get the current ISM-in-a-box materials (ask Joyce — she can point us at the
++   canonical version rather than whatever is findable online).
++2. Get IFI's existing toolkit, which Thanh referenced as a separate overlap
++   risk from ISM-in-a-box. Confirm whether they're the same artifact.
++3. Fill in the table, one row per section of the actual table of contents.
++4. Re-check whether the one-sentence gap above survives contact with it.
++
++---
++
++## Comparison framework
++
++For each capability a church needs, mark whether ISM-in-a-box covers it, and
++whether what we're building duplicates it or extends it.
++
++| Capability a church needs | ISM-in-a-box | IFI toolkit | Us | Verdict |
++| --- | --- | --- | --- | --- |
++| Theology / motivation for welcoming international students | `[UNVERIFIED]` | `[UNVERIFIED]` | Out of scope — deliberately | — |
++| Assessing whether this church is ready to start | `[UNVERIFIED]` | `[UNVERIFIED]` | Readiness Pathway (`/readiness`) | — |
++| Designing a ministry from scratch (structure, roles, calendar) | `[UNVERIFIED]` | `[UNVERIFIED]` | Out of scope — assumed covered | — |
++| Recruiting volunteers from a hesitant congregation | `[UNVERIFIED]` | `[UNVERIFIED]` | Volunteer stories (`/stories`) | — |
++| Field-tested practice from other, comparable churches | `[UNVERIFIED]` | `[UNVERIFIED]` | Playbook Exchange (unbuilt) | — |
++| Day-to-day coordination: gatherings, headcounts, waitlists | `[UNVERIFIED]` | `[UNVERIFIED]` | ChurchedIn (built) | — |
++| Student-initiated one-to-one connections, safely gated | `[UNVERIFIED]` | `[UNVERIFIED]` | ChurchedIn friend directory (built) | — |
++| Year-two sustainability and volunteer handoff | `[UNVERIFIED]` | `[UNVERIFIED]` | Partially — see gap below | — |
++| Cross-denominational coordination | `[UNVERIFIED]` | `[UNVERIFIED]` | Deferred (Campus Coordination Network) | — |
++
++Verdict column values: **duplicate** (stop building), **extend** (keep, and
++say what it adds), **genuine gap** (keep, and lead with it).
++
++## Our strongest a-priori claim
++
++Whatever ISM-in-a-box contains, it is a document, and a document cannot:
++
++- hold a live headcount, or promote someone off a waitlist when a family drops
++  out;
++- withhold a student's email address until both people have agreed to connect;
++- survive the volunteer who set it up moving away.
++
++That is the same argument the landing page now makes against WhatsApp
++(`src/app/BeyondGroupChat.tsx`), and it applies to a curriculum just as much:
++**a curriculum tells a church what to do; it doesn't hold the state of the
++church doing it.** This claim needs no verification of ISM-in-a-box's contents
++to be true, which makes it the safest thing to lead with if the reading
++doesn't happen in time.
++
++## What this analysis does not resolve
++
++Two reviewers (R. Dong, Danielle, Jonathan on the follow-up pipeline;
++Aaron on year two) raised sustainability, and honestly neither ISM-in-a-box
++nor anything we've built answers it yet. A church that hosts three dinners in
++September and nothing in February has not been failed by a lack of tooling or
++a lack of curriculum. We should not claim this as a gap we fill.
+diff --git a/docs/POD2_FEEDBACK_RESPONSE.md b/docs/POD2_FEEDBACK_RESPONSE.md
+new file mode 100644
+index 0000000..76e875c
+--- /dev/null
++++ b/docs/POD2_FEEDBACK_RESPONSE.md
+@@ -0,0 +1,48 @@
++# Pod 2 Demo Day feedback → what we changed
++
++Source: *Demo Day Feedback Synthesis — Mobilizing Pod 2* (15 reviewer
++responses, Ideation Demo Day, Jul 10–16; synthesis by Emmanuel, Jul 2026).
++
++Scores were Church Launch Kit 3.7 · Volunteer Connect 3.6 · Church Resource
++Hub 3.3, with the ordering holding when pod members' own ratings were excluded.
++The three cross-cutting themes were **consolidate**, **segment the persona**,
++and **design for after the yes**.
++
++This file tracks each piece of feedback to the thing that answers it, so the
++next check-in can be about what changed rather than about what we heard.
++
++## Answered in this pass
++
++| Feedback (who raised it) | What we did | Where |
++| --- | --- | --- |
++| "Church" isn't a persona — which church: newly aware, willing pastor / unready congregation, or ready but directionless? (Aaron) | Built the Readiness Pathway as a four-tier self-assessment whose tier names *are* Aaron's three church types, plus an "already going" graduation state. Readiness is scored as a floor, not an average — a church sits at the earliest gate it hasn't cleared. | `src/lib/readiness.ts`, `/readiness` |
++| Too many similar ideas; pick one summer focus; lowest effort / highest impact (Aaron, Erin, Kezia, R. Dong) | The Pathway is the front door and the only new product surface. Playbook Exchange stays unbuilt pending the gap analysis; the Campus Coordination Network is explicitly deferred. Everything else this pass extends ChurchedIn rather than adding a fourth thing. | this file, `docs/ISM_IN_A_BOX_GAP_ANALYSIS.md` |
++| Volunteer Connect is undefined — platform, CRM, training, or guide? (Aaron) | Answered by shipping, as the synthesis proposed: it's a per-church coordination space with three verbs — plan a gathering, RSVP, find a friend. Now stated in those terms on the landing page. | `src/app/page.tsx` |
++| Volunteer supply and motivation; early volunteers should recruit the hesitant (Thanh, Aaron, Gardion) | Volunteer stories: a first-person account from someone who already hosted, church-scoped by default and optionally visible on the church's profile page (first name only) where a student choosing a church will see it. Plus a derived activity feed so a church space never looks abandoned, and a dashboard nudge that fires once — only for a volunteer who has actually hosted and hasn't written one. | `/stories`, `src/lib/churchActivity.ts` |
++| Migration from existing group chats / tools (R. Dong) | A landing section that leads with the three things a group chat structurally can't do — auto-waitlists, a privacy-gated friend directory, and a per-church space with a join code — framed as "keep your WhatsApp group" rather than asking anyone to switch. | `src/app/BeyondGroupChat.tsx` |
++| Never demo from an empty database (synthesis action item) | `npm run db:seed` builds a demo church: 10 people, 3 gatherings (one past, one deliberately over capacity so the waitlist is real), connections in accepted/pending/declined states, an open and a claimed ride, and two stories. Re-runnable, and it refuses to touch a church that isn't its own. | `prisma/seed.ts` |
++| Show ChurchedIn as the graduation destination for a "ready" church (synthesis action item) | Only the two ready tiers carry a ChurchedIn call-to-action; a newly-aware church is told plainly that we're not much use to it yet and pointed at the map instead. There's a unit test asserting that, so it can't drift. | `src/lib/readiness.ts`, `readiness.test.ts` |
++
++## Answered on paper, not in code
++
++| Feedback (who raised it) | Status |
++| --- | --- |
++| Differentiate from ISM-in-a-box and IFI's existing toolkit (Aaron, Thanh) | Framework and the one-sentence gap statement are written; **the empirical claims are unverified** and someone has to read the actual source material before the check-in. See `docs/ISM_IN_A_BOX_GAP_ANALYSIS.md`, which is deliberately left with its comparison table unfilled. |
++| Follow-up pipeline: what happens after a church gets the kit? (R. Dong, Danielle, Jonathan) | Partially answered: the Pathway now defines a next step at every tier, and ChurchedIn is where the step happens. The harder half — year-two sustainability, a church that hosts in September and nothing in February — is not answered by anything we've built, and the gap analysis says so rather than claiming it. |
++| Uniting churches across denominations is its own problem space (Jonathan) | Deferred, as the synthesis recommended. Per-church scoping sidesteps it for now; `ChurchPartnership` is the seam it would grow from. |
++
++## Deliberately not done
++
++- **Student-written stories.** A student's account of being welcomed is
++  probably the single most persuasive thing that could sit on a church's
++  profile page, and that is exactly why it isn't shipped: it needs a consent
++  design of its own before a student's words go anywhere a stranger can read
++  them. Story authorship is limited to volunteers and church leaders.
++- **Persisting readiness answers.** A church shouldn't need an account to find
++  out it isn't ready for one. The assessment runs client-side and stores
++  nothing, which also means we have no readiness data to analyze later — an
++  accepted trade.
++- **Broadcasting connections or rides in the activity feed.** Both are
++  one-to-one relationships behind an accept step; putting "Ana connected with
++  David" in a church-wide feed would leak precisely what the accept step
++  exists to protect.
+diff --git a/package-lock.json b/package-lock.json
+index 3e4e02c..0df6d77 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -32,9 +32,11 @@
+         "@types/node": "^20",
+         "@types/react": "^19",
+         "@types/react-dom": "^19",
++        "dotenv": "^17.4.2",
+         "eslint": "^9",
+         "eslint-config-next": "16.2.10",
+         "tailwindcss": "^4",
++        "tsx": "^4.23.1",
+         "typescript": "^5",
+         "vitest": "^3.0.0"
+       }
+@@ -9700,6 +9702,25 @@
+       "integrity": "sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==",
+       "license": "0BSD"
+     },
++    "node_modules/tsx": {
++      "version": "4.23.1",
++      "resolved": "https://registry.npmjs.org/tsx/-/tsx-4.23.1.tgz",
++      "integrity": "sha512-GQHnkIfxyx1wYCOS/wonik5MVRZU9hi1TEZmzGZSCJB1y9YgoZ8H6itNE/u4suE+yLmOzuE4E5S4TZ/ZX2wcWQ==",
++      "dev": true,
++      "license": "MIT",
++      "dependencies": {
++        "esbuild": "~0.28.0"
++      },
++      "bin": {
++        "tsx": "dist/cli.mjs"
++      },
++      "engines": {
++        "node": ">=18.0.0"
++      },
++      "optionalDependencies": {
++        "fsevents": "~2.3.3"
++      }
++    },
+     "node_modules/tunnel-agent": {
+       "version": "0.6.0",
+       "resolved": "https://registry.npmjs.org/tunnel-agent/-/tunnel-agent-0.6.0.tgz",
+diff --git a/package.json b/package.json
+index e2c1cdd..238b9b3 100644
+--- a/package.json
++++ b/package.json
+@@ -9,6 +9,7 @@
+     "lint": "eslint",
+     "test": "vitest run",
+     "test:e2e": "playwright test",
++    "db:seed": "tsx prisma/seed.ts",
+     "postinstall": "prisma generate"
+   },
+   "dependencies": {
+@@ -35,9 +36,11 @@
+     "@types/node": "^20",
+     "@types/react": "^19",
+     "@types/react-dom": "^19",
++    "dotenv": "^17.4.2",
+     "eslint": "^9",
+     "eslint-config-next": "16.2.10",
+     "tailwindcss": "^4",
++    "tsx": "^4.23.1",
+     "typescript": "^5",
+     "vitest": "^3.0.0"
+   }
+diff --git a/prisma.config.ts b/prisma.config.ts
+index 831a20f..b56ab9c 100644
+--- a/prisma.config.ts
++++ b/prisma.config.ts
+@@ -7,6 +7,10 @@ export default defineConfig({
+   schema: "prisma/schema.prisma",
+   migrations: {
+     path: "prisma/migrations",
++    // Also runnable directly as `npm run db:seed`. Seeds one demo church so
++    // nothing ever has to be demoed against an empty database — see the doc
++    // comment at the top of prisma/seed.ts.
++    seed: "tsx prisma/seed.ts",
+   },
+   datasource: {
+     url: process.env["DATABASE_URL"],
+diff --git a/prisma/migrations/20260729220000_add_volunteer_story/migration.sql b/prisma/migrations/20260729220000_add_volunteer_story/migration.sql
+new file mode 100644
+index 0000000..6f402d8
+--- /dev/null
++++ b/prisma/migrations/20260729220000_add_volunteer_story/migration.sql
+@@ -0,0 +1,20 @@
++-- CreateTable
++CREATE TABLE "VolunteerStory" (
++    "id" TEXT NOT NULL,
++    "body" TEXT NOT NULL,
++    "sharePublicly" BOOLEAN NOT NULL DEFAULT false,
++    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
++    "churchId" TEXT NOT NULL,
++    "authorId" TEXT NOT NULL,
++
++    CONSTRAINT "VolunteerStory_pkey" PRIMARY KEY ("id")
++);
++
++-- CreateIndex
++CREATE INDEX "VolunteerStory_churchId_createdAt_idx" ON "VolunteerStory"("churchId", "createdAt");
++
++-- AddForeignKey
++ALTER TABLE "VolunteerStory" ADD CONSTRAINT "VolunteerStory_churchId_fkey" FOREIGN KEY ("churchId") REFERENCES "Church"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
++
++-- AddForeignKey
++ALTER TABLE "VolunteerStory" ADD CONSTRAINT "VolunteerStory_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+diff --git a/prisma/schema.prisma b/prisma/schema.prisma
+index 7f7dd79..7216074 100644
+--- a/prisma/schema.prisma
++++ b/prisma/schema.prisma
+@@ -114,6 +114,49 @@ model Church {
+   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
+   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
+   rideRequests RideRequest[]
++  volunteerStories VolunteerStory[]
++}
++
++/**
++ * A short first-person account from a volunteer about hosting — "we had four
++ * students over and nobody wanted to leave". Demo Day feedback (Thanh) was
++ * that volunteer supply and motivation is the real constraint, and that the
++ * people best placed to recruit a hesitant congregation are the volunteers
++ * who already said yes. So this is a recruiting surface, not a social feed:
++ * church-scoped by default, appears on /stories alongside a derived activity
++ * feed, and optionally (`sharePublicly`) on the church's profile page. That
++ * page is cross-tenant readable (any signed-in user can load any church's
++ * profile — that's what /discover is for), so `sharePublicly` means "outside
++ * my church", not "on the open internet": a student deciding which church to
++ * visit is exactly who a host's story needs to reach.
++ *
++ * Authorship is limited to VOLUNTEER and CHURCH_ADMIN members, enforced in
++ * src/lib/actions/stories.ts. Students are deliberately excluded for now:
++ * a student's account of being welcomed is arguably the most persuasive
++ * thing on the platform, but it's also the one most likely to expose a
++ * vulnerable person to readers outside their own church, and it needs its
++ * own consent design before it goes anywhere near `sharePublicly`.
++ *
++ * When a story IS shared beyond the church, only the author's first name goes
++ * with it — the same rule listOpenRideRequestsForChurch applies to
++ * FIRST_VISIT rides, enforced the same way (at the query layer, in
++ * listPublicVolunteerStories, not left to each page to remember).
++ */
++model VolunteerStory {
++  id            String   @id @default(cuid())
++  body          String
++  sharePublicly Boolean  @default(false)
++  createdAt     DateTime @default(now())
++
++  churchId String
++  church   Church @relation(fields: [churchId], references: [id])
++  authorId String
++  author   User   @relation(fields: [authorId], references: [id])
++
++  // Every read of this table is "this church's stories, newest first" — the
++  // in-app feed, the church profile page, and the activity feed all want
++  // exactly that order.
++  @@index([churchId, createdAt])
+ }
+ 
+ /**
+@@ -193,6 +236,7 @@ model User {
+   cohostedEvents       EventCohost[]
+   rideRequestsAsStudent   RideRequest[] @relation("RideRequestsAsStudent")
+   rideRequestsAsVolunteer RideRequest[] @relation("RideRequestsAsVolunteer")
++  volunteerStories        VolunteerStory[]
+ }
+ 
+ model PasswordResetToken {
+diff --git a/prisma/seed.ts b/prisma/seed.ts
+new file mode 100644
+index 0000000..c540b99
+--- /dev/null
++++ b/prisma/seed.ts
+@@ -0,0 +1,538 @@
++/**
++ * Seeds one demo church with enough life in it to actually demo.
++ *
++ * Demo Day's most practical note was the last one on the list: never demo
++ * from an empty database. An empty church space doesn't show a reviewer the
++ * waitlist promoting someone, the friend directory withholding an email, or
++ * a volunteer's story sitting under a gathering — it shows them a set of
++ * empty states. So this creates a church with ten people, three gatherings
++ * (one already happened, one deliberately over capacity so there's a real
++ * waitlist), connections in both accepted and pending states, a claimed and
++ * an open ride, and two volunteer stories.
++ *
++ *   npm run db:seed
++ *
++ * Safe to re-run: it resets the demo church's own rows and rebuilds them, so
++ * a demo always starts from the same known state. It will refuse to touch a
++ * church that isn't clearly this script's own — see assertIsDemoChurch.
++ *
++ * Everything created here uses @demo.churchedin.internal email addresses.
++ * That is deliberately NOT the @seed.churchedin.internal suffix used by the
++ * Bryan/College Station map listings: those are placeholder accounts for
++ * churches with no real members yet, and listDiscoverableChurches uses that
++ * suffix to grey them out on the map. The demo church is supposed to look
++ * alive, because looking alive is the entire point of it.
++ */
++import "dotenv/config";
++import bcrypt from "bcryptjs";
++import { PrismaPg } from "@prisma/adapter-pg";
++import { PrismaClient } from "../src/generated/prisma/client";
++
++const DEMO_JOIN_CODE = "DEMO24";
++const DEMO_EMAIL_DOMAIN = "demo.churchedin.internal";
++/** Every demo account shares this password so a demo can log in as anyone. */
++const DEMO_PASSWORD = "demo-password-1234";
++
++const connectionString = process.env.DATABASE_URL;
++if (!connectionString) {
++  console.error("DATABASE_URL is not set. Copy .env.example to .env first.");
++  process.exit(1);
++}
++const schema = new URL(connectionString).searchParams.get("schema") ?? undefined;
++const prisma = new PrismaClient({
++  adapter: new PrismaPg(connectionString, schema ? { schema } : undefined),
++});
++
++const HOUR = 60 * 60 * 1000;
++const DAY = 24 * HOUR;
++
++/** Relative to run time, so a freshly seeded demo always has a "next week". */
++function daysFromNow(days: number, hour = 18): Date {
++  const date = new Date(Date.now() + days * DAY);
++  date.setHours(hour, 0, 0, 0);
++  return date;
++}
++
++function hoursAgo(hours: number): Date {
++  return new Date(Date.now() - hours * HOUR);
++}
++
++type PersonSpec = {
++  key: string;
++  name: string;
++  role: "CHURCH_ADMIN" | "VOLUNTEER" | "STUDENT";
++  bio: string;
++  /** Volunteers/admins get a MentorProfile; students get a StudentProfile. */
++  mentor?: { languages: string; interests: string; openToMentor?: boolean };
++  student?: { countryOfOrigin: string; school: string; languages: string; interests: string };
++  /** How long ago they joined, so the activity feed has a plausible history. */
++  joinedHoursAgo: number;
++};
++
++const PEOPLE: PersonSpec[] = [
++  {
++    key: "naomi",
++    name: "Naomi Adeyemi",
++    role: "CHURCH_ADMIN",
++    bio: "Leads hospitality at Maple Street. Cooks too much food on purpose.",
++    mentor: { languages: "English, Yoruba", interests: "Cooking, gardening, long dinners" },
++    joinedHoursAgo: 70 * 24,
++  },
++  {
++    key: "david",
++    name: "David Okonkwo",
++    role: "VOLUNTEER",
++    bio: "Drives the airport runs. Will talk about football with anyone.",
++    mentor: { languages: "English, Igbo", interests: "Football, cycling, board games" },
++    joinedHoursAgo: 62 * 24,
++  },
++  {
++    key: "grace",
++    name: "Grace Lin",
++    role: "VOLUNTEER",
++    bio: "Grad student turned volunteer — was on the other side of this six years ago.",
++    mentor: { languages: "English, Mandarin", interests: "Hiking, photography, dumplings" },
++    joinedHoursAgo: 40 * 24,
++  },
++  {
++    key: "sam",
++    name: "Sam Ortiz",
++    role: "VOLUNTEER",
++    bio: "Hosts the coffee chats. Believes strongly in a second cup.",
++    mentor: { languages: "English, Spanish", interests: "Coffee, guitar, cycling" },
++    joinedHoursAgo: 26 * 24,
++  },
++  {
++    key: "ruth",
++    name: "Ruth Bennett",
++    role: "VOLUNTEER",
++    // Someone who's stepped back is worth having in a demo: it shows the
++    // directory respecting openToMentor instead of listing every volunteer.
++    bio: "Taking a season off from one-on-ones, still helps at gatherings.",
++    mentor: { languages: "English", interests: "Quilting, baking, crosswords", openToMentor: false },
++    joinedHoursAgo: 20 * 24,
++  },
++  {
++    key: "wei",
++    name: "Wei Zhang",
++    role: "STUDENT",
++    bio: "First year in mechanical engineering. Misses his grandmother's cooking.",
++    student: {
++      countryOfOrigin: "China",
++      school: "Texas A&M University",
++      languages: "Mandarin, English",
++      interests: "Basketball, cooking, photography",
++    },
++    joinedHoursAgo: 18 * 24,
++  },
++  {
++    key: "ana",
++    name: "Ana María Rojas",
++    role: "STUDENT",
++    bio: "Statistics master's. Looking for people to practice English with.",
++    student: {
++      countryOfOrigin: "Colombia",
++      school: "Texas A&M University",
++      languages: "Spanish, English",
++      interests: "Salsa, running, films",
++    },
++    joinedHoursAgo: 14 * 24,
++  },
++  {
++    key: "kenji",
++    name: "Kenji Tanaka",
++    role: "STUDENT",
++    bio: "Exchange year in architecture. Trying every taco truck in town.",
++    student: {
++      countryOfOrigin: "Japan",
++      school: "Texas A&M University",
++      languages: "Japanese, English",
++      interests: "Architecture, cycling, cooking",
++    },
++    joinedHoursAgo: 9 * 24,
++  },
++  {
++    key: "priya",
++    name: "Priya Raman",
++    role: "STUDENT",
++    bio: "PhD in plant pathology. Two weeks into her first American summer.",
++    student: {
++      countryOfOrigin: "India",
++      school: "Texas A&M University",
++      languages: "Tamil, Hindi, English",
++      interests: "Gardening, classical music, badminton",
++    },
++    joinedHoursAgo: 5 * 24,
++  },
++  {
++    key: "mehdi",
++    name: "Mehdi Karimi",
++    role: "STUDENT",
++    // The most recent join, so the activity feed opens on someone brand new —
++    // which is what a reviewer should see first.
++    bio: "Just landed for a computer science master's. Knows nobody yet.",
++    student: {
++      countryOfOrigin: "Iran",
++      school: "Texas A&M University",
++      languages: "Persian, English",
++      interests: "Chess, hiking, cooking",
++    },
++    joinedHoursAgo: 20,
++  },
++];
++
++/**
++ * Refuses to reset anything that isn't unmistakably this script's own demo
++ * church: right join code, and every single member on a demo email address.
++ * The join code alphabet can produce "DEMO24" by chance for a real church,
++ * and wiping a real congregation's gatherings because of a collision is not
++ * a recoverable mistake.
++ */
++async function assertIsDemoChurch(churchId: string): Promise<void> {
++  const members = await prisma.membership.findMany({
++    where: { churchId },
++    include: { user: { select: { email: true } } },
++  });
++  const foreign = members.filter((m) => !m.user.email.endsWith(`@${DEMO_EMAIL_DOMAIN}`));
++  if (foreign.length > 0) {
++    throw new Error(
++      `A church already uses the join code ${DEMO_JOIN_CODE} and has ${foreign.length} member(s) ` +
++        `outside @${DEMO_EMAIL_DOMAIN}. Refusing to touch it — change DEMO_JOIN_CODE in ` +
++        `prisma/seed.ts and re-run.`,
++    );
++  }
++}
++
++/** Removes the demo church and everything hanging off it, in FK-safe order. */
++async function resetDemoChurch(): Promise<void> {
++  const church = await prisma.church.findUnique({ where: { joinCode: DEMO_JOIN_CODE } });
++  if (!church) return;
++
++  await assertIsDemoChurch(church.id);
++  console.log(`Resetting the existing demo church (${church.name})…`);
++
++  const memberships = await prisma.membership.findMany({ where: { churchId: church.id } });
++  const userIds = memberships.map((m) => m.userId);
++
++  await prisma.$transaction([
++    prisma.eventRsvp.deleteMany({ where: { event: { churchId: church.id } } }),
++    prisma.eventCohost.deleteMany({ where: { event: { churchId: church.id } } }),
++    prisma.report.deleteMany({ where: { churchId: church.id } }),
++    prisma.event.deleteMany({ where: { churchId: church.id } }),
++    prisma.volunteerStory.deleteMany({ where: { churchId: church.id } }),
++    prisma.rideRequest.deleteMany({ where: { churchId: church.id } }),
++    prisma.churchAdminInvite.deleteMany({ where: { churchId: church.id } }),
++    prisma.churchPartnership.deleteMany({
++      where: {
++        OR: [{ requestingChurchId: church.id }, { partnerChurchId: church.id }],
++      },
++    }),
++    // Scoped to demo users specifically: these tables aren't church-scoped,
++    // so filtering by churchId isn't an option and filtering by user is.
++    prisma.mentorConnection.deleteMany({
++      where: { OR: [{ studentId: { in: userIds } }, { mentorId: { in: userIds } }] },
++    }),
++    prisma.block.deleteMany({
++      where: { OR: [{ blockerId: { in: userIds } }, { blockedId: { in: userIds } }] },
++    }),
++    prisma.passwordResetToken.deleteMany({ where: { userId: { in: userIds } } }),
++    prisma.mentorProfile.deleteMany({ where: { userId: { in: userIds } } }),
++    prisma.studentProfile.deleteMany({ where: { userId: { in: userIds } } }),
++    prisma.membership.deleteMany({ where: { churchId: church.id } }),
++    prisma.user.deleteMany({ where: { id: { in: userIds } } }),
++    prisma.church.delete({ where: { id: church.id } }),
++  ]);
++}
++
++async function main() {
++  await resetDemoChurch();
++
++  const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
++
++  const church = await prisma.church.create({
++    data: {
++      name: "Maple Street Fellowship",
++      city: "College Station, TX",
++      joinCode: DEMO_JOIN_CODE,
++      denomination: "Non-denominational",
++      languages: "English, Mandarin, Spanish",
++      serviceTimes: "Sundays 9:30am & 11am",
++      bio:
++        "A demo church used to show ChurchedIn with real-looking data. Everyone here is " +
++        "fictional. We host a dinner most months, coffee before finals, and airport pickups " +
++        "at the start of each semester.",
++      locationLat: 30.6188,
++      locationLng: -96.3365,
++      address: "410 Maple Street, College Station, TX 77840",
++      website: "https://example.org/maple-street",
++      // The demo church has a real leader from the moment it exists, so it
++      // must not show the "Not yet claimed" badge or offer the claim flow.
++      claimedAt: hoursAgo(70 * 24),
++    },
++  });
++
++  const users: Record<string, { id: string; name: string }> = {};
++  for (const person of PEOPLE) {
++    const user = await prisma.user.create({
++      data: {
++        email: `${person.key}@${DEMO_EMAIL_DOMAIN}`,
++        name: person.name,
++        bio: person.bio,
++        passwordHash,
++        createdAt: hoursAgo(person.joinedHoursAgo),
++        memberships: {
++          create: {
++            churchId: church.id,
++            role: person.role,
++            createdAt: hoursAgo(person.joinedHoursAgo),
++          },
++        },
++        ...(person.mentor
++          ? {
++              mentorProfile: {
++                create: {
++                  languages: person.mentor.languages,
++                  interests: person.mentor.interests,
++                  openToMentor: person.mentor.openToMentor ?? true,
++                },
++              },
++            }
++          : {}),
++        ...(person.student ? { studentProfile: { create: person.student } } : {}),
++      },
++    });
++    users[person.key] = { id: user.id, name: user.name };
++  }
++
++  // ---- Gathering 1: already happened, so there's something to tell stories
++  // about and the volunteer dashboard's "write a story" nudge has a reason
++  // to appear.
++  const cookout = await prisma.event.create({
++    data: {
++      title: "Welcome-back cookout",
++      description:
++        "Burgers, corn, and lawn games in the Adeyemis' backyard to kick off the semester. " +
++        "Bring nothing; there is always too much food.",
++      category: "DINNER",
++      startsAt: daysFromNow(-6, 17),
++      endsAt: daysFromNow(-6, 20),
++      location: "The Adeyemis' backyard, 410 Maple Street",
++      atChurch: false,
++      volunteerCap: 3,
++      studentCap: 12,
++      churchId: church.id,
++      createdById: users.naomi.id,
++      createdAt: hoursAgo(21 * 24),
++      cohosts: { create: { userId: users.david.id, createdAt: hoursAgo(20 * 24) } },
++    },
++  });
++
++  await prisma.eventRsvp.createMany({
++    data: [
++      { eventId: cookout.id, userId: users.grace.id, role: "HELPER", status: "CONFIRMED", createdAt: hoursAgo(19 * 24) },
++      { eventId: cookout.id, userId: users.sam.id, role: "HELPER", status: "CONFIRMED", createdAt: hoursAgo(18 * 24) },
++      { eventId: cookout.id, userId: users.wei.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(17 * 24) },
++      { eventId: cookout.id, userId: users.ana.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(13 * 24) },
++      { eventId: cookout.id, userId: users.kenji.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(8 * 24) },
++    ],
++  });
++
++  // ---- Gathering 2: upcoming and deliberately oversubscribed. This is the
++  // one that has to exist for a demo to land: a headcount of four with five
++  // students signed up, so the fifth is genuinely WAITLISTED and any
++  // confirmed attendee cancelling their own RSVP visibly promotes them (see
++  // cancelRsvpAction in src/lib/actions/rsvps.ts — promotion is scoped to the
++  // same role bucket, so a confirmed ATTENDEE has to be the one to drop).
++  // Statuses are written explicitly here rather than going through
++  // decideRsvpStatus, but they're what it would return for these caps, and
++  // the waitlisted row is the newest so pickPromotionCandidate's
++  // longest-waiting-first rule picks the person a demo expects.
++  const dinner = await prisma.event.create({
++    data: {
++      title: "Dinner at the Adeyemis'",
++      description:
++        "A proper sit-down dinner for four students — jollof rice, plantain, and whatever " +
++        "dessert Grace brings. Space is genuinely limited to four seats at the table.",
++      category: "DINNER",
++      startsAt: daysFromNow(5, 18),
++      endsAt: daysFromNow(5, 21),
++      location: "410 Maple Street, College Station",
++      atChurch: false,
++      volunteerCap: 2,
++      studentCap: 4,
++      churchId: church.id,
++      createdById: users.naomi.id,
++      createdAt: hoursAgo(6 * 24),
++    },
++  });
++
++  await prisma.eventRsvp.createMany({
++    data: [
++      { eventId: dinner.id, userId: users.grace.id, role: "HELPER", status: "CONFIRMED", createdAt: hoursAgo(5 * 24) },
++      { eventId: dinner.id, userId: users.ruth.id, role: "HELPER", status: "CONFIRMED", createdAt: hoursAgo(4 * 24) },
++      { eventId: dinner.id, userId: users.wei.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(5 * 24) },
++      { eventId: dinner.id, userId: users.ana.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(4 * 24) },
++      { eventId: dinner.id, userId: users.kenji.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(3 * 24) },
++      { eventId: dinner.id, userId: users.priya.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(2 * 24) },
++      // The fifth student — four seats, so this one waits.
++      { eventId: dinner.id, userId: users.mehdi.id, role: "ATTENDEE", status: "WAITLISTED", createdAt: hoursAgo(16) },
++    ],
++  });
++
++  // ---- Gathering 3: upcoming with room to spare, so a reviewer can RSVP
++  // themselves during a demo and get CONFIRMED rather than waitlisted.
++  const coffee = await prisma.event.create({
++    data: {
++      title: "Coffee before finals",
++      description:
++        "Two hours at the coffee shop on Church Ave with whoever wants company while they " +
++        "study. Come and go as you like.",
++      category: "COFFEE_CHAT",
++      startsAt: daysFromNow(13, 15),
++      endsAt: daysFromNow(13, 17),
++      location: "Sweet Eugene's, 1702 George Bush Dr",
++      atChurch: false,
++      volunteerCap: 2,
++      studentCap: 10,
++      churchId: church.id,
++      createdById: users.sam.id,
++      createdAt: hoursAgo(3 * 24),
++    },
++  });
++
++  await prisma.eventRsvp.createMany({
++    data: [
++      { eventId: coffee.id, userId: users.grace.id, role: "HELPER", status: "CONFIRMED", createdAt: hoursAgo(2 * 24) },
++      { eventId: coffee.id, userId: users.ana.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(40) },
++      { eventId: coffee.id, userId: users.priya.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(30) },
++      { eventId: coffee.id, userId: users.kenji.id, role: "ATTENDEE", status: "CONFIRMED", createdAt: hoursAgo(12) },
++    ],
++  });
++
++  // Friend connections in three states, so the directory demo shows the
++  // accept gate working rather than just a list of names: one accepted (both
++  // emails visible to each other), one still pending on the volunteer, one
++  // declined and therefore re-requestable.
++  await prisma.mentorConnection.createMany({
++    data: [
++      {
++        studentId: users.wei.id,
++        mentorId: users.grace.id,
++        status: "ACCEPTED",
++        message: "Hi Grace — I saw you speak Mandarin. Could we get coffee sometime?",
++        createdAt: hoursAgo(15 * 24),
++        lastRequestedAt: hoursAgo(15 * 24),
++        respondedAt: hoursAgo(14 * 24),
++      },
++      {
++        studentId: users.priya.id,
++        mentorId: users.david.id,
++        status: "PENDING",
++        message: "Hello! I just arrived and I don't know anyone here yet. Would you be willing to meet?",
++        createdAt: hoursAgo(2 * 24),
++        lastRequestedAt: hoursAgo(2 * 24),
++      },
++      {
++        studentId: users.mehdi.id,
++        mentorId: users.sam.id,
++        status: "DECLINED",
++        message: "Hi Sam, are you free any evening this week?",
++        createdAt: hoursAgo(18),
++        lastRequestedAt: hoursAgo(18),
++        respondedAt: hoursAgo(10),
++      },
++    ],
++  });
++
++  // One open ride so the volunteer rides board isn't empty, one claimed so
++  // the "contact info revealed" state is demonstrable.
++  await prisma.rideRequest.createMany({
++    data: [
++      {
++        destination: "Easterwood Airport",
++        date: daysFromNow(9, 6),
++        time: "6:00 AM",
++        notes: "Two suitcases. My flight is at 8:15am so I should leave early.",
++        status: "OPEN",
++        type: "GENERAL",
++        churchId: church.id,
++        studentId: users.kenji.id,
++        createdAt: hoursAgo(26),
++      },
++      {
++        destination: "H-E-B on Texas Ave",
++        date: daysFromNow(2, 10),
++        time: "10:00 AM",
++        notes: "First big grocery run — I don't have a car yet.",
++        status: "CLAIMED",
++        type: "GENERAL",
++        churchId: church.id,
++        studentId: users.mehdi.id,
++        volunteerId: users.david.id,
++        createdAt: hoursAgo(19),
++      },
++    ],
++  });
++
++  // Volunteer stories — one shared beyond the church (so the church profile
++  // page has something in "From the people who host"), one kept internal.
++  await prisma.volunteerStory.createMany({
++    data: [
++      {
++        body:
++          "I put off hosting for two years because I was sure I'd run out of things to talk " +
++          "about. Four students came for dinner in February and they stayed until eleven. " +
++          "Wei asked if he could help cook next time. That was the whole thing — I didn't " +
++          "need a curriculum, I needed to set the table.",
++        sharePublicly: true,
++        churchId: church.id,
++        authorId: users.naomi.id,
++        createdAt: hoursAgo(12 * 24),
++      },
++      {
++        body:
++          "Practical note for whoever hosts the next cookout: we badly underestimated rides. " +
++          "Three students said yes and then couldn't get across town, and I only found out " +
++          "the morning of. Ask about transport when you ask about dietary restrictions, not " +
++          "the day before.",
++        sharePublicly: false,
++        churchId: church.id,
++        authorId: users.sam.id,
++        createdAt: hoursAgo(5 * 24),
++      },
++    ],
++  });
++
++  const counts = {
++    people: PEOPLE.length,
++    gatherings: 3,
++    rsvps: await prisma.eventRsvp.count({ where: { event: { churchId: church.id } } }),
++    waitlisted: await prisma.eventRsvp.count({
++      where: { event: { churchId: church.id }, status: "WAITLISTED" },
++    }),
++  };
++
++  console.log(`
++Seeded "${church.name}".
++
++  Join code:  ${DEMO_JOIN_CODE}
++  People:     ${counts.people} (1 leader, 4 volunteers, 5 students)
++  Gatherings: ${counts.gatherings} — 1 past, 1 full with a waitlist, 1 with room
++  RSVPs:      ${counts.rsvps} (${counts.waitlisted} waitlisted)
++
++  Log in as any of these with the password ${DEMO_PASSWORD}:
++${PEOPLE.map((p) => `    ${p.key}@${DEMO_EMAIL_DOMAIN}  (${p.role.toLowerCase()}, ${p.name})`).join("\n")}
++
++  Try: log in as wei, open "Dinner at the Adeyemis'", and cancel his RSVP —
++  Mehdi is promoted off the waitlist (only the person who RSVP'd can cancel
++  it, so this has to be a confirmed student, not the host).
++`);
++}
++
++main()
++  .then(() => prisma.$disconnect())
++  .catch(async (error) => {
++    console.error(error);
++    await prisma.$disconnect();
++    process.exit(1);
++  });
+diff --git a/src/app/(public)/readiness/ReadinessAssessment.tsx b/src/app/(public)/readiness/ReadinessAssessment.tsx
+new file mode 100644
+index 0000000..a629bf3
+--- /dev/null
++++ b/src/app/(public)/readiness/ReadinessAssessment.tsx
+@@ -0,0 +1,278 @@
++"use client";
++
++import { useState } from "react";
++import Link from "next/link";
++import {
++  ArrowClockwise,
++  ArrowRight,
++  CheckCircle,
++  Circle,
++  Compass,
++  Lightbulb,
++  Path,
++  SealCheck,
++} from "@phosphor-icons/react/dist/ssr";
++import { Card } from "@/components/ui/Card";
++import { Badge } from "@/components/ui/Badge";
++import { Button, LinkButton } from "@/components/ui/Button";
++import {
++  QUESTIONS,
++  TIER_ORDER,
++  TIER_CONTENT,
++  DIMENSION_LABELS,
++  classifyReadiness,
++  isComplete,
++  leadershipNote,
++  type Answers,
++} from "@/lib/readiness";
++
++/**
++ * The Readiness Pathway assessment. Entirely client-side and unpersisted on
++ * purpose: a church shouldn't need an account to find out it isn't ready for
++ * one yet, and there's nothing here worth storing about a church that hasn't
++ * agreed to be stored. All the scoring rules live in src/lib/readiness.ts so
++ * they're unit-tested rather than tangled up with the UI.
++ */
++export function ReadinessAssessment() {
++  const [answers, setAnswers] = useState<Answers>({});
++  const [submitted, setSubmitted] = useState(false);
++
++  const complete = isComplete(answers);
++  const answeredCount = QUESTIONS.filter((q) => typeof answers[q.id] === "number").length;
++
++  function choose(questionId: string, optionIndex: number) {
++    setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
++  }
++
++  function reset() {
++    setAnswers({});
++    setSubmitted(false);
++    // Send focus back to the top of the assessment rather than leaving the
++    // reader wherever the (now unmounted) result card used to be.
++    document.getElementById("assessment")?.scrollIntoView({ behavior: "smooth", block: "start" });
++  }
++
++  if (submitted && complete) {
++    return <Result answers={answers} onReset={reset} />;
++  }
++
++  return (
++    <div id="assessment" className="scroll-mt-24">
++      <div className="mb-6 flex items-center justify-between gap-4">
++        <p className="text-sm font-semibold text-ink-soft">
++          {answeredCount} of {QUESTIONS.length} answered
++        </p>
++        <div
++          className="h-1.5 w-40 overflow-hidden rounded-full bg-line"
++          role="progressbar"
++          aria-valuenow={answeredCount}
++          aria-valuemin={0}
++          aria-valuemax={QUESTIONS.length}
++          aria-label="Assessment progress"
++        >
++          <div
++            className="h-full rounded-full bg-brand-500 transition-brand"
++            style={{ width: `${(answeredCount / QUESTIONS.length) * 100}%` }}
++          />
++        </div>
++      </div>
++
++      <div className="space-y-4">
++        {QUESTIONS.map((question, index) => (
++          <Card key={question.id}>
++            <fieldset>
++              <legend className="flex gap-3 text-base font-bold text-ink">
++                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-brand-50 text-xs font-extrabold text-brand-700">
++                  {index + 1}
++                </span>
++                {question.prompt}
++              </legend>
++              <div className="mt-4 space-y-2 sm:pl-9">
++                {question.options.map((option, optionIndex) => {
++                  const selected = answers[question.id] === optionIndex;
++                  return (
++                    <label
++                      key={option}
++                      className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3 text-sm transition-brand ${
++                        selected
++                          ? "border-brand-300 bg-brand-50/70 text-ink"
++                          : "border-line text-ink-soft hover:border-brand-200 hover:bg-paper"
++                      }`}
++                    >
++                      <input
++                        type="radio"
++                        name={question.id}
++                        checked={selected}
++                        onChange={() => choose(question.id, optionIndex)}
++                        className="sr-only"
++                      />
++                      {selected ? (
++                        <CheckCircle
++                          weight="fill"
++                          className="mt-0.5 size-4.5 shrink-0 text-brand-600"
++                        />
++                      ) : (
++                        <Circle className="mt-0.5 size-4.5 shrink-0 text-ink-faint" />
++                      )}
++                      <span>{option}</span>
++                    </label>
++                  );
++                })}
++              </div>
++            </fieldset>
++          </Card>
++        ))}
++      </div>
++
++      <div className="mt-6 flex flex-wrap items-center gap-4">
++        <Button size="lg" disabled={!complete} onClick={() => setSubmitted(true)}>
++          Show me where we are <ArrowRight weight="bold" className="size-4" />
++        </Button>
++        {!complete && (
++          <p className="text-sm text-ink-muted">
++            Answer all {QUESTIONS.length} to get a straight answer.
++          </p>
++        )}
++      </div>
++    </div>
++  );
++}
++
++function Result({ answers, onReset }: { answers: Answers; onReset: () => void }) {
++  const result = classifyReadiness(answers);
++  const content = TIER_CONTENT[result.tier];
++  const currentIndex = TIER_ORDER.indexOf(result.tier);
++
++  return (
++    <div className="scroll-mt-24">
++      {/* The ladder, so a church sees its tier as a position rather than a
++          verdict — the tiers above it are where it's going next. */}
++      <ol className="mb-8 grid gap-2 sm:grid-cols-4">
++        {TIER_ORDER.map((tier, index) => {
++          const isCurrent = index === currentIndex;
++          const isPast = index < currentIndex;
++          return (
++            <li
++              key={tier}
++              aria-current={isCurrent ? "step" : undefined}
++              className={`rounded-xl border p-3 text-xs font-semibold transition-brand ${
++                isCurrent
++                  ? "border-brand-400 bg-brand-600 text-white shadow-brand-glow"
++                  : isPast
++                    ? "border-brand-200 bg-brand-50 text-brand-700"
++                    : "border-line bg-surface text-ink-faint"
++              }`}
++            >
++              <span className="flex items-center gap-1.5">
++                {isPast ? (
++                  <CheckCircle weight="fill" className="size-3.5" />
++                ) : (
++                  <Path weight="bold" className="size-3.5" />
++                )}
++                Tier {index + 1}
++              </span>
++              <span className="mt-1 block leading-snug">{TIER_CONTENT[tier].label}</span>
++            </li>
++          );
++        })}
++      </ol>
++
++      <Card className="border-l-4 border-l-brand-500">
++        <Badge tone="brand" icon={Path}>
++          Tier {currentIndex + 1} of {TIER_ORDER.length}
++        </Badge>
++        <h2 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">{content.label}</h2>
++        <p className="mt-2 text-lg text-ink-soft">{content.summary}</p>
++        <p className="mt-4 text-sm leading-relaxed text-ink-muted">{content.diagnosis}</p>
++
++        <div className="mt-6 grid gap-2 sm:grid-cols-4">
++          {Object.entries(DIMENSION_LABELS).map(([dimension, label]) => {
++            const cleared = result.cleared[dimension as keyof typeof result.cleared];
++            const isBlocker = result.blockedOn === dimension;
++            return (
++              <div
++                key={dimension}
++                className={`rounded-xl border p-3 ${
++                  isBlocker ? "border-accent-300 bg-accent-50" : "border-line bg-paper"
++                }`}
++              >
++                <p className="flex items-center gap-1.5 text-xs font-semibold text-ink-soft">
++                  {cleared ? (
++                    <CheckCircle weight="fill" className="size-3.5 text-success" />
++                  ) : (
++                    <Circle className="size-3.5 text-ink-faint" />
++                  )}
++                  {label}
++                </p>
++                <p className="mt-1 text-xs text-ink-muted">
++                  {isBlocker ? "This is what's next" : cleared ? "In place" : "Not yet"}
++                </p>
++              </div>
++            );
++          })}
++        </div>
++      </Card>
++
++      <Card className="mt-4">
++        <h3 className="text-base font-bold text-ink">Your next three moves</h3>
++        <ol className="mt-4 space-y-3">
++          {content.steps.map((step, index) => (
++            <li key={step} className="flex gap-3 text-sm text-ink-soft">
++              <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent-100 text-xs font-extrabold text-accent-800">
++                {index + 1}
++              </span>
++              <span className="leading-relaxed">{step}</span>
++            </li>
++          ))}
++        </ol>
++      </Card>
++
++      <Card className="mt-4 border-l-4 border-l-accent-500">
++        <h3 className="flex items-center gap-2 text-base font-bold text-ink">
++          <Lightbulb weight="fill" className="size-4.5 text-accent-600" />
++          About your leadership
++        </h3>
++        <p className="mt-2 text-sm leading-relaxed text-ink-soft">{leadershipNote(result.scores)}</p>
++      </Card>
++
++      <Card
++        className={`mt-4 ${content.graduatesToChurchedIn ? "border-l-4 border-l-brand-600" : ""}`}
++      >
++        <h3 className="flex items-center gap-2 text-base font-bold text-ink">
++          {content.graduatesToChurchedIn ? (
++            <SealCheck weight="fill" className="size-4.5 text-brand-600" />
++          ) : (
++            <Compass weight="fill" className="size-4.5 text-ink-muted" />
++          )}
++          {content.graduatesToChurchedIn
++            ? "You're ready for ChurchedIn"
++            : "Where ChurchedIn fits for you"}
++        </h3>
++        <p className="mt-2 text-sm leading-relaxed text-ink-soft">{content.churchedIn}</p>
++        <div className="mt-5 flex flex-wrap items-center gap-3">
++          <LinkButton href={content.cta.href}>
++            {content.cta.label} <ArrowRight weight="bold" className="size-4" />
++          </LinkButton>
++          {content.secondaryCta && (
++            <LinkButton href={content.secondaryCta.href} variant="secondary">
++              {content.secondaryCta.label}
++            </LinkButton>
++          )}
++        </div>
++      </Card>
++
++      <div className="mt-6 flex flex-wrap items-center gap-4">
++        <Button variant="secondary" onClick={onReset}>
++          <ArrowClockwise weight="bold" className="size-4" /> Start over
++        </Button>
++        <p className="text-sm text-ink-muted">
++          Nothing you answered was saved.{" "}
++          <Link href="/discover" className="font-semibold text-brand-600 hover:underline">
++            Browse churches near you
++          </Link>
++          .
++        </p>
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/(public)/readiness/page.tsx b/src/app/(public)/readiness/page.tsx
+new file mode 100644
+index 0000000..30105b7
+--- /dev/null
++++ b/src/app/(public)/readiness/page.tsx
+@@ -0,0 +1,115 @@
++import type { Metadata } from "next";
++import { Path, ForkKnife } from "@phosphor-icons/react/dist/ssr";
++import { PublicHeader } from "@/components/nav/PublicHeader";
++import { FloatingShape } from "@/components/FloatingShape";
++import { Reveal } from "@/components/Reveal";
++import { TIER_ORDER, TIER_CONTENT } from "@/lib/readiness";
++import { ReadinessAssessment } from "./ReadinessAssessment";
++
++export const metadata: Metadata = {
++  title: "Where to start",
++  description:
++    "A short self-assessment that tells your church which of four places it's actually in — and the three next moves from there.",
++};
++
++/**
++ * The Readiness Pathway — the front door.
++ *
++ * Demo Day's clearest note was that "church" isn't a persona and that we had
++ * three overlapping ideas where we needed one. This page is the answer to
++ * both: the tiers are the reviewer's own three church types, and everything
++ * else we're building is what a church gets routed INTO from here rather
++ * than a separate product competing for the same summer.
++ */
++export default function ReadinessPage() {
++  return (
++    <div className="min-h-screen bg-paper">
++      <PublicHeader current="readiness" />
++
++      <section className="relative overflow-hidden bg-hero-mesh">
++        <FloatingShape position="left-[8%] top-[24%]" size="size-12" tone="bg-brand-300/35" scrollSpeed={0.06} />
++        <FloatingShape position="right-[10%] top-[16%]" size="size-9" tone="bg-accent-300/35" delay="2s" scrollSpeed={-0.08} />
++        <div className="relative mx-auto max-w-3xl px-6 pb-14 pt-16 text-center">
++          <Reveal variant="icon">
++            <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-brand-glow">
++              <Path weight="fill" className="size-6" />
++            </span>
++          </Reveal>
++          <Reveal delay={100}>
++            <h1 className="mt-5 text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
++              Not every church is at the same starting line.
++            </h1>
++          </Reveal>
++          <Reveal delay={200}>
++            <p className="mx-auto mt-4 max-w-xl text-lg text-ink-soft">
++              Six questions, no account, nothing saved. At the end you&apos;ll know which of four
++              places your church is actually in, and the three things worth doing next.
++            </p>
++          </Reveal>
++        </div>
++      </section>
++
++      <section className="border-y border-line bg-surface">
++        <div className="mx-auto max-w-5xl px-6 py-14">
++          <Reveal variant="left">
++            <h2 className="text-center text-2xl font-extrabold text-ink">The four places churches are in</h2>
++          </Reveal>
++          <Reveal delay={100}>
++            <p className="mx-auto mt-2 max-w-2xl text-center text-ink-muted">
++              Readiness isn&apos;t a score — it&apos;s a floor. You&apos;re at the earliest of these
++              that isn&apos;t true of you yet, because that&apos;s the one that will stall everything
++              built on top of it.
++            </p>
++          </Reveal>
++          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
++            {TIER_ORDER.map((tier, index) => {
++              const content = TIER_CONTENT[tier];
++              return (
++                <Reveal key={tier} delay={index * 90} className="h-full">
++                  <div
++                    className={`flex h-full flex-col rounded-2xl border bg-surface p-5 shadow-card ${
++                      content.graduatesToChurchedIn ? "border-brand-200" : "border-line"
++                    }`}
++                  >
++                    <span className="text-xs font-extrabold uppercase tracking-wider text-ink-faint">
++                      Tier {index + 1}
++                    </span>
++                    <h3 className="mt-2 text-base font-bold text-ink">{content.label}</h3>
++                    <p className="mt-2 grow text-sm text-ink-muted">{content.summary}</p>
++                    {content.graduatesToChurchedIn && (
++                      <span className="mt-4 inline-flex w-fit items-center rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700">
++                        Ready for ChurchedIn
++                      </span>
++                    )}
++                  </div>
++                </Reveal>
++              );
++            })}
++          </div>
++        </div>
++      </section>
++
++      <section className="mx-auto max-w-3xl px-6 py-16">
++        <Reveal variant="left">
++          <h2 className="text-2xl font-extrabold text-ink">Where is your church?</h2>
++        </Reveal>
++        <Reveal delay={100}>
++          <p className="mt-2 text-ink-muted">
++            Answer for the church as it is today, not as you hope it will be in September. The
++            honest answer is the useful one.
++          </p>
++        </Reveal>
++        <div className="mt-8">
++          <ReadinessAssessment />
++        </div>
++      </section>
++
++      <footer className="border-t border-line px-6 py-10 text-center text-sm text-ink-muted">
++        <span className="inline-flex items-center gap-1.5">
++          <ForkKnife weight="fill" className="size-4" /> Made with love for church communities
++          welcoming students far from home.
++        </span>
++      </footer>
++    </div>
++  );
++}
+diff --git a/src/app/BeyondGroupChat.tsx b/src/app/BeyondGroupChat.tsx
+new file mode 100644
+index 0000000..e21a9ae
+--- /dev/null
++++ b/src/app/BeyondGroupChat.tsx
+@@ -0,0 +1,107 @@
++import { ChatsCircle, ListChecks, LockKey, Ticket, X, Check } from "@phosphor-icons/react/dist/ssr";
++import { Reveal } from "@/components/Reveal";
++
++/**
++ * "We already have a WhatsApp group" is the objection every church we
++ * demoed to raised, and the Demo Day note was that we should meet it head
++ * on rather than pretend it isn't the incumbent: lead with the three things
++ * a group chat structurally cannot do. Not a feature grid — each row is a
++ * specific moment where the group chat breaks down, then what happens here
++ * instead.
++ */
++const CONTRASTS = [
++  {
++    iconKey: "waitlist",
++    moment: "A dinner for eight fills up",
++    groupChat:
++      "Fourteen people reply yes. Someone has to count the messages, then tell six of them no by hand — and redo it every time a family drops out.",
++    churchedIn:
++      "The ninth RSVP joins a waitlist automatically, and the longest-waiting person is promoted the moment someone cancels. Helpers and attendees have separate headcounts.",
++  },
++  {
++    iconKey: "privacy",
++    moment: "A student wants one person to talk to",
++    groupChat:
++      "Adding them to the group hands their phone number to everyone in it, and they still have to work out who to message first.",
++    churchedIn:
++      "They browse a friend directory by language and interest and send one reach-out. Neither side's contact info appears until both people have accepted.",
++  },
++  {
++    iconKey: "handoff",
++    moment: "A new volunteer joins, or a leader moves away",
++    groupChat:
++      "Somebody with admin rights has to add them by phone number, and when the person holding the group leaves, the history and the roster leave with them.",
++    churchedIn:
++      "A six-character join code lets anyone join your church's own space, with roles, a roster, and co-hosts who can cover for each other — it outlasts whoever set it up.",
++  },
++] as const;
++
++const ICONS = {
++  waitlist: ListChecks,
++  privacy: LockKey,
++  handoff: Ticket,
++} as const;
++
++export function BeyondGroupChat() {
++  return (
++    <section className="relative overflow-hidden border-y border-line bg-surface">
++      <div className="relative mx-auto max-w-5xl px-6 py-20">
++        <div className="mb-12 text-center">
++          <Reveal variant="icon">
++            <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
++              <ChatsCircle weight="fill" className="size-6" />
++            </span>
++          </Reveal>
++          <Reveal variant="left" delay={100}>
++            <h2 className="mt-5 text-3xl font-extrabold text-ink">
++              Already have a WhatsApp group? Keep it.
++            </h2>
++          </Reveal>
++          <Reveal delay={200}>
++            <p className="mx-auto mt-3 max-w-2xl text-ink-muted">
++              A group chat is a great place to talk. It&apos;s a bad place to keep a headcount, a
++              private introduction, or a roster that has to outlive you. Those are the three things
++              this replaces — nothing else.
++            </p>
++          </Reveal>
++        </div>
++
++        <div className="space-y-4">
++          {CONTRASTS.map((contrast, index) => {
++            const Icon = ICONS[contrast.iconKey];
++            return (
++              <Reveal key={contrast.moment} delay={index * 100}>
++                <div className="rounded-2xl border border-line bg-surface p-5 shadow-card sm:p-6">
++                  <h3 className="flex items-center gap-2.5 text-base font-bold text-ink">
++                    <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
++                      <Icon weight="fill" className="size-4.5" />
++                    </span>
++                    {contrast.moment}
++                  </h3>
++                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
++                    <div className="rounded-xl border border-line bg-paper p-4">
++                      <p className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-ink-faint">
++                        <X weight="bold" className="size-3.5" /> In the group chat
++                      </p>
++                      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
++                        {contrast.groupChat}
++                      </p>
++                    </div>
++                    <div className="rounded-xl border border-brand-200 bg-brand-50/60 p-4">
++                      <p className="flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-brand-700">
++                        <Check weight="bold" className="size-3.5" /> Here
++                      </p>
++                      <p className="mt-2 text-sm leading-relaxed text-ink-soft">
++                        {contrast.churchedIn}
++                      </p>
++                    </div>
++                  </div>
++                </div>
++              </Reveal>
++            );
++          })}
++        </div>
++      </div>
++    </section>
++  );
++}
+diff --git a/src/app/churches/[id]/page.tsx b/src/app/churches/[id]/page.tsx
+index 00964ad..f20970a 100644
+--- a/src/app/churches/[id]/page.tsx
++++ b/src/app/churches/[id]/page.tsx
+@@ -9,9 +9,10 @@ import {
+   MapPin,
+   NavigationArrow,
+   CalendarBlank,
++  Quotes,
+ } from "@phosphor-icons/react/dist/ssr";
+ import { requireUser } from "@/lib/auth";
+-import { getChurchProfile, listEventsForChurch } from "@/lib/queries";
++import { getChurchProfile, listEventsForChurch, listPublicVolunteerStories } from "@/lib/queries";
+ import { categoryStyle } from "@/lib/eventCategoryStyle";
+ import { AuthShell } from "@/components/nav/AuthShell";
+ import { Card } from "@/components/ui/Card";
+@@ -43,7 +44,10 @@ export default async function ChurchProfilePage({
+   const membership = user.memberships.find((m) => m.churchId === id);
+   const canManageSettings = membership?.role === "CHURCH_ADMIN";
+ 
+-  const events = await listEventsForChurch(id);
++  const [events, stories] = await Promise.all([
++    listEventsForChurch(id),
++    listPublicVolunteerStories(id),
++  ]);
+   const upcoming = events.filter((e) => e.startsAt >= new Date());
+ 
+   const languageList = church.languages
+@@ -148,6 +152,43 @@ export default async function ChurchProfilePage({
+               </div>
+             )}
+           </Card>
++
++          {/* Stories whose authors chose to show them beyond their own church
++              — the strongest signal a student browsing /discover can get
++              about what a visit here is actually like. First names only, by
++              the time it reaches this page (listPublicVolunteerStories). */}
++          {stories.length > 0 && (
++            <Card>
++              <h2 className="mb-4 flex items-center gap-1.5 font-bold text-ink">
++                <Quotes weight="fill" className="size-4.5 text-brand-600" /> From the people who host
++              </h2>
++              <div className="space-y-4">
++                {stories.map((story) => (
++                  <blockquote
++                    key={story.id}
++                    className="rounded-xl border border-line bg-paper p-4 text-sm leading-relaxed text-ink-soft"
++                  >
++                    <p className="whitespace-pre-line">{story.body}</p>
++                    <footer className="mt-3 text-xs font-semibold text-ink-muted">
++                      — {story.authorFirstName}, {story.createdAt.toLocaleDateString()}
++                    </footer>
++                  </blockquote>
++                ))}
++              </div>
++              {/* /stories always shows the viewer's ACTIVE church, so only
++                  offer this when that's the church being looked at — a
++                  multi-church member viewing their other church would
++                  otherwise land on the wrong feed. */}
++              {user.activeMembership?.churchId === id && (
++                <Link
++                  href="/stories"
++                  className="mt-4 inline-block text-sm font-semibold text-brand-600 transition-brand hover:underline"
++                >
++                  See all stories from this church →
++                </Link>
++              )}
++            </Card>
++          )}
+         </div>
+ 
+         <div className="space-y-4">
+diff --git a/src/app/page.tsx b/src/app/page.tsx
+index 9f64ba4..9aff8da 100644
+--- a/src/app/page.tsx
++++ b/src/app/page.tsx
+@@ -1,17 +1,18 @@
+ import Link from "next/link";
+ import {
+-  UsersThree,
+   ArrowRight,
+   ChatCircleDots,
+   ForkKnife,
++  Path,
+   Sparkle,
+ } from "@phosphor-icons/react/dist/ssr";
+-import { LinkButton } from "@/components/ui/Button";
+ import { Reveal } from "@/components/Reveal";
+ import { FloatingShape } from "@/components/FloatingShape";
++import { PublicHeader } from "@/components/nav/PublicHeader";
+ import { StepCard } from "@/components/StepCard";
+ import { FeatureCards } from "./FeatureCards";
+ import { HeroSection } from "./HeroSection";
++import { BeyondGroupChat } from "./BeyondGroupChat";
+ 
+ // Icon keyed by a plain string, not the component itself — Server
+ // Components can't pass function/component references as props to Client
+@@ -63,27 +64,7 @@ const STEPS = [
+ export default function LandingPage() {
+   return (
+     <div className="min-h-screen bg-paper">
+-      <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
+-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+-          <span className="flex items-center gap-2 text-base font-bold text-brand-700">
+-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
+-              <UsersThree weight="fill" className="size-4.5" />
+-            </span>
+-            <span className="hidden sm:inline">ChurchedIn</span>
+-          </span>
+-          <nav className="flex items-center gap-1 text-sm sm:gap-2">
+-            <Link
+-              href="/login"
+-              className="whitespace-nowrap rounded-xl px-2.5 py-2 font-medium text-ink-soft transition-brand hover:text-ink sm:px-3.5"
+-            >
+-              Log in
+-            </Link>
+-            <LinkButton href="/signup" size="sm" className="whitespace-nowrap">
+-              Start a church <ArrowRight weight="bold" className="size-3.5" />
+-            </LinkButton>
+-          </nav>
+-        </div>
+-      </header>
++      <PublicHeader />
+ 
+       <HeroSection />
+ 
+@@ -116,6 +97,8 @@ export default function LandingPage() {
+         </div>
+       </section>
+ 
++      <BeyondGroupChat />
++
+       <section className="mx-auto max-w-4xl px-6 py-20 text-center">
+         <Reveal variant="icon">
+           <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+@@ -136,6 +119,46 @@ export default function LandingPage() {
+         </Reveal>
+       </section>
+ 
++      {/* Not every church that finds this page is ready for it, and pretending
++          otherwise was the thing Demo Day pushed back on hardest. The pathway
++          is the honest front door — it tells a church which of four places
++          it's in and sends only the ready ones in here. */}
++      <section className="relative overflow-hidden border-t border-line bg-brand-700 bg-hero-mesh">
++        <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
++          <Reveal variant="icon">
++            <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-white/15 text-white">
++              <Path weight="fill" className="size-6" />
++            </span>
++          </Reveal>
++          <Reveal variant="left" delay={100}>
++            <h2 className="mt-5 text-2xl font-extrabold text-white sm:text-3xl">
++              Not sure your church is ready for any of this?
++            </h2>
++          </Reveal>
++          <Reveal delay={200}>
++            <p className="mx-auto mt-3 max-w-xl text-brand-100">
++              Six questions, no account, nothing saved. You&apos;ll find out which of four places
++              your church is actually in — and if the answer is &ldquo;not yet,&rdquo; we&apos;ll
++              tell you that and what to do instead.
++            </p>
++          </Reveal>
++          <Reveal delay={300}>
++            <div className="mt-8 flex justify-center">
++              {/* A plain Link rather than LinkButton: this CTA sits on the
++                  brand-700 panel and needs inverted colors, and overriding
++                  LinkButton's own bg/text utilities from the outside is a
++                  coin flip on which class wins in the generated CSS. */}
++              <Link
++                href="/readiness"
++                className="inline-flex items-center justify-center gap-2.5 rounded-xl bg-white px-6 py-3 text-base font-semibold text-brand-700 transition-brand hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-brand-700 active:scale-[0.97]"
++              >
++                Find where to start <ArrowRight weight="bold" className="size-4" />
++              </Link>
++            </div>
++          </Reveal>
++        </div>
++      </section>
++
+       <section className="relative overflow-hidden border-t border-line bg-surface">
+         <FloatingShape position="right-28 top-20" size="size-8" tone="bg-brand-300/40" delay="1s" scrollSpeed={0.12} scrollMax={55} strong />
+         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
+diff --git a/src/app/sitemap.ts b/src/app/sitemap.ts
+index 8fa506c..059766b 100644
+--- a/src/app/sitemap.ts
++++ b/src/app/sitemap.ts
+@@ -4,7 +4,7 @@ import { appUrl } from "@/lib/email";
+ /** Only the public marketing/auth pages — everything else requires a
+  * session and is excluded from crawling via robots.ts. */
+ export default function sitemap(): MetadataRoute.Sitemap {
+-  const paths = ["/", "/login", "/signup", "/join", "/forgot-password"];
++  const paths = ["/", "/readiness", "/login", "/signup", "/join", "/forgot-password"];
+   return paths.map((path) => ({
+     url: appUrl(path),
+     changeFrequency: path === "/" ? "weekly" : "monthly",
+diff --git a/src/app/stories/StoryActions.tsx b/src/app/stories/StoryActions.tsx
+new file mode 100644
+index 0000000..d243985
+--- /dev/null
++++ b/src/app/stories/StoryActions.tsx
+@@ -0,0 +1,88 @@
++"use client";
++
++import { useState, useTransition } from "react";
++import { Eye, EyeSlash, Trash } from "@phosphor-icons/react/dist/ssr";
++import { Button } from "@/components/ui/Button";
++import { FormError } from "@/components/ui/Field";
++import {
++  deleteVolunteerStoryAction,
++  toggleStoryVisibilityAction,
++  type ActionResult,
++} from "@/lib/actions/stories";
++
++/**
++ * Per-story controls. `canToggle` (author only) and `canDelete` (author or a
++ * church admin) are decided on the server and passed in — these are just the
++ * buttons; both actions re-check permission themselves.
++ */
++export function StoryActions({
++  storyId,
++  sharePublicly,
++  canToggle,
++  canDelete,
++}: {
++  storyId: string;
++  sharePublicly: boolean;
++  canToggle: boolean;
++  canDelete: boolean;
++}) {
++  const [pending, startTransition] = useTransition();
++  const [error, setError] = useState<string | undefined>(undefined);
++
++  function run(action: (id: string) => Promise<ActionResult>, confirmMessage?: string) {
++    if (confirmMessage && !confirm(confirmMessage)) return;
++    setError(undefined);
++    startTransition(async () => {
++      const result = await action(storyId);
++      if (result && "error" in result) {
++        setError(result.error);
++      }
++    });
++  }
++
++  if (!canToggle && !canDelete) return null;
++
++  return (
++    <div className="space-y-1.5">
++      <FormError message={error} />
++      <div className="flex items-center gap-2">
++        {canToggle && (
++          <Button
++            variant="ghost"
++            size="sm"
++            disabled={pending}
++            onClick={() => run(toggleStoryVisibilityAction)}
++            title={
++              sharePublicly
++                ? "Stop showing this on the church's public page"
++                : "Show this on the church's public page"
++            }
++          >
++            {sharePublicly ? (
++              <>
++                <EyeSlash weight="bold" className="size-3.5" /> Make private
++              </>
++            ) : (
++              <>
++                <Eye weight="bold" className="size-3.5" /> Share publicly
++              </>
++            )}
++          </Button>
++        )}
++        {canDelete && (
++          <Button
++            variant="ghost"
++            size="sm"
++            disabled={pending}
++            onClick={() =>
++              run(deleteVolunteerStoryAction, "Remove this story? This can't be undone.")
++            }
++            title="Remove this story"
++          >
++            <Trash weight="bold" className="size-3.5" /> Remove
++          </Button>
++        )}
++      </div>
++    </div>
++  );
++}
+diff --git a/src/app/stories/StoryForm.tsx b/src/app/stories/StoryForm.tsx
+new file mode 100644
+index 0000000..e5662b5
+--- /dev/null
++++ b/src/app/stories/StoryForm.tsx
+@@ -0,0 +1,43 @@
++"use client";
++
++import { useActionState, useState } from "react";
++import { createVolunteerStoryAction } from "@/lib/actions/stories";
++import { TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
++import { SubmitButton } from "@/components/ui/SubmitButton";
++
++/** Remounted via `key` after a successful submit to clear the textarea — the
++ * new story appearing in the list below is the confirmation, so there's no
++ * separate banner to go stale (same pattern as RideRequestForm). */
++export function StoryForm() {
++  const [state, formAction] = useActionState(createVolunteerStoryAction, undefined);
++  const [formKey, setFormKey] = useState(0);
++  const [lastState, setLastState] = useState(state);
++
++  if (state !== lastState) {
++    setLastState(state);
++    if (state && "ok" in state && state.ok) {
++      setFormKey((k) => k + 1);
++    }
++  }
++
++  return (
++    <form key={formKey} action={formAction} className="space-y-4">
++      <FormError message={state && "error" in state ? state.error : undefined} />
++      <TextAreaField
++        label="What happened?"
++        name="body"
++        required
++        minLength={60}
++        maxLength={1500}
++        className="min-h-32"
++        hint="Concrete beats inspiring. What you cooked, what you were nervous about, what you'd tell someone considering it."
++        placeholder="We had four students over for dinner and I spent the whole afternoon worrying nobody would talk. They stayed until eleven…"
++      />
++      <CheckboxField
++        label="Also show this on our church's public page (first name only)"
++        name="sharePublicly"
++      />
++      <SubmitButton pendingText="Sharing…">Share this story</SubmitButton>
++    </form>
++  );
++}
+diff --git a/src/app/stories/loading.tsx b/src/app/stories/loading.tsx
+new file mode 100644
+index 0000000..723baf1
+--- /dev/null
++++ b/src/app/stories/loading.tsx
+@@ -0,0 +1,5 @@
++import { PageLoading } from "@/components/ui/PageLoading";
++
++export default function Loading() {
++  return <PageLoading />;
++}
+diff --git a/src/app/stories/page.tsx b/src/app/stories/page.tsx
+new file mode 100644
+index 0000000..adf67f5
+--- /dev/null
++++ b/src/app/stories/page.tsx
+@@ -0,0 +1,187 @@
++import Link from "next/link";
++import { redirect } from "next/navigation";
++import type { Metadata } from "next";
++import {
++  CalendarPlus,
++  ChatCenteredText,
++  Globe,
++  HandHeart,
++  Quotes,
++  UserPlus,
++  Users,
++} from "@phosphor-icons/react/dist/ssr";
++import { requireUser } from "@/lib/auth";
++import { listVolunteerStoriesForChurch, listChurchActivity } from "@/lib/queries";
++import { AuthShell } from "@/components/nav/AuthShell";
++import { Card } from "@/components/ui/Card";
++import { Badge } from "@/components/ui/Badge";
++import { Avatar } from "@/components/ui/Avatar";
++import { EmptyState } from "@/components/ui/EmptyState";
++import { ROLES } from "@/lib/constants";
++import { ACTIVITY_KINDS, relativeTime, type ActivityKind } from "@/lib/churchActivity";
++import { StoryForm } from "./StoryForm";
++import { StoryActions } from "./StoryActions";
++
++export const metadata: Metadata = {
++  title: "Stories",
++};
++
++const ACTIVITY_ICONS: Record<ActivityKind, typeof CalendarPlus> = {
++  EVENT_CREATED: CalendarPlus,
++  MEMBER_JOINED: UserPlus,
++  RSVP: HandHeart,
++  STORY_SHARED: ChatCenteredText,
++};
++
++/**
++ * Volunteer stories + the church's activity feed — the answer to Demo Day's
++ * volunteer-supply note (Thanh's): the people best placed to recruit a
++ * hesitant congregation are the volunteers who already said yes, so give
++ * them somewhere to say what it was actually like, and give the church
++ * visible evidence that things are happening here.
++ *
++ * Open to every member, not just volunteers: a student reading why a host
++ * was nervous the first time is the point. Writing is limited to volunteers
++ * and leaders (see the VolunteerStory doc comment in schema.prisma).
++ */
++export default async function StoriesPage() {
++  const user = await requireUser();
++  const membership = user.activeMembership;
++  if (!membership) {
++    redirect("/join");
++  }
++
++  const [stories, activity] = await Promise.all([
++    listVolunteerStoriesForChurch(membership.churchId),
++    listChurchActivity(membership.churchId),
++  ]);
++
++  const canWrite = membership.role === ROLES.VOLUNTEER || membership.role === ROLES.CHURCH_ADMIN;
++  const isChurchAdmin = membership.role === ROLES.CHURCH_ADMIN;
++  const now = new Date();
++
++  return (
++    <AuthShell user={user}>
++      <div className="mb-8">
++        <h1 className="text-2xl font-extrabold text-ink">Stories from {membership.church.name}</h1>
++        <p className="mt-1 max-w-2xl text-sm text-ink-muted">
++          The most persuasive thing a hesitant volunteer can read is what it was actually like for
++          someone who already did it — including the part where they were nervous.
++        </p>
++      </div>
++
++      <div className="grid gap-6 lg:grid-cols-3">
++        <div className="space-y-6 lg:col-span-2">
++          {canWrite && (
++            <Card>
++              <h2 className="flex items-center gap-2 font-bold text-ink">
++                <Quotes weight="fill" className="size-4.5 text-brand-600" />
++                Share what happened
++              </h2>
++              <p className="mt-1 mb-4 text-sm text-ink-muted">
++                A few sentences is plenty. Stays inside your church unless you tick the box.
++              </p>
++              <StoryForm />
++            </Card>
++          )}
++
++          {stories.length === 0 ? (
++            <EmptyState
++              icon={Quotes}
++              title="No stories yet"
++              body={
++                canWrite
++                  ? "Yours would be the first. Whoever hosted most recently probably has the best one."
++                  : "Once a volunteer here writes one, it'll show up here."
++              }
++            />
++          ) : (
++            <div className="space-y-4">
++              {stories.map((story) => (
++                <Card key={story.id}>
++                  <div className="flex items-start justify-between gap-4">
++                    <div className="flex items-center gap-3">
++                      <Avatar name={story.author.name} size="sm" />
++                      <div>
++                        <p className="text-sm font-semibold text-ink">{story.author.name}</p>
++                        <p className="text-xs text-ink-faint">
++                          {relativeTime(story.createdAt, now)}
++                        </p>
++                      </div>
++                    </div>
++                    {story.sharePublicly && (
++                      <Badge tone="brand" icon={Globe}>
++                        On the public page
++                      </Badge>
++                    )}
++                  </div>
++                  {/* whitespace-pre-line so a story written as two or three
++                      short paragraphs survives — these are typed into a
++                      textarea, not a rich editor. */}
++                  <p className="mt-4 whitespace-pre-line text-sm leading-relaxed text-ink-soft">
++                    {story.body}
++                  </p>
++                  <div className="mt-4">
++                    <StoryActions
++                      storyId={story.id}
++                      sharePublicly={story.sharePublicly}
++                      canToggle={story.authorId === user.id}
++                      canDelete={story.authorId === user.id || isChurchAdmin}
++                    />
++                  </div>
++                </Card>
++              ))}
++            </div>
++          )}
++        </div>
++
++        <div className="lg:col-span-1">
++          <Card>
++            <h2 className="flex items-center gap-2 font-bold text-ink">
++              <Users weight="fill" className="size-4.5 text-brand-600" />
++              What&apos;s been happening
++            </h2>
++            {activity.length === 0 ? (
++              <p className="mt-3 text-sm text-ink-muted">
++                Nothing yet. The first gathering on the calendar is what gets this moving.
++              </p>
++            ) : (
++              <ul className="mt-4 space-y-3">
++                {activity.map((item) => {
++                  const Icon = ACTIVITY_ICONS[item.kind] ?? ACTIVITY_ICONS[ACTIVITY_KINDS.RSVP];
++                  const line = (
++                    <span className="flex gap-2.5">
++                      <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-lg bg-paper text-ink-muted">
++                        <Icon weight="fill" className="size-3.5" />
++                      </span>
++                      <span className="text-sm leading-snug text-ink-soft">
++                        <span className="font-semibold text-ink">{item.actor}</span> {item.summary}
++                        <span className="block text-xs text-ink-faint">
++                          {relativeTime(item.at, now)}
++                        </span>
++                      </span>
++                    </span>
++                  );
++                  return (
++                    <li key={item.id}>
++                      {item.href ? (
++                        <Link
++                          href={item.href}
++                          className="block rounded-lg transition-brand hover:opacity-80"
++                        >
++                          {line}
++                        </Link>
++                      ) : (
++                        line
++                      )}
++                    </li>
++                  );
++                })}
++              </ul>
++            )}
++          </Card>
++        </div>
++      </div>
++    </AuthShell>
++  );
++}
+diff --git a/src/app/volunteer/dashboard/page.tsx b/src/app/volunteer/dashboard/page.tsx
+index b9d8453..7c19254 100644
+--- a/src/app/volunteer/dashboard/page.tsx
++++ b/src/app/volunteer/dashboard/page.tsx
+@@ -1,5 +1,5 @@
+ import Link from "next/link";
+-import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree, Car } from "@phosphor-icons/react/dist/ssr";
++import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree, Car, Quotes } from "@phosphor-icons/react/dist/ssr";
+ import { requireRole } from "@/lib/auth";
+ import { prisma } from "@/lib/prisma";
+ import { listConnectionsAsMentor, listOpenRideRequestsForChurch } from "@/lib/queries";
+@@ -18,7 +18,7 @@ export default async function VolunteerDashboardPage() {
+   const user = await requireRole(ROLES.VOLUNTEER);
+   const churchId = user.activeMembership!.churchId;
+ 
+-  const [myEvents, memberCount, openRides] = await Promise.all([
++  const [myEvents, memberCount, openRides, myStoryCount] = await Promise.all([
+     // Includes events this volunteer is cohosting, not just ones they
+     // created — otherwise an invited mentor has no way to see their own
+     // upcoming commitment from their own dashboard.
+@@ -29,6 +29,7 @@ export default async function VolunteerDashboardPage() {
+     }),
+     prisma.membership.count({ where: { churchId } }),
+     listOpenRideRequestsForChurch(churchId),
++    prisma.volunteerStory.count({ where: { authorId: user.id, churchId } }),
+   ]);
+ 
+   const connections = await listConnectionsAsMentor(user.id);
+@@ -37,6 +38,12 @@ export default async function VolunteerDashboardPage() {
+   const upcoming = myEvents.filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED");
+   const nextEvent = [...upcoming].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+ 
++  // Only nudge a volunteer who has actually hosted something and hasn't
++  // written a story yet — asking someone with nothing to describe, or asking
++  // twice, is how a prompt like this turns into noise people learn to ignore.
++  const hasHosted = myEvents.some((e) => e.startsAt < new Date() && e.status !== "CANCELLED");
++  const shouldPromptForStory = hasHosted && myStoryCount === 0;
++
+   return (
+     <AuthShell user={user}>
+       <div className="mb-8 flex items-center justify-between">
+@@ -84,6 +91,26 @@ export default async function VolunteerDashboardPage() {
+         />
+       </div>
+ 
++      {shouldPromptForStory && (
++        <Card className="mb-6 border-l-4 border-l-accent-500">
++          <div className="flex flex-wrap items-center justify-between gap-4">
++            <div>
++              <h2 className="flex items-center gap-2 font-bold text-ink">
++                <Quotes weight="fill" className="size-4.5 text-accent-600" />
++                You&apos;ve hosted. Someone here is still on the fence.
++              </h2>
++              <p className="mt-1 max-w-xl text-sm text-ink-muted">
++                A few sentences about how it actually went — including the part you were nervous
++                about — does more to recruit the next volunteer than any announcement.
++              </p>
++            </div>
++            <LinkButton href="/stories" variant="secondary">
++              Write a story
++            </LinkButton>
++          </div>
++        </Card>
++      )}
++
+       {pending.length > 0 && (
+         <Card className="mb-6">
+           <h2 className="mb-3 font-bold text-ink">Friend requests waiting on you</h2>
+diff --git a/src/components/nav/AuthShell.tsx b/src/components/nav/AuthShell.tsx
+index f7ab34f..f633521 100644
+--- a/src/components/nav/AuthShell.tsx
++++ b/src/components/nav/AuthShell.tsx
+@@ -12,10 +12,14 @@ import { MobileMenu } from "./MobileMenu";
+ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): NavLink[] {
+   const events: NavLink = { href: "/events", label: "Events", iconKey: "events", hasBadge: unseenEvents };
+   const discover: NavLink = { href: "/discover", label: "Discover", iconKey: "discover" };
++  // Every role gets Stories: volunteers and leaders write them, and a student
++  // reading why a host was nervous their first time is exactly the point.
++  const stories: NavLink = { href: "/stories", label: "Stories", iconKey: "stories" };
+   if (role === ROLES.CHURCH_ADMIN) {
+     return [
+       { href: "/admin/dashboard", label: "Dashboard", iconKey: "dashboard" },
+       events,
++      stories,
+       discover,
+       { href: `/churches/${churchId}/settings`, label: "Church settings", iconKey: "settings" },
+     ];
+@@ -24,12 +28,14 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): N
+     return [
+       { href: "/volunteer/dashboard", label: "Dashboard", iconKey: "dashboard" },
+       events,
++      stories,
+       discover,
+     ];
+   }
+   return [
+     { href: "/student/dashboard", label: "Dashboard", iconKey: "dashboard" },
+     events,
++    stories,
+     discover,
+     { href: "/student/mentors", label: "Friends", iconKey: "mentors" },
+   ];
+diff --git a/src/components/nav/NavLinks.tsx b/src/components/nav/NavLinks.tsx
+index d4663f5..2b4d947 100644
+--- a/src/components/nav/NavLinks.tsx
++++ b/src/components/nav/NavLinks.tsx
+@@ -2,7 +2,7 @@
+ 
+ import Link from "next/link";
+ import { usePathname } from "next/navigation";
+-import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree } from "@phosphor-icons/react/dist/ssr";
++import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree, Quotes } from "@phosphor-icons/react/dist/ssr";
+ 
+ // Server Components can't pass component/function references (like a Phosphor
+ // icon) as props to Client Components — only plain serializable data crosses
+@@ -15,6 +15,7 @@ export const NAV_ICONS = {
+   discover: Compass,
+   settings: GearSix,
+   mentors: UsersThree,
++  stories: Quotes,
+ } as const;
+ 
+ export type NavIconKey = keyof typeof NAV_ICONS;
+diff --git a/src/components/nav/PublicHeader.tsx b/src/components/nav/PublicHeader.tsx
+new file mode 100644
+index 0000000..49d8c05
+--- /dev/null
++++ b/src/components/nav/PublicHeader.tsx
+@@ -0,0 +1,43 @@
++import Link from "next/link";
++import { UsersThree, ArrowRight } from "@phosphor-icons/react/dist/ssr";
++import { LinkButton } from "@/components/ui/Button";
++
++/**
++ * The sticky header shared by the signed-out pages (landing, /readiness).
++ * Extracted from the landing page when /readiness arrived so the two can't
++ * drift apart — and so the readiness link only has to be added in one place.
++ */
++export function PublicHeader({ current }: { current?: "readiness" }) {
++  return (
++    <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
++      <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
++        <Link href="/" className="flex items-center gap-2 text-base font-bold text-brand-700">
++          <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
++            <UsersThree weight="fill" className="size-4.5" />
++          </span>
++          <span className="hidden sm:inline">ChurchedIn</span>
++        </Link>
++        <nav className="flex items-center gap-1 text-sm sm:gap-2">
++          <Link
++            href="/readiness"
++            aria-current={current === "readiness" ? "page" : undefined}
++            className={`whitespace-nowrap rounded-xl px-2.5 py-2 font-medium transition-brand sm:px-3.5 ${
++              current === "readiness" ? "text-brand-700" : "text-ink-soft hover:text-ink"
++            }`}
++          >
++            Where to start
++          </Link>
++          <Link
++            href="/login"
++            className="whitespace-nowrap rounded-xl px-2.5 py-2 font-medium text-ink-soft transition-brand hover:text-ink sm:px-3.5"
++          >
++            Log in
++          </Link>
++          <LinkButton href="/signup" size="sm" className="whitespace-nowrap">
++            Start a church <ArrowRight weight="bold" className="size-3.5" />
++          </LinkButton>
++        </nav>
++      </div>
++    </header>
++  );
++}
+diff --git a/src/lib/actions/stories.ts b/src/lib/actions/stories.ts
+new file mode 100644
+index 0000000..f0bfc47
+--- /dev/null
++++ b/src/lib/actions/stories.ts
+@@ -0,0 +1,102 @@
++"use server";
++
++import { revalidatePath } from "next/cache";
++import { prisma } from "@/lib/prisma";
++import { requireUser } from "@/lib/auth";
++import { ROLES } from "@/lib/constants";
++import { volunteerStorySchema, firstIssueMessage } from "@/lib/validation";
++
++export type ActionResult = { error: string } | { ok: true } | void;
++
++/** VOLUNTEER and CHURCH_ADMIN members can write; see the VolunteerStory doc
++ * comment in schema.prisma for why students deliberately can't yet. */
++const AUTHOR_ROLES: string[] = [ROLES.VOLUNTEER, ROLES.CHURCH_ADMIN];
++
++export async function createVolunteerStoryAction(
++  _prev: ActionResult,
++  formData: FormData,
++): Promise<ActionResult> {
++  const user = await requireUser();
++  const membership = user.activeMembership;
++  if (!membership) {
++    return { error: "Join a church before sharing a story." };
++  }
++  if (!AUTHOR_ROLES.includes(membership.role)) {
++    return { error: "Only volunteers and church leaders can share a story right now." };
++  }
++
++  const parsed = volunteerStorySchema.safeParse({
++    body: formData.get("body"),
++    // An unchecked checkbox sends nothing at all, so absence is a decisive
++    // "no" here — never default this to true.
++    sharePublicly: formData.get("sharePublicly") === "on",
++  });
++  if (!parsed.success) {
++    return { error: firstIssueMessage(parsed.error) };
++  }
++
++  await prisma.volunteerStory.create({
++    data: {
++      body: parsed.data.body,
++      sharePublicly: parsed.data.sharePublicly,
++      churchId: membership.churchId,
++      authorId: user.id,
++    },
++  });
++
++  revalidatePath("/stories");
++  revalidatePath(`/churches/${membership.churchId}`);
++  return { ok: true };
++}
++
++/**
++ * Deletes a story. The author can always remove their own; a CHURCH_ADMIN of
++ * the same church can also remove one, since they're accountable for what
++ * shows up on their church's public page and there's no edit/report flow for
++ * stories yet.
++ */
++export async function deleteVolunteerStoryAction(storyId: string): Promise<ActionResult> {
++  const user = await requireUser();
++  const story = await prisma.volunteerStory.findUnique({ where: { id: storyId } });
++  if (!story) {
++    return { error: "That story no longer exists." };
++  }
++
++  const isAuthor = story.authorId === user.id;
++  const isChurchAdmin = user.memberships.some(
++    (m) => m.churchId === story.churchId && m.role === ROLES.CHURCH_ADMIN,
++  );
++  if (!isAuthor && !isChurchAdmin) {
++    return { error: "You can only remove your own story." };
++  }
++
++  await prisma.volunteerStory.delete({ where: { id: storyId } });
++
++  revalidatePath("/stories");
++  revalidatePath(`/churches/${story.churchId}`);
++}
++
++/**
++ * Flips whether a story shows on the church's public profile page. Author
++ * only — an admin can remove a story they're uncomfortable with (above), but
++ * shouldn't be able to publish someone else's words to a public page under
++ * their name without asking.
++ */
++export async function toggleStoryVisibilityAction(storyId: string): Promise<ActionResult> {
++  const user = await requireUser();
++  const story = await prisma.volunteerStory.findUnique({ where: { id: storyId } });
++  if (!story) {
++    return { error: "That story no longer exists." };
++  }
++  if (story.authorId !== user.id) {
++    return { error: "Only the person who wrote a story can change where it shows." };
++  }
++
++  await prisma.volunteerStory.update({
++    where: { id: storyId },
++    data: { sharePublicly: !story.sharePublicly },
++  });
++
++  revalidatePath("/stories");
++  revalidatePath(`/churches/${story.churchId}`);
++}
+diff --git a/src/lib/churchActivity.test.ts b/src/lib/churchActivity.test.ts
+new file mode 100644
+index 0000000..690278d
+--- /dev/null
++++ b/src/lib/churchActivity.test.ts
+@@ -0,0 +1,213 @@
++import { describe, it, expect } from "vitest";
++import {
++  ACTIVITY_KINDS,
++  EMPTY_ACTIVITY_SOURCES,
++  buildActivityFeed,
++  firstName,
++  relativeTime,
++  type ActivitySources,
++} from "@/lib/churchActivity";
++import { ROLES, RSVP_ROLE } from "@/lib/constants";
++
++function at(iso: string): Date {
++  return new Date(iso);
++}
++
++const SOURCES: ActivitySources = {
++  events: [
++    {
++      id: "e1",
++      title: "Welcome dinner",
++      createdAt: at("2026-07-04T10:00:00Z"),
++      createdBy: { name: "Naomi Adeyemi" },
++    },
++  ],
++  members: [
++    {
++      id: "m1",
++      createdAt: at("2026-07-01T10:00:00Z"),
++      role: ROLES.VOLUNTEER,
++      user: { name: "Grace Lin" },
++    },
++  ],
++  rsvps: [
++    {
++      id: "r1",
++      createdAt: at("2026-07-06T10:00:00Z"),
++      role: RSVP_ROLE.ATTENDEE,
++      user: { name: "Wei Zhang" },
++      event: { id: "e1", title: "Welcome dinner" },
++    },
++  ],
++  stories: [
++    {
++      id: "s1",
++      createdAt: at("2026-07-02T10:00:00Z"),
++      author: { name: "Naomi Adeyemi" },
++    },
++  ],
++};
++
++describe("buildActivityFeed", () => {
++  it("merges every source into one newest-first feed", () => {
++    const feed = buildActivityFeed(SOURCES);
++    expect(feed.map((item) => item.id)).toEqual(["rsvp-r1", "event-e1", "story-s1", "member-m1"]);
++  });
++
++  it("keeps ids unique across sources that could share a primary key", () => {
++    // An RSVP and an event both keyed "e1" must not collide as React keys.
++    const feed = buildActivityFeed(SOURCES);
++    expect(new Set(feed.map((item) => item.id)).size).toBe(feed.length);
++  });
++
++  it("caps after merging, not per source", () => {
++    // The newest two overall are both RSVPs here; a per-source cap would
++    // wrongly let an older event through in place of one of them.
++    const sources: ActivitySources = {
++      ...EMPTY_ACTIVITY_SOURCES,
++      events: [
++        {
++          id: "old",
++          title: "Old picnic",
++          createdAt: at("2026-01-01T00:00:00Z"),
++          createdBy: { name: "Ann Older" },
++        },
++      ],
++      rsvps: [
++        {
++          id: "new1",
++          createdAt: at("2026-07-10T00:00:00Z"),
++          role: RSVP_ROLE.ATTENDEE,
++          user: { name: "Ana One" },
++          event: { id: "e1", title: "Welcome dinner" },
++        },
++        {
++          id: "new2",
++          createdAt: at("2026-07-09T00:00:00Z"),
++          role: RSVP_ROLE.HELPER,
++          user: { name: "Ben Two" },
++          event: { id: "e1", title: "Welcome dinner" },
++        },
++      ],
++    };
++    expect(buildActivityFeed(sources, 2).map((item) => item.id)).toEqual(["rsvp-new1", "rsvp-new2"]);
++  });
++
++  it("returns an empty feed for an empty church rather than throwing", () => {
++    expect(buildActivityFeed(EMPTY_ACTIVITY_SOURCES)).toEqual([]);
++    expect(buildActivityFeed(SOURCES, 0)).toEqual([]);
++    expect(buildActivityFeed(SOURCES, -5)).toEqual([]);
++  });
++
++  it("shows first names only", () => {
++    const feed = buildActivityFeed(SOURCES);
++    expect(feed.every((item) => !item.actor.includes(" "))).toBe(true);
++    expect(feed.find((item) => item.id === "event-e1")?.actor).toBe("Naomi");
++  });
++
++  it("phrases each kind in plain language", () => {
++    const feed = buildActivityFeed(SOURCES);
++    const byId = Object.fromEntries(feed.map((item) => [item.id, item]));
++    expect(byId["event-e1"].summary).toBe("planned Welcome dinner");
++    expect(byId["member-m1"].summary).toBe("joined as a volunteer");
++    expect(byId["rsvp-r1"].summary).toBe("is coming to Welcome dinner");
++    expect(byId["story-s1"].summary).toBe("shared a story");
++  });
++
++  it("distinguishes helpers from attendees", () => {
++    const helper = buildActivityFeed({
++      ...EMPTY_ACTIVITY_SOURCES,
++      rsvps: [
++        {
++          id: "h1",
++          createdAt: at("2026-07-06T10:00:00Z"),
++          role: RSVP_ROLE.HELPER,
++          user: { name: "Sam Ortiz" },
++          event: { id: "e1", title: "Welcome dinner" },
++        },
++      ],
++    });
++    expect(helper[0].summary).toBe("signed up to help with Welcome dinner");
++  });
++
++  it("links to the thing itself where there is one, and nowhere for a join", () => {
++    const feed = buildActivityFeed(SOURCES);
++    const byId = Object.fromEntries(feed.map((item) => [item.id, item]));
++    expect(byId["event-e1"].href).toBe("/events/e1");
++    expect(byId["rsvp-r1"].href).toBe("/events/e1");
++    expect(byId["member-m1"].href).toBeUndefined();
++  });
++
++  it("falls back to sane wording for an unrecognized role or rsvp role", () => {
++    // These columns are plain TEXT in Postgres (see constants.ts) — an
++    // unexpected value should read oddly, never crash the page.
++    const feed = buildActivityFeed({
++      ...EMPTY_ACTIVITY_SOURCES,
++      members: [
++        { id: "m9", createdAt: at("2026-07-01T00:00:00Z"), role: "PASTOR", user: { name: "Ed X" } },
++      ],
++      rsvps: [
++        {
++          id: "r9",
++          createdAt: at("2026-07-02T00:00:00Z"),
++          role: "MAYBE",
++          user: { name: "Fay Y" },
++          event: { id: "e2", title: "Picnic" },
++        },
++      ],
++    });
++    expect(feed.find((i) => i.id === "member-m9")?.summary).toBe("joined as a student");
++    expect(feed.find((i) => i.id === "rsvp-r9")?.summary).toBe("is coming to Picnic");
++  });
++
++  it("tags every item with a known kind", () => {
++    const kinds = new Set(Object.values(ACTIVITY_KINDS));
++    for (const item of buildActivityFeed(SOURCES)) {
++      expect(kinds.has(item.kind)).toBe(true);
++    }
++  });
++});
++
++describe("relativeTime", () => {
++  const now = at("2026-07-29T12:00:00Z");
++
++  it("collapses anything under a minute, including a future timestamp from clock skew", () => {
++    expect(relativeTime(at("2026-07-29T11:59:30Z"), now)).toBe("just now");
++    expect(relativeTime(at("2026-07-29T12:00:05Z"), now)).toBe("just now");
++  });
++
++  it("counts minutes, then hours", () => {
++    expect(relativeTime(at("2026-07-29T11:20:00Z"), now)).toBe("40m ago");
++    expect(relativeTime(at("2026-07-29T09:00:00Z"), now)).toBe("3h ago");
++    expect(relativeTime(at("2026-07-28T13:00:00Z"), now)).toBe("23h ago");
++  });
++
++  it("names yesterday, then counts days up to a week", () => {
++    expect(relativeTime(at("2026-07-28T11:00:00Z"), now)).toBe("yesterday");
++    expect(relativeTime(at("2026-07-26T11:00:00Z"), now)).toBe("3 days ago");
++    expect(relativeTime(at("2026-07-23T11:00:00Z"), now)).toBe("6 days ago");
++  });
++
++  it("switches to weeks, then to a plain date once it's old news", () => {
++    expect(relativeTime(at("2026-07-21T11:00:00Z"), now)).toBe("last week");
++    expect(relativeTime(at("2026-07-08T11:00:00Z"), now)).toBe("3 weeks ago");
++    expect(relativeTime(at("2026-05-01T11:00:00Z"), now)).toMatch(/May/);
++  });
++});
++
++describe("firstName", () => {
++  it("takes the first word", () => {
++    expect(firstName("Naomi Adeyemi")).toBe("Naomi");
++    expect(firstName("Mary-Anne Van Der Berg")).toBe("Mary-Anne");
++  });
++
++  it("handles single names and stray whitespace", () => {
++    expect(firstName("Prince")).toBe("Prince");
++    expect(firstName("  Wei   Zhang  ")).toBe("Wei");
++  });
++
++  it("returns the input rather than an empty string when there's nothing to split", () => {
++    expect(firstName("")).toBe("");
++    expect(firstName("   ")).toBe("   ");
++  });
++});
+diff --git a/src/lib/churchActivity.ts b/src/lib/churchActivity.ts
+new file mode 100644
+index 0000000..7527140
+--- /dev/null
++++ b/src/lib/churchActivity.ts
+@@ -0,0 +1,187 @@
++import { ROLES, RSVP_ROLE, type Role, type RsvpRole } from "@/lib/constants";
++
++/**
++ * Builds the "what's been happening here" feed shown on /stories.
++ *
++ * The Demo Day note this answers (Thanh's, on volunteer supply) is that a
++ * hesitant volunteer needs evidence other people are already doing this. A
++ * church space that looks quiet reads as abandoned even when it isn't, so
++ * this derives visible momentum from activity the church can already see —
++ * gatherings planned, people joining, RSVPs, stories shared — rather than
++ * adding a table to track it.
++ *
++ * Two things are deliberately NOT sources here: mentor connections and ride
++ * requests. Both are one-to-one relationships whose existence is private
++ * between the two people in them (and gated behind an accept step), so
++ * broadcasting "Ana connected with David" to the whole church would leak
++ * exactly what connectionState.ts and rideState.ts exist to protect.
++ *
++ * Pure and Prisma-free so the merge/sort/cap rules are unit-testable — the
++ * queries that feed it live in queries.ts (listChurchActivity).
++ */
++
++export const ACTIVITY_KINDS = {
++  EVENT_CREATED: "EVENT_CREATED",
++  MEMBER_JOINED: "MEMBER_JOINED",
++  RSVP: "RSVP",
++  STORY_SHARED: "STORY_SHARED",
++} as const;
++
++export type ActivityKind = (typeof ACTIVITY_KINDS)[keyof typeof ACTIVITY_KINDS];
++
++export type ActivityItem = {
++  /** Prefixed with the kind so ids stay unique once four tables are merged. */
++  id: string;
++  kind: ActivityKind;
++  at: Date;
++  /** First name only — the feed is a nudge, not a roster. */
++  actor: string;
++  /** The sentence after the name, e.g. "planned Welcome dinner". */
++  summary: string;
++  /** Where to go to see the thing itself, when there is somewhere to go. */
++  href?: string;
++};
++
++export type ActivitySources = {
++  events: {
++    id: string;
++    title: string;
++    createdAt: Date;
++    createdBy: { name: string };
++  }[];
++  members: {
++    id: string;
++    createdAt: Date;
++    role: string;
++    user: { name: string };
++  }[];
++  rsvps: {
++    id: string;
++    createdAt: Date;
++    role: string;
++    user: { name: string };
++    event: { id: string; title: string };
++  }[];
++  stories: {
++    id: string;
++    createdAt: Date;
++    author: { name: string };
++  }[];
++};
++
++/** The feed is first-names-only; a full roster already exists in church settings. */
++export function firstName(name: string): string {
++  return name.trim().split(/\s+/)[0] || name;
++}
++
++const ROLE_WORDS: Record<Role, string> = {
++  CHURCH_ADMIN: "a church leader",
++  VOLUNTEER: "a volunteer",
++  STUDENT: "a student",
++};
++
++function roleWord(role: string): string {
++  return ROLE_WORDS[role as Role] ?? ROLE_WORDS[ROLES.STUDENT];
++}
++
++const RSVP_VERBS: Record<RsvpRole, (title: string) => string> = {
++  HELPER: (title) => `signed up to help with ${title}`,
++  ATTENDEE: (title) => `is coming to ${title}`,
++};
++
++function rsvpSummary(role: string, title: string): string {
++  const verb = RSVP_VERBS[role as RsvpRole] ?? RSVP_VERBS[RSVP_ROLE.ATTENDEE];
++  return verb(title);
++}
++
++/**
++ * Merges every source into one newest-first feed, capped at `limit`.
++ *
++ * Callers over-fetch each source independently (there's no way to know which
++ * table holds the most recent rows without reading all four), so the cap has
++ * to be applied here, after the merge, or the feed would silently favor
++ * whichever source happened to be queried first.
++ */
++export function buildActivityFeed(sources: ActivitySources, limit = 12): ActivityItem[] {
++  const items: ActivityItem[] = [
++    ...sources.events.map((event) => ({
++      id: `event-${event.id}`,
++      kind: ACTIVITY_KINDS.EVENT_CREATED,
++      at: event.createdAt,
++      actor: firstName(event.createdBy.name),
++      summary: `planned ${event.title}`,
++      href: `/events/${event.id}`,
++    })),
++    ...sources.members.map((membership) => ({
++      id: `member-${membership.id}`,
++      kind: ACTIVITY_KINDS.MEMBER_JOINED,
++      at: membership.createdAt,
++      actor: firstName(membership.user.name),
++      summary: `joined as ${roleWord(membership.role)}`,
++    })),
++    ...sources.rsvps.map((rsvp) => ({
++      id: `rsvp-${rsvp.id}`,
++      kind: ACTIVITY_KINDS.RSVP,
++      at: rsvp.createdAt,
++      actor: firstName(rsvp.user.name),
++      summary: rsvpSummary(rsvp.role, rsvp.event.title),
++      href: `/events/${rsvp.event.id}`,
++    })),
++    ...sources.stories.map((story) => ({
++      id: `story-${story.id}`,
++      kind: ACTIVITY_KINDS.STORY_SHARED,
++      at: story.createdAt,
++      actor: firstName(story.author.name),
++      summary: "shared a story",
++      href: "/stories",
++    })),
++  ];
++
++  return items.sort((a, b) => b.at.getTime() - a.at.getTime()).slice(0, Math.max(0, limit));
++}
++
++/** An empty source set for callers with no active church (see /stories). */
++export const EMPTY_ACTIVITY_SOURCES: ActivitySources = {
++  events: [],
++  members: [],
++  rsvps: [],
++  stories: [],
++};
++
++const MINUTE = 60 * 1000;
++const HOUR = 60 * MINUTE;
++const DAY = 24 * HOUR;
++const WEEK = 7 * DAY;
++
++/**
++ * Coarse "3 days ago" phrasing for the activity feed. Deliberately coarse:
++ * this feed answers "is anything happening here", and a precise timestamp
++ * invites the reader to audit individual people's participation instead.
++ * `now` is a parameter rather than a `new Date()` call inside so it's
++ * testable without freezing the clock.
++ *
++ * Rendered only from Server Components, so there's no hydration concern
++ * about the server and client disagreeing on the current time.
++ */
++export function relativeTime(at: Date, now: Date = new Date()): string {
++  const elapsed = now.getTime() - at.getTime();
++  // A clock skew between the app server and Postgres can hand us a
++  // timestamp a few seconds in the future; "in 4 seconds" would be a
++  // strange thing to show, so anything not yet past reads as just now.
++  if (elapsed < MINUTE) return "just now";
++  if (elapsed < HOUR) {
++    const minutes = Math.floor(elapsed / MINUTE);
++    return `${minutes}m ago`;
++  }
++  if (elapsed < DAY) {
++    const hours = Math.floor(elapsed / HOUR);
++    return `${hours}h ago`;
++  }
++  if (elapsed < WEEK) {
++    const days = Math.floor(elapsed / DAY);
++    return days === 1 ? "yesterday" : `${days} days ago`;
++  }
++  const weeks = Math.floor(elapsed / WEEK);
++  if (weeks < 5) return weeks === 1 ? "last week" : `${weeks} weeks ago`;
++  return at.toLocaleDateString(undefined, { month: "short", day: "numeric" });
++}
+diff --git a/src/lib/queries.ts b/src/lib/queries.ts
+index 793e5b3..e5a45da 100644
+--- a/src/lib/queries.ts
++++ b/src/lib/queries.ts
+@@ -11,6 +11,7 @@ import {
+ } from "@/lib/constants";
+ import { contactInfoVisible } from "@/lib/connectionState";
+ import { rideContactVisible } from "@/lib/rideState";
++import { buildActivityFeed, firstName, type ActivityItem } from "@/lib/churchActivity";
+ 
+ export function listEventsForChurch(churchId: string) {
+   return prisma.event.findMany({
+@@ -340,6 +341,87 @@ export async function getChurchProfile(churchId: string) {
+   return { ...church, memberCount };
+ }
+ 
++/** Volunteer stories for the in-app /stories feed — full names, since
++ * everyone reading this is already a member of the same church and can see
++ * the roster anyway. Public display is a different query (see below). */
++export function listVolunteerStoriesForChurch(churchId: string) {
++  return prisma.volunteerStory.findMany({
++    where: { churchId },
++    include: { author: { select: { id: true, name: true } } },
++    orderBy: { createdAt: "desc" },
++  });
++}
++
++/**
++ * Stories the author opted into showing on the church's profile page, which
++ * any signed-in user can load for any church (see listDiscoverableChurches
++ * for why that page is deliberately cross-tenant). Two things are enforced
++ * here at the query layer rather than in the page, the same defense-in-depth
++ * convention the connection and ride queries above follow: only
++ * `sharePublicly` rows come back, and the author is reduced to a first name
++ * — never an id or an email — so a reader from another church can't be shown
++ * more than the author agreed to.
++ */
++export async function listPublicVolunteerStories(churchId: string, limit = 3) {
++  const stories = await prisma.volunteerStory.findMany({
++    where: { churchId, sharePublicly: true },
++    include: { author: { select: { name: true } } },
++    orderBy: { createdAt: "desc" },
++    take: limit,
++  });
++  return stories.map((story) => ({
++    id: story.id,
++    body: story.body,
++    createdAt: story.createdAt,
++    authorFirstName: firstName(story.author.name),
++  }));
++}
++
++/**
++ * The derived "what's been happening here" feed for /stories. Each source is
++ * over-fetched to `limit` independently and merged/capped by
++ * buildActivityFeed — there's no way to know which table holds the most
++ * recent rows without reading all four, so the cap can only be applied after
++ * the merge (see that function's doc comment).
++ */
++export async function listChurchActivity(churchId: string, limit = 12): Promise<ActivityItem[]> {
++  const [events, members, rsvps, stories] = await Promise.all([
++    prisma.event.findMany({
++      where: { churchId, status: EVENT_STATUS.PUBLISHED },
++      include: { createdBy: { select: { name: true } } },
++      orderBy: { createdAt: "desc" },
++      take: limit,
++    }),
++    prisma.membership.findMany({
++      where: { churchId },
++      include: { user: { select: { name: true } } },
++      orderBy: { createdAt: "desc" },
++      take: limit,
++    }),
++    prisma.eventRsvp.findMany({
++      // Cancelled RSVPs are dropped rather than shown as a withdrawal: the
++      // point of this feed is to give a hesitant volunteer evidence that
++      // people are showing up, and "someone pulled out" is both discouraging
++      // and nobody else's business.
++      where: { event: { churchId }, status: { not: RSVP_STATUS.CANCELLED } },
++      include: {
++        user: { select: { name: true } },
++        event: { select: { id: true, title: true } },
++      },
++      orderBy: { createdAt: "desc" },
++      take: limit,
++    }),
++    prisma.volunteerStory.findMany({
++      where: { churchId },
++      include: { author: { select: { name: true } } },
++      orderBy: { createdAt: "desc" },
++      take: limit,
++    }),
++  ]);
++
++  return buildActivityFeed({ events, members, rsvps, stories }, limit);
++}
++
+ /** All members of a church with their role, for the admin settings
+  * page's member list — admins first, then by join date. */
+ export function listMembersForChurch(churchId: string) {
+diff --git a/src/lib/readiness.test.ts b/src/lib/readiness.test.ts
+new file mode 100644
+index 0000000..63bc629
+--- /dev/null
++++ b/src/lib/readiness.test.ts
+@@ -0,0 +1,168 @@
++import { describe, it, expect } from "vitest";
++import {
++  QUESTIONS,
++  DIMENSIONS,
++  READINESS_TIERS,
++  TIER_CONTENT,
++  TIER_ORDER,
++  LEADERSHIP_NOTES,
++  classifyReadiness,
++  dimensionScores,
++  isComplete,
++  leadershipNote,
++  type Answers,
++  type Dimension,
++} from "@/lib/readiness";
++
++/** Answers every question in a dimension with `value`, everything else with `fill`. */
++function answersWith(overrides: Partial<Record<Dimension, number>>, fill = 0): Answers {
++  const answers: Answers = {};
++  for (const q of QUESTIONS) {
++    answers[q.id] = overrides[q.dimension] ?? fill;
++  }
++  return answers;
++}
++
++const ALL_STRONG = answersWith({}, 2);
++
++describe("classifyReadiness", () => {
++  it("places a church with no awareness at the first tier, however keen it is otherwise", () => {
++    // The point of gating rather than averaging: an eager congregation that
++    // has never met an international student is still newly aware.
++    const result = classifyReadiness(answersWith({ AWARENESS: 0 }, 2));
++    expect(result.tier).toBe(READINESS_TIERS.NEWLY_AWARE);
++    expect(result.blockedOn).toBe(DIMENSIONS.AWARENESS);
++  });
++
++  it("places an aware church with no hosts at the willing-but-unready tier", () => {
++    const result = classifyReadiness(answersWith({ CONGREGATION: 0 }, 2));
++    expect(result.tier).toBe(READINESS_TIERS.WILLING_UNREADY);
++    expect(result.blockedOn).toBe(DIMENSIONS.CONGREGATION);
++  });
++
++  it("places an aware church with hosts but no plan at the ready-but-directionless tier", () => {
++    const result = classifyReadiness(answersWith({ DIRECTION: 0 }, 2));
++    expect(result.tier).toBe(READINESS_TIERS.READY_DIRECTIONLESS);
++    expect(result.blockedOn).toBe(DIMENSIONS.DIRECTION);
++  });
++
++  it("graduates a church that clears every gate", () => {
++    const result = classifyReadiness(ALL_STRONG);
++    expect(result.tier).toBe(READINESS_TIERS.ACTIVE);
++    expect(result.blockedOn).toBeNull();
++  });
++
++  it("reports the earliest gate when several are unmet", () => {
++    const result = classifyReadiness(answersWith({}, 0));
++    expect(result.tier).toBe(READINESS_TIERS.NEWLY_AWARE);
++    expect(result.blockedOn).toBe(DIMENSIONS.AWARENESS);
++  });
++
++  it("does not let weak leadership hold a church back", () => {
++    // "You don't have to be a pastor" — leadership shapes the advice but
++    // never the tier, so a grassroots church still graduates.
++    const result = classifyReadiness(answersWith({ LEADERSHIP: 0 }, 2));
++    expect(result.tier).toBe(READINESS_TIERS.ACTIVE);
++    expect(result.cleared.LEADERSHIP).toBe(false);
++  });
++
++  it("clears a two-question dimension at 3 of 4 but not at 2 of 4", () => {
++    const strongAndMiddling: Answers = { ...ALL_STRONG, "met-a-student": 1 };
++    expect(classifyReadiness(strongAndMiddling).cleared.AWARENESS).toBe(true);
++
++    const twoMiddling: Answers = { ...ALL_STRONG, "met-a-student": 1, "students-nearby": 1 };
++    expect(classifyReadiness(twoMiddling).cleared.AWARENESS).toBe(false);
++  });
++
++  it("requires the strongest answer to clear a single-question dimension", () => {
++    expect(classifyReadiness({ ...ALL_STRONG, "next-step": 1 }).cleared.DIRECTION).toBe(false);
++    expect(classifyReadiness({ ...ALL_STRONG, "next-step": 2 }).cleared.DIRECTION).toBe(true);
++  });
++
++  it("treats missing, out-of-range, and non-integer answers as unanswered", () => {
++    const scores = dimensionScores({
++      ...ALL_STRONG,
++      "students-nearby": 99,
++      "met-a-student": -1,
++      "next-step": 1.5,
++    });
++    expect(scores.AWARENESS).toBe(0);
++    expect(scores.DIRECTION).toBe(0);
++    expect(dimensionScores({}).AWARENESS).toBe(0);
++  });
++});
++
++describe("dimensionScores", () => {
++  it("normalizes every dimension to 0–1 regardless of question count", () => {
++    const scores = dimensionScores(ALL_STRONG);
++    for (const dimension of Object.values(DIMENSIONS)) {
++      expect(scores[dimension]).toBe(1);
++    }
++    expect(dimensionScores(answersWith({}, 1)).AWARENESS).toBe(0.5);
++  });
++});
++
++describe("isComplete", () => {
++  it("is false until every question is answered", () => {
++    expect(isComplete({})).toBe(false);
++    const allButOne = { ...ALL_STRONG };
++    delete allButOne[QUESTIONS[0].id];
++    expect(isComplete(allButOne)).toBe(false);
++  });
++
++  it("accepts a zero answer — 'we only just realized' is an answer", () => {
++    expect(isComplete(answersWith({}, 0))).toBe(true);
++  });
++
++  it("rejects an out-of-range option index", () => {
++    expect(isComplete({ ...ALL_STRONG, [QUESTIONS[0].id]: 3 })).toBe(false);
++  });
++});
++
++describe("leadershipNote", () => {
++  it("matches the note to where leadership actually stands", () => {
++    expect(leadershipNote(dimensionScores(ALL_STRONG))).toBe(LEADERSHIP_NOTES.strong);
++    expect(leadershipNote(dimensionScores(answersWith({ LEADERSHIP: 1 }, 2)))).toBe(
++      LEADERSHIP_NOTES.partial,
++    );
++    expect(leadershipNote(dimensionScores(answersWith({ LEADERSHIP: 0 }, 2)))).toBe(
++      LEADERSHIP_NOTES.absent,
++    );
++  });
++});
++
++describe("tier content", () => {
++  it("covers every tier, in ladder order, with three steps each", () => {
++    expect(TIER_ORDER).toHaveLength(Object.keys(READINESS_TIERS).length);
++    for (const tier of TIER_ORDER) {
++      const content = TIER_CONTENT[tier];
++      expect(content).toBeDefined();
++      expect(content.steps).toHaveLength(3);
++    }
++  });
++
++  it("only sends the two ready tiers into ChurchedIn", () => {
++    // The synthesis is explicit that ChurchedIn is the graduation
++    // destination, not the answer for a church at tier one.
++    expect(TIER_CONTENT.NEWLY_AWARE.graduatesToChurchedIn).toBe(false);
++    expect(TIER_CONTENT.WILLING_UNREADY.graduatesToChurchedIn).toBe(false);
++    expect(TIER_CONTENT.READY_DIRECTIONLESS.graduatesToChurchedIn).toBe(true);
++    expect(TIER_CONTENT.ACTIVE.graduatesToChurchedIn).toBe(true);
++  });
++});
++
++describe("questions", () => {
++  it("has unique ids and three ordered options each", () => {
++    const ids = QUESTIONS.map((q) => q.id);
++    expect(new Set(ids).size).toBe(ids.length);
++    for (const q of QUESTIONS) {
++      expect(q.options).toHaveLength(3);
++    }
++  });
++
++  it("covers every dimension the classifier reads", () => {
++    for (const dimension of Object.values(DIMENSIONS)) {
++      expect(QUESTIONS.some((q) => q.dimension === dimension)).toBe(true);
++    }
++  });
++});
+diff --git a/src/lib/readiness.ts b/src/lib/readiness.ts
+new file mode 100644
+index 0000000..836b8ce
+--- /dev/null
++++ b/src/lib/readiness.ts
+@@ -0,0 +1,314 @@
++/**
++ * The Readiness Pathway — the tiered self-assessment behind /readiness.
++ *
++ * This exists to answer the sharpest piece of Demo Day feedback we got
++ * (Aaron's): "church" is not a persona. Which church are we serving — one
++ * that's newly aware international students are nearby, one whose pastor is
++ * willing but whose congregation isn't, or one that's ready but has no idea
++ * what to actually do? The three tiers below ARE those three church types,
++ * kept in his words on purpose so the segmentation stays legible to
++ * everyone who gave us that note. A fourth state (ACTIVE) is the graduation
++ * case: a church that clears every dimension doesn't need a pathway, it
++ * needs the product, so that tier routes straight into ChurchedIn.
++ *
++ * Deliberately pure and dependency-free: no Prisma, no session, no React.
++ * The assessment is anonymous — a church shouldn't have to make an account
++ * to find out it isn't ready for one yet — so nothing here is persisted and
++ * the whole thing can be unit-tested (see readiness.test.ts) and run
++ * client-side.
++ */
++
++export const READINESS_TIERS = {
++  NEWLY_AWARE: "NEWLY_AWARE",
++  WILLING_UNREADY: "WILLING_UNREADY",
++  READY_DIRECTIONLESS: "READY_DIRECTIONLESS",
++  ACTIVE: "ACTIVE",
++} as const;
++
++export type ReadinessTier = (typeof READINESS_TIERS)[keyof typeof READINESS_TIERS];
++
++/** Tiers low-to-high, for the ladder display on /readiness. */
++export const TIER_ORDER: ReadinessTier[] = [
++  READINESS_TIERS.NEWLY_AWARE,
++  READINESS_TIERS.WILLING_UNREADY,
++  READINESS_TIERS.READY_DIRECTIONLESS,
++  READINESS_TIERS.ACTIVE,
++];
++
++/**
++ * The four things we're actually measuring. AWARENESS, CONGREGATION and
++ * DIRECTION are the gates — in that order — because that's the order they
++ * actually block a church: you can't mobilize people who don't know the
++ * students exist, you can't run a gathering without hosts, and hosts with
++ * no plan stall out. LEADERSHIP is deliberately NOT a gate: this app's
++ * whole "you don't have to be a pastor" stance means a grassroots pair of
++ * households shouldn't be told they're unready because they never asked
++ * permission. It shapes the advice instead (see LEADERSHIP_NOTES).
++ */
++export const DIMENSIONS = {
++  AWARENESS: "AWARENESS",
++  LEADERSHIP: "LEADERSHIP",
++  CONGREGATION: "CONGREGATION",
++  DIRECTION: "DIRECTION",
++} as const;
++
++export type Dimension = (typeof DIMENSIONS)[keyof typeof DIMENSIONS];
++
++export type ReadinessQuestion = {
++  id: string;
++  dimension: Dimension;
++  prompt: string;
++  /** Ordered weakest-to-strongest; the index is the answer's score (0, 1, 2). */
++  options: string[];
++};
++
++export const QUESTIONS: ReadinessQuestion[] = [
++  {
++    id: "students-nearby",
++    dimension: DIMENSIONS.AWARENESS,
++    prompt: "How well does your church know the international students near you?",
++    options: [
++      "We only just realized there are any nearby.",
++      "A few of us have noticed them, but we've never really looked.",
++      "We know roughly how many there are and where they study.",
++    ],
++  },
++  {
++    id: "met-a-student",
++    dimension: DIMENSIONS.AWARENESS,
++    prompt: "Has anyone from your church actually met one of them in the past year?",
++    options: [
++      "Not that I know of.",
++      "One or two people have, in passing.",
++      "Several of us have students we'd recognize by name.",
++    ],
++  },
++  {
++    id: "leadership",
++    dimension: DIMENSIONS.LEADERSHIP,
++    prompt: "Where does your pastor or leadership team stand on this?",
++    options: [
++      "Nobody has asked them yet.",
++      "Supportive in principle, but it isn't a priority.",
++      "They'd put it in front of the congregation and back it publicly.",
++    ],
++  },
++  {
++    id: "who-would-host",
++    dimension: DIMENSIONS.CONGREGATION,
++    prompt: "If a dinner for eight students were on the calendar next month, who would host it?",
++    options: [
++      "I honestly don't know who I'd ask.",
++      "I could probably talk one household into it.",
++      "Two or three households would say yes without much persuading.",
++    ],
++  },
++  {
++    id: "congregation-reaction",
++    dimension: DIMENSIONS.CONGREGATION,
++    prompt: "How does your congregation react when this comes up?",
++    options: [
++      "It hasn't come up.",
++      "Warm in theory — but nobody has signed up for anything.",
++      "People ask how they can help.",
++    ],
++  },
++  {
++    id: "next-step",
++    dimension: DIMENSIONS.DIRECTION,
++    prompt: "What's your next concrete step?",
++    options: [
++      "That's exactly the part we don't know.",
++      "We have ideas, but nothing on the calendar.",
++      "There's a date, a host, and someone inviting students.",
++    ],
++  },
++];
++
++/** questionId -> chosen option index. Missing entries score 0. */
++export type Answers = Record<string, number>;
++
++/**
++ * A dimension counts as cleared at 75% of its available points. With the
++ * 0/1/2 options above that means a two-question dimension needs 3 of 4
++ * (so: one strong answer and one middling one, but not two middling ones),
++ * and the single-question dimensions need the strongest answer outright.
++ * Strict on purpose — the failure mode we're guarding against is a church
++ * telling itself it's ready, showing up to a launch, and stalling.
++ */
++export const CLEAR_THRESHOLD = 0.75;
++
++const MAX_SCORE_PER_QUESTION = 2;
++
++/** 0–1 score per dimension, so dimensions with different question counts stay comparable. */
++export function dimensionScores(answers: Answers): Record<Dimension, number> {
++  const scores = {} as Record<Dimension, number>;
++  for (const dimension of Object.values(DIMENSIONS)) {
++    const questions = QUESTIONS.filter((q) => q.dimension === dimension);
++    const earned = questions.reduce((sum, q) => sum + clampAnswer(q, answers[q.id]), 0);
++    scores[dimension] = earned / (questions.length * MAX_SCORE_PER_QUESTION);
++  }
++  return scores;
++}
++
++/** Guards against an out-of-range or missing option index reaching the score math. */
++function clampAnswer(question: ReadinessQuestion, value: number | undefined): number {
++  if (typeof value !== "number" || !Number.isInteger(value)) return 0;
++  if (value < 0 || value >= question.options.length) return 0;
++  return value;
++}
++
++export type ReadinessResult = {
++  tier: ReadinessTier;
++  scores: Record<Dimension, number>;
++  cleared: Record<Dimension, boolean>;
++  /** The gate that stopped them, or null once every gate is cleared. */
++  blockedOn: Dimension | null;
++};
++
++/**
++ * Places a church on the pathway. The tier is the FIRST uncleared gate, not
++ * an average — a church with a wildly enthusiastic congregation that has
++ * never met an international student is still newly aware, and averaging
++ * would hide that behind a middling overall score.
++ */
++export function classifyReadiness(answers: Answers): ReadinessResult {
++  const scores = dimensionScores(answers);
++  const cleared = {} as Record<Dimension, boolean>;
++  for (const dimension of Object.values(DIMENSIONS)) {
++    cleared[dimension] = scores[dimension] >= CLEAR_THRESHOLD;
++  }
++
++  const gates: { dimension: Dimension; tier: ReadinessTier }[] = [
++    { dimension: DIMENSIONS.AWARENESS, tier: READINESS_TIERS.NEWLY_AWARE },
++    { dimension: DIMENSIONS.CONGREGATION, tier: READINESS_TIERS.WILLING_UNREADY },
++    { dimension: DIMENSIONS.DIRECTION, tier: READINESS_TIERS.READY_DIRECTIONLESS },
++  ];
++  const blocking = gates.find((gate) => !cleared[gate.dimension]);
++
++  return {
++    tier: blocking ? blocking.tier : READINESS_TIERS.ACTIVE,
++    scores,
++    cleared,
++    blockedOn: blocking?.dimension ?? null,
++  };
++}
++
++/** True once every question has a valid answer — the result is meaningless before that. */
++export function isComplete(answers: Answers): boolean {
++  return QUESTIONS.every((q) => {
++    const value = answers[q.id];
++    return typeof value === "number" && value >= 0 && value < q.options.length;
++  });
++}
++
++export type TierContent = {
++  /** Aaron's name for this church type, kept close to his wording. */
++  label: string;
++  /** The one-line "this is you" read. */
++  summary: string;
++  /** Why this tier is where the church actually is. */
++  diagnosis: string;
++  /** Three concrete moves, in order — not a checklist of everything possible. */
++  steps: string[];
++  /** What ChurchedIn does for a church at THIS tier — honestly, including "not much yet". */
++  churchedIn: string;
++  cta: { label: string; href: string };
++  secondaryCta?: { label: string; href: string };
++  /** True for the tiers where ChurchedIn itself is the right next move. */
++  graduatesToChurchedIn: boolean;
++};
++
++export const TIER_CONTENT: Record<ReadinessTier, TierContent> = {
++  NEWLY_AWARE: {
++    label: "Newly aware",
++    summary: "You've just learned international students are your neighbors.",
++    diagnosis:
++      "Nothing here is a capacity problem yet — it's a proximity problem. Before you can mobilize anyone, a handful of people at your church need to have met an actual student, not an idea of one.",
++    steps: [
++      "Find the real number: how many international students study within a 20-minute drive, and where do they live?",
++      "Get two or three people to share one meal with one student this month — no program, no plan, just a meal.",
++      "Bring back one story to the people who'd have to say yes before anything bigger happens.",
++    ],
++    churchedIn:
++      "Not much, honestly — and we'd rather say so. Use the map to see which churches near you are already hosting students, then come back once a few people at your church have met one.",
++    cta: { label: "See the churches around you", href: "/discover" },
++    graduatesToChurchedIn: false,
++  },
++  WILLING_UNREADY: {
++    label: "Willing leadership, unready congregation",
++    summary: "The support is real. The volunteers aren't there yet.",
++    diagnosis:
++      "This is the most common place to get stuck, and the most misdiagnosed: it looks like a lack of interest and it's almost always a lack of a first, small, obviously-doable ask. Announcing a ministry to a congregation with no hosts produces a warm response and zero gatherings.",
++    steps: [
++      "Don't launch anything. Ask exactly two households to host one dinner — a specific date, a specific number of students.",
++      "Go as guests first: take those households to a gathering at a church already doing this, so the ask stops being hypothetical.",
++      "Have the hosts tell the congregation what happened. A story from the pew recruits people an announcement from the front never will.",
++    ],
++    churchedIn:
++      "Start a space for just those first few households and run one gathering in it. A space with two hosts and one dinner on the calendar is a far better recruiting tool than a plan — and volunteer stories from other churches are visible on their church pages.",
++    cta: { label: "Find a church to visit together", href: "/discover" },
++    secondaryCta: { label: "Start a space for the willing few", href: "/signup" },
++    graduatesToChurchedIn: false,
++  },
++  READY_DIRECTIONLESS: {
++    label: "Ready but directionless",
++    summary: "You have the people. You need the next step to be obvious.",
++    diagnosis:
++      "You're past every problem a pathway can solve. What's missing is not readiness or willingness — it's a place where the next step is already defined, so the willingness doesn't quietly expire while everyone waits for a plan.",
++    steps: [
++      "Put one gathering on a real calendar this month, with a host and a headcount.",
++      "Open your church's space and get your hosts and students into it, so RSVPs and waitlists stop living in someone's text messages.",
++      "Let students reach out on their own through the friend directory instead of waiting for you to make every introduction.",
++    ],
++    churchedIn:
++      "This is what ChurchedIn is for. Your church gets its own space with a join code, gatherings with separate helper and attendee headcounts, automatic waitlists, and a friend directory where contact info stays private until both people agree to connect.",
++    cta: { label: "Start your church's space", href: "/signup" },
++    secondaryCta: { label: "Join with a code", href: "/join" },
++    graduatesToChurchedIn: true,
++  },
++  ACTIVE: {
++    label: "Already going",
++    summary: "You're not on the pathway — you're doing the thing.",
++    diagnosis:
++      "Awareness, hosts, and a plan are all in place. The risk at this stage isn't starting, it's follow-through: gatherings that don't repeat, students who come once, and coordination that lives in a group chat nobody can hand off.",
++    steps: [
++      "Move coordination somewhere a new volunteer can be handed the keys to — group chats don't transfer.",
++      "Make the second and third gatherings as easy to say yes to as the first, so hosts repeat instead of burning out.",
++      "Write down what worked while it's fresh. Your notes are the thing another church at tier one actually needs.",
++    ],
++    churchedIn:
++      "Bring what you're already running into a space that keeps it: automatic waitlists, a per-church roster with a join code, co-hosts who can cover for each other, and a public church page students can find on their own.",
++    cta: { label: "Start your church's space", href: "/signup" },
++    secondaryCta: { label: "Join with a code", href: "/join" },
++    graduatesToChurchedIn: true,
++  },
++};
++
++/**
++ * Leadership is a modifier, not a gate (see DIMENSIONS) — this is the extra
++ * sentence a church gets based on where their leadership actually stands,
++ * keyed by whether their LEADERSHIP score is strong, partial, or absent.
++ */
++export const LEADERSHIP_NOTES = {
++  strong:
++    "Your leadership will back this publicly — spend that on a specific ask (two hosts, one date), not a general call for volunteers.",
++  partial:
++    "Supportive-but-not-a-priority is enough to start. Don't wait for it to become a priority; bring them a gathering that already happened.",
++  absent:
++    "Nobody has asked your leadership yet, and you don't have to before you begin. Two households and one dinner need no official blessing — a growing thing is much easier to endorse than a proposal.",
++} as const;
++
++export function leadershipNote(scores: Record<Dimension, number>): string {
++  const score = scores[DIMENSIONS.LEADERSHIP];
++  if (score >= CLEAR_THRESHOLD) return LEADERSHIP_NOTES.strong;
++  if (score > 0) return LEADERSHIP_NOTES.partial;
++  return LEADERSHIP_NOTES.absent;
++}
++
++export const DIMENSION_LABELS: Record<Dimension, string> = {
++  AWARENESS: "Awareness",
++  LEADERSHIP: "Leadership",
++  CONGREGATION: "Congregation",
++  DIRECTION: "Direction",
++};
+diff --git a/src/lib/validation.ts b/src/lib/validation.ts
+index 8184f2f..b00af91 100644
+--- a/src/lib/validation.ts
++++ b/src/lib/validation.ts
+@@ -117,6 +117,21 @@ export const rideRequestSchema = z.object({
+   notes: z.string().trim().max(500).optional().or(z.literal("")),
+ });
+ 
++/**
++ * A volunteer's short account of hosting. The 60-character floor is
++ * deliberate: "it was great" recruits nobody, and the whole point of this
++ * feature is that a hesitant volunteer reads something concrete enough to
++ * picture themselves doing it.
++ */
++export const volunteerStorySchema = z.object({
++  body: z
++    .string()
++    .trim()
++    .min(60, "Tell us a little more — a couple of sentences about what actually happened")
++    .max(1500, "Keep it under 1500 characters"),
++  sharePublicly: z.boolean().default(false),
++});
++
+ /** Formats the first Zod issue as a single plain-language string for form errors. */
+ export function firstIssueMessage(error: z.ZodError): string {
+   return error.issues[0]?.message ?? "Please check the form and try again.";
+diff --git a/src/proxy.ts b/src/proxy.ts
+index 1d208ea..f4612a7 100644
+--- a/src/proxy.ts
++++ b/src/proxy.ts
+@@ -27,6 +27,18 @@ export async function proxy(request: NextRequest) {
+   }
+ }
+ 
++// /stories belongs here for a specific reason: it has a loading.tsx, so its
++// response starts streaming before requireUser() resolves, which means an
++// anonymous request gets a 200 and a shell with the redirect applied
++// client-side instead of a clean bounce. Every other authenticated route with
++// a loading.tsx is already covered here — that's what stops this happening to
++// them too.
+ export const config = {
+-  matcher: ["/admin/:path*", "/volunteer/:path*", "/student/:path*", "/events/:path*"],
++  matcher: [
++    "/admin/:path*",
++    "/volunteer/:path*",
++    "/student/:path*",
++    "/events/:path*",
++    "/stories/:path*",
++  ],
+ };
+-- 
+2.43.0
+
