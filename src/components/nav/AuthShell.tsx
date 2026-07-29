@@ -5,6 +5,7 @@ import { ROLES, profilePathForRole, type Role } from "@/lib/constants";
 import { logoutAction } from "@/lib/actions/auth";
 import { hasUnseenEvents } from "@/lib/queries";
 import { Avatar } from "@/components/ui/Avatar";
+import { HelpGuideButton } from "@/components/HelpGuideButton";
 import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
 import { MobileMenu } from "./MobileMenu";
@@ -85,6 +86,7 @@ export async function AuthShell({
                 {user.name}
               </span>
             </Link>
+            <HelpGuideButton role={role} churchId={user.activeMembership?.churchId ?? ""} />
             <form action={logoutAction}>
               <button
                 className="flex size-8 items-center justify-center rounded-lg text-ink-faint transition-brand hover:bg-danger-soft hover:text-danger"
@@ -102,6 +104,7 @@ export async function AuthShell({
             memberships={user.memberships}
             activeChurchId={user.activeMembership?.churchId}
             profilePath={profilePathForRole(role)}
+            role={role}
           />
         </div>
       </header>

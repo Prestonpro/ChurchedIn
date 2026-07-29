@@ -3,11 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { List, X, SignOut } from "@phosphor-icons/react/dist/ssr";
+import { List, X, SignOut, Question } from "@phosphor-icons/react/dist/ssr";
 import { logoutAction } from "@/lib/actions/auth";
 import { Avatar } from "@/components/ui/Avatar";
+import { HelpGuideModal } from "@/components/HelpGuideButton";
 import { NAV_ICONS, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
+import type { Role } from "@/lib/constants";
 
 /**
  * Replaces the desktop header's inline nav/church-switcher/avatar/logout row
@@ -23,6 +25,7 @@ export function MobileMenu({
   memberships,
   activeChurchId,
   profilePath,
+  role,
 }: {
   links: NavLink[];
   userName: string;
@@ -30,8 +33,10 @@ export function MobileMenu({
   memberships: { churchId: string; church: { name: string } }[];
   activeChurchId?: string;
   profilePath: string;
+  role: Role;
 }) {
   const [open, setOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => {
@@ -99,14 +104,28 @@ export function MobileMenu({
                   )}
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setOpen(false)}
-                aria-label="Close menu"
-                className="flex size-11 shrink-0 items-center justify-center rounded-lg text-ink-faint hover:bg-paper"
-              >
-                <X weight="bold" className="size-5" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setHelpOpen(true);
+                  }}
+                  title="Help"
+                  aria-label="Help"
+                  className="flex size-11 items-center justify-center rounded-lg text-ink-faint hover:bg-paper"
+                >
+                  <Question weight="bold" className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close menu"
+                  className="flex size-11 items-center justify-center rounded-lg text-ink-faint hover:bg-paper"
+                >
+                  <X weight="bold" className="size-5" />
+                </button>
+              </div>
             </div>
 
             {memberships.length > 1 && activeChurchId && (
@@ -153,6 +172,7 @@ export function MobileMenu({
           </div>
         </>
       )}
+      <HelpGuideModal role={role} churchId={activeChurchId ?? ""} open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
   );
 }
