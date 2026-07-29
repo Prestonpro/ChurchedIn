@@ -12,6 +12,7 @@ import {
   CalendarCheck,
   Compass,
   MapTrifold,
+  Crown,
 } from "@phosphor-icons/react/dist/ssr";
 import { ROLES, type Role } from "@/lib/constants";
 
@@ -38,6 +39,13 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
         body: "See your member count, upcoming gatherings, and quick links to everything else, all in one place.",
         linkHref: "/admin/dashboard",
         linkLabel: "Go to dashboard",
+      },
+      {
+        icon: Crown,
+        title: "If your church is already listed",
+        body: "Some churches — like the ones from our initial Bryan/College Station map listings — already show up on the discover map before anyone from them has an account here. If that's yours, join it like normal from its church page, then look for a “Claim as church leader” button — the first member to claim an unclaimed listing becomes its leader. If your church isn't listed at all yet, just create it during sign-up and you're automatically its leader, no claiming needed.",
+        linkHref: "/discover",
+        linkLabel: "Find your church",
       },
       {
         icon: UsersFour,
