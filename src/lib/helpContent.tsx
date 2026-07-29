@@ -11,6 +11,7 @@ import {
   HandHeart,
   CalendarCheck,
   Compass,
+  MapTrifold,
 } from "@phosphor-icons/react/dist/ssr";
 import { ROLES, type Role } from "@/lib/constants";
 
@@ -67,9 +68,16 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
         linkLabel: "See events",
       },
       {
+        icon: MapTrifold,
+        title: "See gatherings your way",
+        body: "Switch between a map view (see where everything is happening) and a calendar view (see what's coming up week by week) from the top of the events page.",
+        linkHref: "/events/map",
+        linkLabel: "Open map view",
+      },
+      {
         icon: HandsClapping,
         title: "Partner with other churches",
-        body: "Send a partnership request to another church so members on both sides can see each other's public events.",
+        body: "Send a partnership request to another church so members on both sides can see each other's public events, right alongside their own.",
         linkHref: `/churches/${churchId}/settings`,
         linkLabel: "Go to church settings",
       },
@@ -78,6 +86,13 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
         title: "Keep an eye on rides",
         body: "See ride requests from students at your church who need a lift somewhere, or need a first ride to a service.",
         linkHref: "/events",
+      },
+      {
+        icon: Compass,
+        title: "Browse the discover map",
+        body: "See every church on the platform on a map, filterable by denomination, size, and language spoken — useful for finding partner churches or just seeing who else is out there.",
+        linkHref: "/discover",
+        linkLabel: "Open discover",
       },
     ];
   }
@@ -118,11 +133,25 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
         linkLabel: "Plan a gathering",
       },
       {
+        icon: MapTrifold,
+        title: "See gatherings your way",
+        body: "Switch between a map view and a calendar view from the top of the events page — including any events from partner churches your church has connected with.",
+        linkHref: "/events/map",
+        linkLabel: "Open map view",
+      },
+      {
         icon: Car,
         title: "Give someone a ride",
         body: "Claim an open ride request so a student never has to ask twice.",
         linkHref: "/volunteer/rides",
         linkLabel: "See ride requests",
+      },
+      {
+        icon: Compass,
+        title: "Explore other churches",
+        body: "Browse the discover map to see other churches nearby, filterable by denomination, size, and language spoken.",
+        linkHref: "/discover",
+        linkLabel: "Open discover",
       },
     ];
   }
@@ -151,9 +180,16 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
     {
       icon: CalendarBlank,
       title: "Join gatherings",
-      body: "RSVP to dinners, coffee chats, study groups, and more happening at your church.",
+      body: "RSVP to dinners, coffee chats, study groups, and more happening at your church — including anything from a partner church, if yours has connected with one.",
       linkHref: "/events",
       linkLabel: "See events",
+    },
+    {
+      icon: MapTrifold,
+      title: "See gatherings your way",
+      body: "Switch between a map view (see where everything is) and a calendar view (see what's coming up) from the top of the events page.",
+      linkHref: "/events/map",
+      linkLabel: "Open map view",
     },
     {
       icon: Car,
@@ -165,7 +201,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
     {
       icon: Compass,
       title: "Explore other churches",
-      body: "Browse nearby churches on the map before you commit to one, or if you're moving somewhere new.",
+      body: "Browse every church on the platform on a map, filterable by denomination, size, and language spoken. Hover a pin to preview a church, click for directions or to visit its page — and if a church hasn't been claimed by a leader yet, you can claim it once you join.",
       linkHref: "/discover",
       linkLabel: "Open discover",
     },
