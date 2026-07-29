@@ -8,6 +8,7 @@ import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BlockButton } from "@/components/BlockButton";
 import { EndConnectionButton, CancelRequestButton } from "@/components/ConnectionActions";
+import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
 import { ConnectionRequestForm } from "./ConnectionRequestForm";
 import { CONNECTION_STATUS, ROLES } from "@/lib/constants";
 
@@ -106,6 +107,7 @@ export default async function MentorDirectoryPage() {
                         <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
                         {connection.mentor.email}
                       </p>
+                      <MeetingPlanEditor connectionId={connection.id} plan={connection.meetingPlan} />
                       <EndConnectionButton connectionId={connection.id} />
                     </div>
                   )}

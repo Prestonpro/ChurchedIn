@@ -17,9 +17,9 @@ import {
   InvalidConnectionTransitionError,
 } from "@/lib/connectionState";
 import { ROLES, CONNECTION_STATUS, MAX_CONNECTION_REQUESTS_PER_DAY } from "@/lib/constants";
-import { connectionRequestSchema, firstIssueMessage } from "@/lib/validation";
+import { connectionRequestSchema, meetingPlanSchema, firstIssueMessage } from "@/lib/validation";
 
-export type ActionResult = { error: string } | void;
+export type ActionResult = { error: string } | { ok: true } | void;
 
 export async function requestConnectionAction(
   _prev: ActionResult,
@@ -220,6 +220,59 @@ export async function respondToConnectionAction(
     });
   }
 
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/student/mentors");
+}
+
+/** Sets or updates the recurring-meeting note on an ACCEPTED connection —
+ * either the student or the mentor can do this, and there's no separate
+ * approve step; see MentorMeetingPlan's doc comment in schema.prisma. */
+export async function setMeetingPlanAction(
+  connectionId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { connection } = await requireConnectionParticipant(connectionId);
+  if (connection.status !== CONNECTION_STATUS.ACCEPTED) {
+    return { error: "Only an active connection can have a recurring meeting." };
+  }
+
+  const parsed = meetingPlanSchema.safeParse({
+    frequency: formData.get("frequency"),
+    dayOfWeek: formData.get("dayOfWeek"),
+    time: formData.get("time"),
+    notes: formData.get("notes"),
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+  const { frequency, dayOfWeek: dayOfWeekRaw, time, notes } = parsed.data;
+
+  let dayOfWeek: number | null = null;
+  if (dayOfWeekRaw) {
+    const n = Number(dayOfWeekRaw);
+    if (!Number.isInteger(n) || n < 0 || n > 6) {
+      return { error: "Choose a valid day of the week." };
+    }
+    dayOfWeek = n;
+  }
+
+  await prisma.mentorMeetingPlan.upsert({
+    where: { connectionId },
+    create: { connectionId, frequency, dayOfWeek, time: time || null, notes: notes || null },
+    update: { frequency, dayOfWeek, time: time || null, notes: notes || null },
+  });
+
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/student/mentors");
+  return { ok: true };
+}
+
+/** Removes the recurring-meeting note entirely — e.g. "we don't meet on a
+ * regular schedule anymore." Either participant can clear it. */
+export async function clearMeetingPlanAction(connectionId: string): Promise<ActionResult> {
+  await requireConnectionParticipant(connectionId);
+  await prisma.mentorMeetingPlan.deleteMany({ where: { connectionId } });
   revalidatePath("/volunteer/dashboard");
   revalidatePath("/student/mentors");
 }

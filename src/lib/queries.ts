@@ -111,7 +111,10 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
 export async function listConnectionsAsStudent(studentId: string) {
   const connections = await prisma.mentorConnection.findMany({
     where: { studentId },
-    include: { mentor: { select: { id: true, name: true, email: true, bio: true } } },
+    include: {
+      mentor: { select: { id: true, name: true, email: true, bio: true } },
+      meetingPlan: true,
+    },
     orderBy: { lastRequestedAt: "desc" },
   });
   return connections.map((c) => ({
@@ -123,7 +126,10 @@ export async function listConnectionsAsStudent(studentId: string) {
 export async function listConnectionsAsMentor(mentorId: string) {
   const connections = await prisma.mentorConnection.findMany({
     where: { mentorId },
-    include: { student: { select: { id: true, name: true, email: true, bio: true } } },
+    include: {
+      student: { select: { id: true, name: true, email: true, bio: true } },
+      meetingPlan: true,
+    },
     orderBy: { lastRequestedAt: "desc" },
   });
   return connections.map((c) => ({

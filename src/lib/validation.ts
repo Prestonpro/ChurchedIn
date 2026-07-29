@@ -110,6 +110,16 @@ export const connectionRequestSchema = z.object({
   message: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
+export const meetingPlanSchema = z.object({
+  frequency: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY"]),
+  // Free-text here on purpose — parsed to a 0-6 day index (or left unset)
+  // in the action, since a bare number field would coerce an empty
+  // "no preference" selection to 0 (Sunday) instead of null.
+  dayOfWeek: z.string().trim().max(2).optional().or(z.literal("")),
+  time: z.string().trim().max(100).optional().or(z.literal("")),
+  notes: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
 export const rideRequestSchema = z.object({
   destination: z.string().trim().min(1, "Enter where you need to go").max(300),
   date: z.string().min(1, "Choose a date"),

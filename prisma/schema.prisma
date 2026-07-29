@@ -50,6 +50,12 @@ enum ConnectionStatus {
   ENDED
 }
 
+enum MeetingFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
 enum ReportStatus {
   OPEN
   REVIEWED
@@ -331,7 +337,32 @@ model MentorConnection {
   mentorId  String
   mentor    User   @relation("ConnectionsAsMentor", fields: [mentorId], references: [id])
 
+  meetingPlan MentorMeetingPlan?
+
   @@unique([studentId, mentorId])
+}
+
+/**
+ * A private, informal recurring-meeting note attached to an ACCEPTED
+ * MentorConnection — the "mentor sets up a bi-weekly/monthly standing
+ * meeting with a mentee" behavior from real mentor feedback, which the
+ * public Event/RSVP system isn't the right fit for (no audience,
+ * capacity, or waitlist involved, just the two connected people). Either
+ * person can set or edit it directly — no separate propose/accept step,
+ * same trust-it-for-now spirit as the rest of this app. Calendar
+ * invites/reminders are intentionally out of scope for now; this is a
+ * shared note, not a scheduling system.
+ */
+model MentorMeetingPlan {
+  id           String          @id @default(cuid())
+  frequency    MeetingFrequency
+  dayOfWeek    Int?
+  time         String?
+  notes        String?
+  updatedAt    DateTime        @updatedAt
+
+  connectionId String           @unique
+  connection   MentorConnection @relation(fields: [connectionId], references: [id])
 }
 
 /**

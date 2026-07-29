@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { RespondToConnectionButtons, EndConnectionButton } from "@/components/ConnectionActions";
+import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
 import { CONNECTION_STATUS, ROLES, type EventCategory } from "@/lib/constants";
 
 export default async function VolunteerDashboardPage() {
@@ -112,20 +113,20 @@ export default async function VolunteerDashboardPage() {
           <h2 className="mb-3 font-bold text-ink">Your friends</h2>
           <div className="space-y-3">
             {active.map((c) => (
-              <div
-                key={c.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"
-              >
-                <div className="flex items-center gap-3">
-                  <Avatar name={c.student.name} size="sm" />
-                  <div>
-                    <p className="text-sm font-semibold text-ink">{c.student.name}</p>
-                    <p className="flex items-center gap-1.5 text-xs text-ink-muted">
-                      <EnvelopeSimple weight="bold" className="size-3.5" /> {c.student.email}
-                    </p>
+              <div key={c.id} className="space-y-2.5 rounded-xl border border-line p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <Avatar name={c.student.name} size="sm" />
+                    <div>
+                      <p className="text-sm font-semibold text-ink">{c.student.name}</p>
+                      <p className="flex items-center gap-1.5 text-xs text-ink-muted">
+                        <EnvelopeSimple weight="bold" className="size-3.5" /> {c.student.email}
+                      </p>
+                    </div>
                   </div>
+                  <EndConnectionButton connectionId={c.id} />
                 </div>
-                <EndConnectionButton connectionId={c.id} />
+                <MeetingPlanEditor connectionId={c.id} plan={c.meetingPlan} />
               </div>
             ))}
           </div>

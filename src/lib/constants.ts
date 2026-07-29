@@ -65,6 +65,22 @@ export const CONNECTION_STATUS = {
 
 export type ConnectionStatus = (typeof CONNECTION_STATUS)[keyof typeof CONNECTION_STATUS];
 
+export const MEETING_FREQUENCY = {
+  WEEKLY: "WEEKLY",
+  BIWEEKLY: "BIWEEKLY",
+  MONTHLY: "MONTHLY",
+} as const;
+
+export type MeetingFrequency = (typeof MEETING_FREQUENCY)[keyof typeof MEETING_FREQUENCY];
+
+export const MEETING_FREQUENCY_LABELS: Record<MeetingFrequency, string> = {
+  WEEKLY: "Every week",
+  BIWEEKLY: "Every other week",
+  MONTHLY: "Every month",
+};
+
+export const DAY_OF_WEEK_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"] as const;
+
 export const REPORT_STATUS = {
   OPEN: "OPEN",
   REVIEWED: "REVIEWED",
