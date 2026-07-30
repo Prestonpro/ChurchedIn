@@ -90,7 +90,6 @@ export function StudentProfileForm({
       <TextAreaField
         label="Career goals (optional)"
         name="careerGoals"
-        icon={Target}
         defaultValue={initial.careerGoals}
         placeholder="What kind of job are you looking for?"
       />
