@@ -235,8 +235,13 @@ model Membership {
 
 model MentorProfile {
   id           String  @id @default(cuid())
+  jobTitle     String?
+  company      String?
+  industry     String?
   languages    String?
+  hobbies      String?
   interests    String?
+  linkedinUrl  String?
   openToMentor Boolean @default(true)
 
   userId String @unique
@@ -247,8 +252,13 @@ model StudentProfile {
   id              String  @id @default(cuid())
   countryOfOrigin String?
   school          String?
+  major           String?
+  graduationYear  String?
   languages       String?
+  hobbies         String?
   interests       String?
+  careerGoals     String?
+  linkedinUrl     String?
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])

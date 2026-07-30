@@ -203,3 +203,19 @@ export const SCHOOLS = [
   "University of Washington",
 ].sort();
 
+export const MAJORS = [
+  "Computer Science", "Business Administration", "Mechanical Engineering",
+  "Biology", "Nursing", "Psychology", "Economics", "Electrical Engineering",
+  "Civil Engineering", "Accounting", "Finance", "Marketing",
+  "Communications", "Political Science", "English", "History",
+  "Mathematics", "Physics", "Chemistry", "Art and Design",
+  "Data Science", "Information Technology", "Sociology", "Education",
+].sort();
+
+export const INDUSTRIES = [
+  "Technology", "Healthcare", "Financial Services", "Education",
+  "Manufacturing", "Retail", "Real Estate", "Consulting",
+  "Media and Entertainment", "Non-profit", "Government",
+  "Energy", "Transportation", "Telecommunications", "Hospitality",
+  "Legal Services", "Agriculture", "Construction", "Pharmaceuticals",
+].sort();

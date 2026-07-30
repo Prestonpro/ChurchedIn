@@ -107,7 +107,25 @@ export default async function MentorDirectoryPage() {
                   <BlockButton userId={m.userId} name={m.user.name} />
                 </div>
                 {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
-                {(m.languages || m.interests) && (
+                
+                {(m.jobTitle || m.company || m.industry) && (
+                  <p className="mt-2 text-sm text-ink-muted">
+                    {[m.jobTitle, m.company, m.industry].filter(Boolean).join(" • ")}
+                  </p>
+                )}
+
+                {m.linkedinUrl && (
+                  <a
+                    href={m.linkedinUrl.startsWith('http') ? m.linkedinUrl : `https://${m.linkedinUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline"
+                  >
+                    View LinkedIn Profile
+                  </a>
+                )}
+
+                {(m.languages || m.interests || m.hobbies) && (
                   <div className="mt-3 flex flex-wrap gap-1.5">
                     {m.languages &&
                       tags(m.languages).map((t) => (
@@ -129,6 +147,15 @@ export default async function MentorDirectoryPage() {
                           className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-medium text-accent-700"
                         >
                           <Sparkle weight="bold" className="size-3" /> {t}
+                        </span>
+                      ))}
+                    {m.hobbies &&
+                      tags(m.hobbies).map((t) => (
+                        <span
+                          key={`hob-${t}`}
+                          className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+                        >
+                          {t}
                         </span>
                       ))}
                   </div>

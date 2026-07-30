@@ -25,19 +25,43 @@ export async function updateMentorProfileAction(
   }
 
   const parsed = mentorProfileSchema.safeParse({
+    jobTitle: formData.get("jobTitle"),
+    company: formData.get("company"),
+    industry: formData.get("industry"),
     languages: formData.get("languages"),
+    hobbies: formData.get("hobbies"),
     interests: formData.get("interests"),
+    linkedinUrl: formData.get("linkedinUrl"),
     openToMentor: formData.get("openToMentor") === "on",
   });
   if (!parsed.success) {
     return { error: firstIssueMessage(parsed.error) };
   }
-  const { languages, interests, openToMentor } = parsed.data;
+  const data = parsed.data;
 
   await prisma.mentorProfile.upsert({
     where: { userId: user.id },
-    create: { userId: user.id, languages: languages || null, interests: interests || null, openToMentor },
-    update: { languages: languages || null, interests: interests || null, openToMentor },
+    create: { 
+      userId: user.id, 
+      jobTitle: data.jobTitle || null,
+      company: data.company || null,
+      industry: data.industry || null,
+      languages: data.languages || null, 
+      hobbies: data.hobbies || null,
+      interests: data.interests || null, 
+      linkedinUrl: data.linkedinUrl || null,
+      openToMentor: data.openToMentor 
+    },
+    update: { 
+      jobTitle: data.jobTitle || null,
+      company: data.company || null,
+      industry: data.industry || null,
+      languages: data.languages || null, 
+      hobbies: data.hobbies || null,
+      interests: data.interests || null, 
+      linkedinUrl: data.linkedinUrl || null,
+      openToMentor: data.openToMentor 
+    },
   });
 
   revalidatePath("/volunteer/profile");
@@ -56,8 +80,13 @@ export async function updateStudentProfileAction(
   const parsed = studentProfileSchema.safeParse({
     countryOfOrigin: formData.get("countryOfOrigin"),
     school: formData.get("school"),
+    major: formData.get("major"),
+    graduationYear: formData.get("graduationYear"),
     languages: formData.get("languages"),
+    hobbies: formData.get("hobbies"),
     interests: formData.get("interests"),
+    careerGoals: formData.get("careerGoals"),
+    linkedinUrl: formData.get("linkedinUrl"),
   });
   if (!parsed.success) {
     return { error: firstIssueMessage(parsed.error) };
@@ -70,14 +99,24 @@ export async function updateStudentProfileAction(
       userId: user.id,
       countryOfOrigin: data.countryOfOrigin || null,
       school: data.school || null,
+      major: data.major || null,
+      graduationYear: data.graduationYear || null,
       languages: data.languages || null,
+      hobbies: data.hobbies || null,
       interests: data.interests || null,
+      careerGoals: data.careerGoals || null,
+      linkedinUrl: data.linkedinUrl || null,
     },
     update: {
       countryOfOrigin: data.countryOfOrigin || null,
       school: data.school || null,
+      major: data.major || null,
+      graduationYear: data.graduationYear || null,
       languages: data.languages || null,
+      hobbies: data.hobbies || null,
       interests: data.interests || null,
+      careerGoals: data.careerGoals || null,
+      linkedinUrl: data.linkedinUrl || null,
     },
   });
 

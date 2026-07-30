@@ -40,6 +40,11 @@ export default async function VolunteerProfilePage() {
               languages: mentorProfile?.languages ?? "",
               interests: mentorProfile?.interests ?? "",
               openToMentor: mentorProfile?.openToMentor ?? false,
+              jobTitle: mentorProfile?.jobTitle ?? "",
+              company: mentorProfile?.company ?? "",
+              industry: mentorProfile?.industry ?? "",
+              hobbies: mentorProfile?.hobbies ?? "",
+              linkedinUrl: mentorProfile?.linkedinUrl ?? "",
             }}
           />
         </Card>

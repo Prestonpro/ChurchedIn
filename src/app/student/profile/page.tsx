@@ -34,8 +34,13 @@ export default async function StudentProfilePage() {
             initial={{
               countryOfOrigin: studentProfile?.countryOfOrigin ?? "",
               school: studentProfile?.school ?? "",
+              major: studentProfile?.major ?? "",
+              graduationYear: studentProfile?.graduationYear ?? "",
               languages: studentProfile?.languages ?? "",
+              hobbies: studentProfile?.hobbies ?? "",
               interests: studentProfile?.interests ?? "",
+              careerGoals: studentProfile?.careerGoals ?? "",
+              linkedinUrl: studentProfile?.linkedinUrl ?? "",
             }}
           />
         </Card>

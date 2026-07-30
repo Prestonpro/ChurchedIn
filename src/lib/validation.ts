@@ -102,16 +102,26 @@ export const eventSchema = z.object({
 });
 
 export const mentorProfileSchema = z.object({
+  jobTitle: z.string().trim().max(100).optional().or(z.literal("")),
+  company: z.string().trim().max(100).optional().or(z.literal("")),
+  industry: z.string().trim().max(100).optional().or(z.literal("")),
   languages: z.string().trim().max(300).optional().or(z.literal("")),
+  hobbies: z.string().trim().max(300).optional().or(z.literal("")),
   interests: z.string().trim().max(500).optional().or(z.literal("")),
+  linkedinUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
   openToMentor: z.boolean().default(true),
 });
 
 export const studentProfileSchema = z.object({
   countryOfOrigin: z.string().trim().max(100).optional().or(z.literal("")),
   school: z.string().trim().max(150).optional().or(z.literal("")),
+  major: z.string().trim().max(100).optional().or(z.literal("")),
+  graduationYear: z.string().trim().max(4).optional().or(z.literal("")),
   languages: z.string().trim().max(300).optional().or(z.literal("")),
+  hobbies: z.string().trim().max(300).optional().or(z.literal("")),
   interests: z.string().trim().max(500).optional().or(z.literal("")),
+  careerGoals: z.string().trim().max(500).optional().or(z.literal("")),
+  linkedinUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
 });
 
 export const connectionRequestSchema = z.object({
