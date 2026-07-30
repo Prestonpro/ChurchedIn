@@ -82,6 +82,7 @@ export default async function VolunteerDashboardPage() {
           value={memberCount}
           tone="bg-brand-50 text-brand-600"
           accent="border-l-brand-500"
+          href={`/churches/${churchId}/members`}
         />
       </div>
 

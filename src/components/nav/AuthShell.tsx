@@ -68,7 +68,7 @@ export async function AuthShell({
   return (
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line bg-surface/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-5">
             <Link href="/home" className="flex items-center gap-2 text-base font-bold text-brand-700">
               <span className="flex size-8 items-center justify-center rounded-full bg-brand-600 text-white">
@@ -121,7 +121,7 @@ export async function AuthShell({
       {fullBleed ? (
         <main className="h-[calc(100dvh-65px)] animate-fade-in overflow-hidden">{children}</main>
       ) : (
-        <main className="mx-auto max-w-6xl animate-fade-in px-6 py-8">{children}</main>
+        <main className="mx-auto max-w-7xl animate-fade-in px-6 py-8">{children}</main>
       )}
     </div>
   );
