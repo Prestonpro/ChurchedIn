@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Ticket } from "@phosphor-icons/react/dist/ssr";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
@@ -41,6 +42,13 @@ export default function JoinEntryPage() {
           Continue
         </SubmitButton>
       </form>
+      <p className="mt-8 text-center text-sm text-ink-muted">
+        Don&apos;t have a code yet?{" "}
+        <Link href="/browse" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
+          Just look around first
+        </Link>
+        .
+      </p>
     </AuthPageLayout>
   );
 }

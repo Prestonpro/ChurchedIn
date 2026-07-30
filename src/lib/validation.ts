@@ -44,6 +44,15 @@ export const joinChurchSchema = z.object({
   role: z.enum(["VOLUNTEER", "STUDENT"]),
 });
 
+/** For /browse — an account with no church yet, so someone can look around
+ * /discover before committing to one. Just the account fields, no role or
+ * church — those come later, at joinDiscoveredChurchAction time. */
+export const browseSignupSchema = z.object({
+  name: nameSchema,
+  email: emailSchema,
+  password: passwordSchema,
+});
+
 export const loginSchema = z.object({
   email: emailSchema,
   password: z.string().min(1, "Enter your password"),

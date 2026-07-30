@@ -42,10 +42,14 @@ export default async function LoginPage({
         New here?{" "}
         <Link href="/join" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
           Join with a church code
-        </Link>{" "}
-        or{" "}
+        </Link>
+        ,{" "}
         <Link href="/signup" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
           start your church&apos;s space
+        </Link>
+        , or{" "}
+        <Link href="/browse" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
+          just look around first
         </Link>
         .
       </p>

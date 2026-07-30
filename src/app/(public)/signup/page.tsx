@@ -23,6 +23,10 @@ export default function SignupPage() {
         <Link href="/join" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
           Enter a join code
         </Link>
+        , or{" "}
+        <Link href="/browse" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
+          just look around first
+        </Link>
         .
       </p>
     </AuthPageLayout>

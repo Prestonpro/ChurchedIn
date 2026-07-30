@@ -10,6 +10,7 @@ import { ROLES, dashboardPathForRole, type Role } from "@/lib/constants";
 import {
   createChurchSchema,
   joinChurchSchema,
+  browseSignupSchema,
   loginSchema,
   firstIssueMessage,
 } from "@/lib/validation";
@@ -107,6 +108,38 @@ export async function joinChurchAction(
   redirect(dashboardPathForRole(role as Role));
 }
 
+/** Creates an account with no church yet — for someone who just wants to
+ * look around /discover before committing to one. Joining a specific
+ * church (and choosing volunteer vs. student) happens later, via
+ * joinDiscoveredChurchAction. */
+export async function createBrowsingAccountAction(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const parsed = browseSignupSchema.safeParse({
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    return { error: firstIssueMessage(parsed.error) };
+  }
+  const { name, email, password } = parsed.data;
+
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) {
+    return { error: "An account with that email already exists." };
+  }
+
+  const passwordHash = await hashPassword(password);
+  const user = await prisma.user.create({ data: { name, email, passwordHash } });
+
+  const token = await createSessionToken({ userId: user.id, activeChurchId: "" });
+  await setSessionCookie(token);
+
+  redirect("/discover");
+}
+
 export async function loginAction(_prev: ActionResult, formData: FormData): Promise<ActionResult> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
@@ -135,9 +168,11 @@ export async function loginAction(_prev: ActionResult, formData: FormData): Prom
 
   const firstMembership = user.memberships[0];
   if (!firstMembership) {
-    // Shouldn't happen in practice (every signup path creates one membership),
-    // but fail toward "join a church" rather than a broken session.
-    redirect("/join");
+    // A browsing account (see createBrowsingAccountAction) with no church
+    // yet — still log them in, just land on /discover instead of a dashboard.
+    const token = await createSessionToken({ userId: user.id, activeChurchId: "" });
+    await setSessionCookie(token);
+    redirect("/discover");
   }
 
   const token = await createSessionToken({

@@ -10,6 +10,11 @@ import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
 import { MobileMenu } from "./MobileMenu";
 
+/** For a logged-in user with no church yet (see createBrowsingAccountAction)
+ * — every other nav destination requires a membership and would just
+ * bounce them to /join, so show only what actually works. */
+const BROWSING_LINKS: NavLink[] = [{ href: "/discover", label: "Discover", iconKey: "discover" }];
+
 function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): NavLink[] {
   const events: NavLink = { href: "/events", label: "Events", iconKey: "events", hasBadge: unseenEvents };
   const discover: NavLink = { href: "/discover", label: "Discover", iconKey: "discover" };
@@ -56,7 +61,9 @@ export async function AuthShell({
   const unseenEvents = user.activeMembership
     ? await hasUnseenEvents(user.activeMembership.churchId, user.activeMembership.lastSeenEventsAt)
     : false;
-  const links = navLinksForRole(role, unseenEvents, user.activeMembership?.churchId ?? "");
+  const links = user.activeMembership
+    ? navLinksForRole(role, unseenEvents, user.activeMembership.churchId)
+    : BROWSING_LINKS;
 
   return (
     <div className="min-h-screen bg-paper">
