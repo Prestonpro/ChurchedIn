@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import CreatableSelect from "react-select/creatable";
+import type { MultiValue, SingleValue } from "react-select";
 import type { Icon } from "@phosphor-icons/react";
+
+type Option = { value: string; label: string };
 
 function Wrapper({
   label,
@@ -42,7 +45,7 @@ export function SearchableSelect({
   placeholder?: string;
 }) {
   const selectOptions = options.map((opt) => ({ value: opt, label: opt }));
-  
+
   const parseDefaultValue = () => {
     if (!defaultValue) return isMulti ? [] : null;
     if (isMulti) {
@@ -56,12 +59,19 @@ export function SearchableSelect({
     return found || { value: defaultValue, label: defaultValue };
   };
 
-  const [selected, setSelected] = useState<{ value: string; label: string } | { value: string; label: string }[] | null>(parseDefaultValue());
+  const [selected, setSelected] = useState<Option | Option[] | null>(parseDefaultValue());
 
   // Derive the string value to insert into the hidden input
   const hiddenValue = isMulti
-    ? (selected as { value: string; label: string }[])?.map((s) => s.value).join(", ") || ""
-    : (selected as { value: string; label: string })?.value || "";
+    ? (selected as Option[])?.map((s) => s.value).join(", ") || ""
+    : (selected as Option)?.value || "";
+
+  // react-select's onChange passes a readonly MultiValue array (isMulti) or
+  // a single Option-or-null (SingleValue) — spread the array so it matches
+  // the plain mutable Option[] the rest of this component works with.
+  function handleChange(newValue: MultiValue<Option> | SingleValue<Option>) {
+    setSelected(isMulti ? [...(newValue as MultiValue<Option>)] : (newValue as SingleValue<Option>));
+  }
 
   return (
     <Wrapper label={label} hint={hint}>
@@ -76,7 +86,7 @@ export function SearchableSelect({
           isMulti={isMulti}
           options={selectOptions}
           value={selected}
-          onChange={setSelected}
+          onChange={handleChange}
           placeholder={placeholder}
           formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
           classNames={{
