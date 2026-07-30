@@ -18,15 +18,10 @@ const TILE_ATTRIBUTION =
 // resolved) the viewer's location.
 const DEFAULT_CENTER: [number, number] = [39.5, -98.35];
 
-// Pins scale with member count (bigger community = bigger dot) instead of
-// being sorted into discrete color tiers — sqrt so a handful of huge
-// churches don't make everything else invisible by comparison.
-const MIN_PIN_SIZE = 14;
-const MAX_PIN_SIZE = 38;
-function pinSizeForMemberCount(memberCount: number): number {
-  const size = MIN_PIN_SIZE + Math.sqrt(Math.min(memberCount, 4000)) * 1.1;
-  return Math.round(Math.min(size, MAX_PIN_SIZE));
-}
+// Every pin is the same small size regardless of member count — size used
+// to scale with it, but that made a handful of huge churches dominate the
+// map visually over everything else.
+const PIN_SIZE = 14;
 
 // Brand teal for "member count is a map-seed estimate"; accent gold for a
 // church with at least one real, signed-up member (see
@@ -110,7 +105,7 @@ export function DiscoverMap({
             position={[church.locationLat!, church.locationLng!]}
             icon={leafletPin(
               pinColor(church.hasRealMembers),
-              pinSizeForMemberCount(church.memberCount) + (church.id === selectedId ? 6 : 0),
+              PIN_SIZE + (church.id === selectedId ? 6 : 0),
             )}
             eventHandlers={{
               click: () => onSelect(church.id),
