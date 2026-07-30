@@ -28,8 +28,24 @@ export function Field({
   hint,
   className = "",
   icon: IconComponent,
+  datalist,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; icon?: Icon }) {
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; icon?: Icon; datalist?: string[] }) {
+  const datalistId = datalist ? `${props.name}-datalist` : undefined;
+  
+  const inputEl = (
+    <>
+      <input className={`${INPUT_CLASSES} ${IconComponent ? 'pl-10 ' : ''}${className}`} list={datalistId} {...props} />
+      {datalist && (
+        <datalist id={datalistId}>
+          {datalist.map((option) => (
+            <option key={option} value={option} />
+          ))}
+        </datalist>
+      )}
+    </>
+  );
+
   return (
     <Wrapper label={label} hint={hint}>
       {IconComponent ? (
@@ -38,10 +54,10 @@ export function Field({
             weight="bold"
             className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-ink-faint"
           />
-          <input className={`${INPUT_CLASSES} pl-10 ${className}`} {...props} />
+          {inputEl}
         </div>
       ) : (
-        <input className={`${INPUT_CLASSES} ${className}`} {...props} />
+        inputEl
       )}
     </Wrapper>
   );

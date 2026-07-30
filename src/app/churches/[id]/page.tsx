@@ -9,6 +9,7 @@ import {
   MapPin,
   NavigationArrow,
   CalendarBlank,
+  Ticket,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getChurchProfile, listEventsForChurch } from "@/lib/queries";
@@ -19,6 +20,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { Badge } from "@/components/ui/Badge";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
+import { CopyButton } from "@/components/ui/CopyButton";
 import { type EventCategory } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
 import { ClaimAdminButton } from "./ClaimAdminButton";
@@ -177,6 +179,23 @@ export default async function ChurchProfilePage({
                 <UsersThree weight="bold" className="size-4 text-brand-600" /> Join this church
               </h2>
               <JoinChurchForm churchId={id} requireJoinCode={church.claimedAt !== null} />
+            </Card>
+          )}
+
+          {isMember && !canManageSettings && (
+            <Card>
+              <h2 className="mb-3 flex items-center gap-1.5 font-bold text-ink">
+                <Ticket weight="bold" className="size-4 text-brand-600" /> Invite people
+              </h2>
+              <p className="mb-3 text-sm text-ink-soft">
+                Share this code with anyone you&apos;d like to invite to {church.name}.
+              </p>
+              <div className="flex flex-wrap items-center gap-3">
+                <code className="rounded-lg bg-paper px-4 py-2.5 text-lg font-bold tracking-[0.3em] text-brand-700">
+                  {church.joinCode}
+                </code>
+                <CopyButton text={church.joinCode} label="Copy code" />
+              </div>
             </Card>
           )}
 

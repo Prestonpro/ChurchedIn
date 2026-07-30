@@ -6,6 +6,7 @@ import { updateChurchProfileAction } from "@/lib/actions/churches";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { LocationPicker } from "@/components/LocationPicker";
+import { LANGUAGES } from "@/lib/constants";
 
 type ChurchDefaults = {
   name: string;
@@ -50,6 +51,7 @@ export function EditChurchProfileForm({ churchId, church }: { churchId: string; 
           icon={Translate}
           defaultValue={church.languages ?? ""}
           placeholder="English, Mandarin"
+          datalist={LANGUAGES}
         />
       </div>
       <TextAreaField label="Short description (optional)" name="bio" defaultValue={church.bio ?? ""} />

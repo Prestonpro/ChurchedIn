@@ -157,3 +157,49 @@ export const MAX_CONNECTION_REQUESTS_PER_DAY = 5;
 // member's inbox. Enforced in src/lib/actions/events.ts by counting recent
 // Event.createdAt values for the church, not an external rate limiter.
 export const MAX_EVENT_NOTIFICATIONS_PER_DAY = 3;
+
+export const COUNTRIES = [
+  "United States", "China", "India", "Brazil", "Mexico",
+  "Canada", "United Kingdom", "Germany", "France", "Japan",
+  "South Korea", "Taiwan", "Vietnam", "Philippines", "Nigeria",
+  "Australia", "Spain", "Italy", "Colombia", "Argentina",
+  "Russia", "South Africa", "Indonesia", "Malaysia", "Thailand",
+].sort();
+
+export const LANGUAGES = [
+  "English", "Mandarin", "Spanish", "Hindi", "Arabic",
+  "Portuguese", "Bengali", "Russian", "Japanese", "Punjabi",
+  "German", "Javanese", "Wu", "Malay", "Telugu",
+  "Vietnamese", "Korean", "French", "Marathi", "Tamil",
+  "Urdu", "Turkish", "Italian", "Yue (Cantonese)", "Thai",
+  "Gujarati", "Jin", "Southern Min", "Persian", "Polish",
+].sort();
+
+export const SCHOOLS = [
+  "University of Texas at Austin",
+  "Texas A&M University",
+  "University of Houston",
+  "Texas Tech University",
+  "University of North Texas",
+  "University of Texas at Dallas",
+  "University of Texas at Arlington",
+  "Baylor University",
+  "Rice University",
+  "Southern Methodist University",
+  "Texas Christian University",
+  "University of Texas at San Antonio",
+  "Texas State University",
+  "Stanford University",
+  "Massachusetts Institute of Technology (MIT)",
+  "Harvard University",
+  "University of California, Berkeley",
+  "University of California, Los Angeles",
+  "University of Southern California",
+  "New York University",
+  "Columbia University",
+  "University of Michigan",
+  "University of Pennsylvania",
+  "Cornell University",
+  "University of Washington",
+].sort();
+

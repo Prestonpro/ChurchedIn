@@ -5,6 +5,7 @@ import { Globe, GraduationCap } from "@phosphor-icons/react/dist/ssr";
 import { updateStudentProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { COUNTRIES, LANGUAGES, SCHOOLS } from "@/lib/constants";
 
 export function StudentProfileForm({
   initial,
@@ -16,9 +17,26 @@ export function StudentProfileForm({
   return (
     <form action={formAction} className="space-y-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
-      <Field label="Country of origin" name="countryOfOrigin" icon={Globe} defaultValue={initial.countryOfOrigin} />
-      <Field label="School / program" name="school" icon={GraduationCap} defaultValue={initial.school} />
-      <Field label="Languages you speak" name="languages" defaultValue={initial.languages} />
+      <Field 
+        label="Country of origin" 
+        name="countryOfOrigin" 
+        icon={Globe} 
+        defaultValue={initial.countryOfOrigin} 
+        datalist={COUNTRIES}
+      />
+      <Field 
+        label="School / program" 
+        name="school" 
+        icon={GraduationCap} 
+        defaultValue={initial.school} 
+        datalist={SCHOOLS}
+      />
+      <Field 
+        label="Languages you speak" 
+        name="languages" 
+        defaultValue={initial.languages} 
+        datalist={LANGUAGES}
+      />
       <TextAreaField
         label="Interests"
         name="interests"

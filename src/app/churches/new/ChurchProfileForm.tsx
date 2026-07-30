@@ -6,6 +6,7 @@ import { createChurchProfileAction } from "@/lib/actions/churches";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { LocationPicker } from "@/components/LocationPicker";
+import { LANGUAGES } from "@/lib/constants";
 
 export function ChurchProfileForm() {
   const [state, formAction] = useActionState(createChurchProfileAction, undefined);
@@ -32,6 +33,7 @@ export function ChurchProfileForm() {
           name="languages"
           icon={Translate}
           placeholder="English, Mandarin"
+          datalist={LANGUAGES}
         />
       </div>
       <TextAreaField

@@ -9,6 +9,7 @@ import { HelpGuideButton } from "@/components/HelpGuideButton";
 import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
 import { MobileMenu } from "./MobileMenu";
+import { PageTransition } from "./PageTransition";
 
 /** For a logged-in user with no church yet (see createBrowsingAccountAction)
  * — every other nav destination requires a membership and would just
@@ -119,9 +120,13 @@ export async function AuthShell({
         </div>
       </header>
       {fullBleed ? (
-        <main className="h-[calc(100dvh-65px)] animate-fade-in overflow-hidden">{children}</main>
+        <main className="h-[calc(100dvh-65px)] overflow-hidden">
+          <PageTransition className="h-full">{children}</PageTransition>
+        </main>
       ) : (
-        <main className="mx-auto max-w-7xl animate-fade-in px-6 py-8">{children}</main>
+        <main className="mx-auto max-w-7xl px-6 py-8">
+          <PageTransition>{children}</PageTransition>
+        </main>
       )}
     </div>
   );
