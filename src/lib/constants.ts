@@ -159,63 +159,127 @@ export const MAX_CONNECTION_REQUESTS_PER_DAY = 5;
 export const MAX_EVENT_NOTIFICATIONS_PER_DAY = 3;
 
 export const COUNTRIES = [
-  "United States", "China", "India", "Brazil", "Mexico",
-  "Canada", "United Kingdom", "Germany", "France", "Japan",
-  "South Korea", "Taiwan", "Vietnam", "Philippines", "Nigeria",
-  "Australia", "Spain", "Italy", "Colombia", "Argentina",
-  "Russia", "South Africa", "Indonesia", "Malaysia", "Thailand",
+  // North America
+  "United States", "Canada", "Mexico",
+  // South America
+  "Brazil", "Colombia", "Argentina", "Peru", "Venezuela", "Chile", "Ecuador", "Bolivia", "Paraguay", "Uruguay",
+  // Europe
+  "United Kingdom", "Germany", "France", "Italy", "Spain", "Ukraine", "Poland", "Romania", "Netherlands", "Belgium",
+  "Czech Republic", "Greece", "Portugal", "Sweden", "Hungary", "Belarus", "Austria", "Serbia", "Switzerland", "Bulgaria",
+  // Asia
+  "China", "India", "Indonesia", "Pakistan", "Bangladesh", "Japan", "Philippines", "Vietnam", "Turkey", "Iran",
+  "Thailand", "Myanmar", "South Korea", "Iraq", "Afghanistan", "Saudi Arabia", "Uzbekistan", "Malaysia", "Yemen", "Nepal",
+  "North Korea", "Sri Lanka", "Kazakhstan", "Syria", "Cambodia", "Jordan", "Azerbaijan", "United Arab Emirates", "Tajikistan",
+  "Israel", "Laos", "Lebanon", "Kyrgyzstan", "Turkmenistan", "Singapore", "Oman", "State of Palestine", "Kuwait", "Georgia",
+  "Mongolia", "Armenia", "Qatar", "Bahrain", "Timor-Leste", "Cyprus", "Bhutan", "Maldives", "Brunei", "Taiwan",
+  // Africa
+  "Nigeria", "Ethiopia", "Egypt", "Democratic Republic of the Congo", "Tanzania", "South Africa", "Kenya", "Uganda",
+  "Algeria", "Sudan", "Morocco", "Angola", "Mozambique", "Ghana", "Madagascar", "Cameroon", "Côte d'Ivoire", "Niger",
+  "Burkina Faso", "Mali", "Malawi", "Zambia", "Senegal", "Chad", "Somalia", "Zimbabwe", "Guinea", "Rwanda", "Benin",
+  "Burundi", "Tunisia", "South Sudan", "Togo", "Sierra Leone", "Libya", "Congo", "Liberia", "Central African Republic",
+  // Oceania
+  "Australia", "Papua New Guinea", "New Zealand", "Fiji", "Solomon Islands", "Micronesia", "Vanuatu", "Samoa", "Kiribati",
 ].sort();
 
 export const LANGUAGES = [
-  "English", "Mandarin", "Spanish", "Hindi", "Arabic",
-  "Portuguese", "Bengali", "Russian", "Japanese", "Punjabi",
-  "German", "Javanese", "Wu", "Malay", "Telugu",
-  "Vietnamese", "Korean", "French", "Marathi", "Tamil",
-  "Urdu", "Turkish", "Italian", "Yue (Cantonese)", "Thai",
-  "Gujarati", "Jin", "Southern Min", "Persian", "Polish",
+  "English", "Mandarin Chinese", "Spanish", "Hindi", "Arabic", "Bengali", "Russian", "Portuguese", "Urdu", "Indonesian",
+  "German", "Japanese", "Marathi", "Telugu", "Turkish", "Tamil", "Yue Chinese (Cantonese)", "Vietnamese", "Tagalog", "Wu Chinese",
+  "Korean", "Persian", "Hausa", "Egyptian Arabic", "Swahili", "Javanese", "Italian", "Punjabi", "Gujarati", "Thai",
+  "Amharic", "Kannada", "Bhojpuri", "Jin Chinese", "Southern Min", "Hakka", "Burmese", "Yoruba", "Uzbek", "Odia",
+  "Maithili", "Sindhi", "Ukrainian", "Malayalam", "Sundanese", "Igbo", "Romanian", "Azerbaijani", "Awadhi", "Dutch",
+  "Kurdish", "Serbo-Croatian", "Malagasy", "Saraiki", "Nepali", "Sinhalese", "Chittagonian", "Zhuang", "Khmer", "Turkmen",
+  "Assamese", "Madurese", "Somali", "Marwari", "Magahi", "Haryanvi", "Hungarian", "Chhattisgarhi", "Greek", "Chewa",
+  "Deccan", "Akan", "Kazakh", "Sylheti", "Zulu", "Czech", "Kinyarwanda", "Dhundhari", "Haitian Creole", "Ilocano",
+  "Quechua", "Kirundi", "Swedish", "Hmong", "Shona", "Uyghur", "Hiligaynon", "Mossi", "Xhosa", "Belarusian", "Balochi", "Konkani",
 ].sort();
 
 export const SCHOOLS = [
-  "University of Texas at Austin",
-  "Texas A&M University",
-  "University of Houston",
-  "Texas Tech University",
-  "University of North Texas",
-  "University of Texas at Dallas",
-  "University of Texas at Arlington",
-  "Baylor University",
-  "Rice University",
-  "Southern Methodist University",
-  "Texas Christian University",
-  "University of Texas at San Antonio",
-  "Texas State University",
-  "Stanford University",
-  "Massachusetts Institute of Technology (MIT)",
-  "Harvard University",
-  "University of California, Berkeley",
-  "University of California, Los Angeles",
-  "University of Southern California",
-  "New York University",
-  "Columbia University",
-  "University of Michigan",
-  "University of Pennsylvania",
-  "Cornell University",
-  "University of Washington",
+  // Texas (Keep existing + more)
+  "University of Texas at Austin", "Texas A&M University", "University of Houston", "Texas Tech University", 
+  "University of North Texas", "University of Texas at Dallas", "University of Texas at Arlington", "Baylor University", 
+  "Rice University", "Southern Methodist University", "Texas Christian University", "University of Texas at San Antonio", 
+  "Texas State University", "University of Texas at El Paso", "Stephen F. Austin State University", "Sam Houston State University",
+  "Lamar University", "Texas A&M University-Corpus Christi", "Texas Woman's University", "University of Houston-Clear Lake",
+  "University of Houston-Downtown", "Prairie View A&M University", "Tarleton State University", "Texas A&M International University",
+  "West Texas A&M University", "Midwestern State University", "Angelo State University", "St. Edward's University",
+  "Trinity University", "Southwestern University", "University of Dallas", "St. Mary's University", "Abilene Christian University",
+  
+  // Ivy League & Top Tier
+  "Harvard University", "Stanford University", "Massachusetts Institute of Technology (MIT)", "Yale University", 
+  "Princeton University", "Columbia University", "University of Pennsylvania", "Brown University", "Cornell University", 
+  "Dartmouth College", "California Institute of Technology (Caltech)", "University of Chicago", "Johns Hopkins University", 
+  "Northwestern University", "Duke University", "Vanderbilt University", "Washington University in St. Louis",
+  
+  // UC System & California
+  "University of California, Berkeley", "University of California, Los Angeles", "University of California, San Diego", 
+  "University of California, Davis", "University of California, Irvine", "University of California, Santa Barbara", 
+  "University of California, Santa Cruz", "University of California, Riverside", "University of Southern California", 
+  "Santa Clara University", "Loyola Marymount University", "Chapman University", "San Diego State University",
+  
+  // Public Ivy & Big State Schools
+  "University of Michigan", "University of Virginia", "University of North Carolina at Chapel Hill", "William & Mary", 
+  "University of Texas at Austin", "University of Florida", "University of Washington", "University of Wisconsin-Madison", 
+  "University of Illinois at Urbana-Champaign", "Georgia Institute of Technology", "University of Maryland, College Park", 
+  "Ohio State University", "Purdue University", "Pennsylvania State University", "Rutgers University", "University of Minnesota", 
+  "Indiana University Bloomington", "Michigan State University", "University of Colorado Boulder", "University of Arizona",
+  "Arizona State University", "University of Utah", "University of Oregon", "University of Massachusetts Amherst",
+  
+  // Private & Other Notable
+  "New York University", "Boston University", "Northeastern University", "Tufts University", "Boston College", 
+  "Carnegie Mellon University", "Emory University", "Georgetown University", "George Washington University", "Tulane University", 
+  "University of Miami", "Syracuse University", "Villanova University", "Wake Forest University", "Rensselaer Polytechnic Institute",
+  "Rochester Institute of Technology", "Worcester Polytechnic Institute", "Stevens Institute of Technology", "Pratt Institute",
+  "Rhode Island School of Design", "Berklee College of Music", "Juilliard School", "Parsons School of Design",
 ].sort();
 
 export const MAJORS = [
-  "Computer Science", "Business Administration", "Mechanical Engineering",
-  "Biology", "Nursing", "Psychology", "Economics", "Electrical Engineering",
-  "Civil Engineering", "Accounting", "Finance", "Marketing",
-  "Communications", "Political Science", "English", "History",
-  "Mathematics", "Physics", "Chemistry", "Art and Design",
-  "Data Science", "Information Technology", "Sociology", "Education",
+  // STEM
+  "Computer Science", "Software Engineering", "Information Technology", "Cybersecurity", "Data Science", "Artificial Intelligence",
+  "Mathematics", "Statistics", "Applied Mathematics", "Actuarial Science",
+  "Physics", "Astrophysics", "Chemistry", "Biochemistry", "Biology", "Microbiology", "Genetics", "Neuroscience",
+  "Mechanical Engineering", "Electrical Engineering", "Civil Engineering", "Chemical Engineering", "Aerospace Engineering",
+  "Biomedical Engineering", "Industrial Engineering", "Environmental Engineering", "Computer Engineering", "Materials Science",
+  
+  // Business & Finance
+  "Business Administration", "Management", "Finance", "Accounting", "Economics", "Marketing", "Supply Chain Management",
+  "International Business", "Entrepreneurship", "Human Resources", "Real Estate", "Hospitality Management", "Sports Management",
+  
+  // Humanities & Arts
+  "English", "Creative Writing", "Literature", "History", "Philosophy", "Theology", "Religious Studies",
+  "Art History", "Fine Arts", "Graphic Design", "Industrial Design", "Architecture", "Interior Design",
+  "Music", "Music Performance", "Theater", "Dance", "Film and Television", "Photography",
+  
+  // Social Sciences
+  "Psychology", "Sociology", "Anthropology", "Political Science", "International Relations", "Public Policy",
+  "Communications", "Journalism", "Public Relations", "Media Studies", "Linguistics", "Criminal Justice", "Criminology",
+  "Geography", "Urban Planning", "Women's and Gender Studies", "Ethnic Studies",
+  
+  // Health & Education
+  "Nursing", "Pre-Medicine", "Pre-Dentistry", "Pre-Pharmacy", "Pre-Veterinary", "Public Health", "Kinesiology",
+  "Nutrition and Dietetics", "Physical Therapy", "Occupational Therapy", "Speech-Language Pathology",
+  "Education", "Early Childhood Education", "Elementary Education", "Secondary Education", "Special Education",
 ].sort();
 
 export const INDUSTRIES = [
-  "Technology", "Healthcare", "Financial Services", "Education",
-  "Manufacturing", "Retail", "Real Estate", "Consulting",
-  "Media and Entertainment", "Non-profit", "Government",
-  "Energy", "Transportation", "Telecommunications", "Hospitality",
-  "Legal Services", "Agriculture", "Construction", "Pharmaceuticals",
+  "Technology (Software / Internet)", "Technology (Hardware / Semiconductors)", "Artificial Intelligence / Machine Learning",
+  "Healthcare / Hospitals", "Pharmaceuticals / Biotech", "Medical Devices",
+  "Financial Services", "Banking", "Investment Banking / Private Equity", "Venture Capital", "Insurance", "Accounting / Tax",
+  "Education / Higher Ed", "EdTech",
+  "Manufacturing", "Automotive", "Aerospace and Defense", "Chemicals",
+  "Retail", "E-commerce", "Consumer Goods / CPG",
+  "Real Estate", "Construction", "Architecture / Urban Planning",
+  "Consulting", "Management Consulting", "Strategy",
+  "Media and Entertainment", "Film / Television", "Music", "Publishing", "Journalism",
+  "Non-profit / NGO", "Philanthropy", "Social Services",
+  "Government / Public Administration", "Law Enforcement", "Military",
+  "Energy / Oil & Gas", "Renewable Energy / Cleantech", "Utilities",
+  "Transportation / Logistics", "Supply Chain", "Aviation / Airlines",
+  "Telecommunications",
+  "Hospitality / Tourism", "Food and Beverage", "Restaurants",
+  "Legal Services", "Law Practice",
+  "Agriculture / Forestry", "Mining",
+  "Marketing / Advertising", "Public Relations (PR)",
+  "Design / Graphic Design", "Fashion / Apparel",
+  "Sports / Athletics",
+  "Human Resources / Staffing",
 ].sort();

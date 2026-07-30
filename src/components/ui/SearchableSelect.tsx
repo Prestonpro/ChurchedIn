@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Select from "react-select";
+import CreatableSelect from "react-select/creatable";
 import type { Icon } from "@phosphor-icons/react";
 
 function Wrapper({
@@ -47,9 +47,13 @@ export function SearchableSelect({
     if (!defaultValue) return isMulti ? [] : null;
     if (isMulti) {
       const vals = defaultValue.split(",").map((v) => v.trim()).filter(Boolean);
-      return selectOptions.filter((opt) => vals.includes(opt.value));
+      return vals.map(val => {
+        const found = selectOptions.find((opt) => opt.value === val);
+        return found || { value: val, label: val };
+      });
     }
-    return selectOptions.find((opt) => opt.value === defaultValue) || null;
+    const found = selectOptions.find((opt) => opt.value === defaultValue);
+    return found || { value: defaultValue, label: defaultValue };
   };
 
   const [selected, setSelected] = useState<any>(parseDefaultValue());
@@ -68,12 +72,13 @@ export function SearchableSelect({
             className="pointer-events-none absolute left-3.5 top-1/2 z-10 size-4 -translate-y-1/2 text-ink-faint"
           />
         )}
-        <Select
+        <CreatableSelect
           isMulti={isMulti}
           options={selectOptions}
           value={selected}
           onChange={setSelected}
           placeholder={placeholder}
+          formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
           classNames={{
             control: (state) =>
               `min-h-11 rounded-lg border bg-white transition-brand ${
