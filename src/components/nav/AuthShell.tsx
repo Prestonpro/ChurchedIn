@@ -14,7 +14,10 @@ import { PageTransition } from "./PageTransition";
 /** For a logged-in user with no church yet (see createBrowsingAccountAction)
  * — every other nav destination requires a membership and would just
  * bounce them to /join, so show only what actually works. */
-const BROWSING_LINKS: NavLink[] = [{ href: "/discover", label: "Discover", iconKey: "discover" }];
+const BROWSING_LINKS: NavLink[] = [
+  { href: "/discover", label: "Discover", iconKey: "discover" },
+  { href: "/join", label: "Join Church with Code", iconKey: "church" }
+];
 
 function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): NavLink[] {
   const events: NavLink = { href: "/events", label: "Events", iconKey: "events", hasBadge: unseenEvents };

@@ -49,7 +49,7 @@ export async function updateStudentProfileAction(
   formData: FormData,
 ): Promise<ActionResult> {
   const user = await requireUser();
-  if (user.activeMembership?.role !== ROLES.STUDENT) {
+  if (user.activeMembership && user.activeMembership.role !== ROLES.STUDENT) {
     return { error: "Only students have this profile type." };
   }
 

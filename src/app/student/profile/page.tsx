@@ -1,14 +1,20 @@
-import { requireRole } from "@/lib/auth";
+import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { MembershipsCard } from "@/components/MembershipsCard";
 import { StudentProfileForm } from "./StudentProfileForm";
-import { ROLES } from "@/lib/constants";
+import { ROLES, profilePathForRole } from "@/lib/constants";
 
 export default async function StudentProfilePage() {
-  const user = await requireRole(ROLES.STUDENT);
+  const user = await requireUser();
+  
+  if (user.activeMembership && user.activeMembership.role !== ROLES.STUDENT) {
+    redirect(profilePathForRole(user.activeMembership.role));
+  }
+
   const studentProfile = await prisma.studentProfile.findUnique({ where: { userId: user.id } });
 
   return (
