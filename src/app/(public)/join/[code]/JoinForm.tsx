@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useActionState } from "react";
 import { EnvelopeSimple, LockSimple, User, HandHeart, GraduationCap } from "@phosphor-icons/react/dist/ssr";
-import { joinChurchAction } from "@/lib/actions/auth";
+import { joinChurchAction, joinChurchAsExistingUserAction } from "@/lib/actions/auth";
 import { Field, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { GoogleButton, OrDivider } from "@/components/ui/GoogleButton";
@@ -13,9 +13,11 @@ const ROLE_OPTIONS = [
   { value: "STUDENT", label: "International student", icon: GraduationCap },
 ] as const;
 
-export function JoinForm({ code }: { code: string }) {
-  const action = joinChurchAction.bind(null, code);
-  const [state, formAction] = useActionState(action, undefined);
+export function JoinForm({ code, isLoggedIn }: { code: string; isLoggedIn?: boolean }) {
+  const loggedOutAction = joinChurchAction.bind(null, code);
+  const loggedInAction = joinChurchAsExistingUserAction.bind(null, code);
+  const [state, formAction] = useActionState(isLoggedIn ? loggedInAction : loggedOutAction, undefined);
+  
   // Shared with the Google button below so it can carry whichever role is
   // currently selected through the OAuth redirect round-trip.
   const [role, setRole] = useState<(typeof ROLE_OPTIONS)[number]["value"]>("VOLUNTEER");
@@ -44,6 +46,21 @@ export function JoinForm({ code }: { code: string }) {
       </div>
     </div>
   );
+
+  if (isLoggedIn) {
+    return (
+      <div className="space-y-4">
+        {roleGroup}
+        <form action={formAction} className="space-y-4 mt-6">
+          <FormError message={state && "error" in state ? state.error : undefined} />
+          <input type="hidden" name="role" value={role} />
+          <SubmitButton pendingText="Joining…" className="w-full">
+            Join Church
+          </SubmitButton>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

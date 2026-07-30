@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { Buildings, XCircle } from "@phosphor-icons/react/dist/ssr";
 import { getChurchByJoinCode } from "@/lib/queries";
+import { getCurrentUser } from "@/lib/auth";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { JoinForm } from "./JoinForm";
 
@@ -22,6 +23,7 @@ export default async function JoinWithCodePage({
 }) {
   const { code } = await params;
   const church = await getChurchByJoinCode(code);
+  const user = await getCurrentUser();
 
   return (
     <AuthPageLayout
@@ -40,7 +42,7 @@ export default async function JoinWithCodePage({
           <h1 className="mt-4 text-2xl font-extrabold text-ink">Join {church.name}</h1>
           {church.city && <p className="mt-1 text-sm text-ink-muted">{church.city}</p>}
           <div className="mt-8">
-            <JoinForm code={church.joinCode} />
+            <JoinForm code={church.joinCode} isLoggedIn={!!user} />
           </div>
         </>
       ) : (

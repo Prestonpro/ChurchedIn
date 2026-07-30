@@ -108,6 +108,41 @@ export async function joinChurchAction(
   redirect(dashboardPathForRole(role as Role));
 }
 
+/** Joins an existing church via its join code, when the user is already logged in. */
+export async function joinChurchAsExistingUserAction(
+  joinCode: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const user = await requireUser();
+  const role = formData.get("role") as string;
+  if (role !== ROLES.VOLUNTEER && role !== ROLES.STUDENT) {
+    return { error: "Choose whether you're joining as a volunteer or a student." };
+  }
+
+  const church = await prisma.church.findUnique({ where: { joinCode: joinCode.toUpperCase() } });
+  if (!church) {
+    return { error: "That join code doesn't match a church. Double-check it and try again." };
+  }
+
+  if (user.memberships.some((m) => m.churchId === church.id)) {
+    // If they're already a member, just switch to it and redirect
+    const membership = user.memberships.find(m => m.churchId === church.id)!;
+    const token = await createSessionToken({ userId: user.id, activeChurchId: church.id });
+    await setSessionCookie(token);
+    redirect(dashboardPathForRole(membership.role as Role));
+  }
+
+  await prisma.membership.create({
+    data: { userId: user.id, churchId: church.id, role },
+  });
+
+  const token = await createSessionToken({ userId: user.id, activeChurchId: church.id });
+  await setSessionCookie(token);
+
+  redirect(dashboardPathForRole(role as Role));
+}
+
 /** Creates an account with no church yet — for someone who just wants to
  * look around /discover before committing to one. Joining a specific
  * church (and choosing volunteer vs. student) happens later, via
