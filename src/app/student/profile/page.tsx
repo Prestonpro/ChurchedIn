@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
+import { MembershipsCard } from "@/components/MembershipsCard";
 import { StudentProfileForm } from "./StudentProfileForm";
 import { ROLES } from "@/lib/constants";
 
@@ -20,6 +21,7 @@ export default async function StudentProfilePage() {
             <p className="text-sm text-ink-muted">{user.email}</p>
           </div>
         </Card>
+        <MembershipsCard memberships={user.memberships} />
         <Card>
           <h2 className="mb-4 font-bold text-ink">Your profile</h2>
           <StudentProfileForm

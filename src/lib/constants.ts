@@ -134,6 +134,17 @@ export function profilePathForRole(role: Role): string {
   }
 }
 
+export function roleLabel(role: Role): string {
+  switch (role) {
+    case ROLES.CHURCH_ADMIN:
+      return "Church leader";
+    case ROLES.VOLUNTEER:
+      return "Volunteer";
+    case ROLES.STUDENT:
+      return "International student";
+  }
+}
+
 // A student can send at most this many mentor connection requests (new
 // requests or re-requests after a decline) in a rolling 24h window. This is
 // the actual anti-harassment control referenced in the safety rule — it is

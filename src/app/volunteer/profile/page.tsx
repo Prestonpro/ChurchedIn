@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
+import { MembershipsCard } from "@/components/MembershipsCard";
 import { MentorProfileForm } from "./MentorProfileForm";
 import { ROLES } from "@/lib/constants";
 
@@ -21,6 +22,7 @@ export default async function VolunteerProfilePage() {
             <p className="text-sm text-ink-muted">{user.email}</p>
           </div>
         </Card>
+        <MembershipsCard memberships={user.memberships} />
         <Card>
           <div className="mb-4 flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-accent-50 text-accent-600">

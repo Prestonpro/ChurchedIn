@@ -5,6 +5,7 @@ import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { MembershipsCard } from "@/components/MembershipsCard";
 import { ROLES } from "@/lib/constants";
 
 /** A church admin has no role-specific profile fields the way volunteers
@@ -27,6 +28,7 @@ export default async function AdminProfilePage() {
             </p>
           </div>
         </Card>
+        <MembershipsCard memberships={user.memberships} />
         <Card>
           <div className="mb-4 flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-brand-50 text-brand-600">
