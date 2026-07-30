@@ -84,6 +84,18 @@ export async function isBlockedPair(userAId: string, userBId: string): Promise<b
   return blocked.has(userBId);
 }
 
+/** People this user has blocked — specifically the ones THEY initiated
+ * (not the reverse direction), since only the blocker can undo their own
+ * block. Without this, blocking someone by mistake had no way back:
+ * unblockUserAction existed but nothing in the UI ever called it. */
+export function listBlockedUsers(userId: string) {
+  return prisma.block.findMany({
+    where: { blockerId: userId },
+    include: { blocked: { select: { id: true, name: true } } },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
 /** A mentor shows up if they're currently open to mentoring, OR the viewer
  * already has a connection with them (any status) — otherwise a mentor
  * closing themselves off would make an existing pending/accepted/ended
@@ -237,6 +249,31 @@ export async function listOpenRideRequestsForChurch(churchId: string) {
     where: { churchId, status: RIDE_STATUS.OPEN },
     include: { student: { select: { id: true, name: true, photoUrl: true } } },
     orderBy: { date: "asc" },
+  });
+  return rides.map((r) => ({
+    ...r,
+    student:
+      r.type === RIDE_REQUEST_TYPE.FIRST_VISIT
+        ? { ...r.student, name: r.student.name.split(" ")[0] }
+        : r.student,
+  }));
+}
+
+/** Read-only ride overview for a church's leader — every status, no
+ * contact info at all (not even once claimed): an admin isn't a party to
+ * the ride the way the assigned volunteer is, so this deliberately doesn't
+ * reuse rideContactVisible's "reveal once claimed" rule, which is scoped to
+ * the two people actually involved. FIRST_VISIT rows still get the
+ * first-name-only treatment regardless of status, same reasoning as
+ * listOpenRideRequestsForChurch. */
+export async function listAllRideRequestsForChurch(churchId: string) {
+  const rides = await prisma.rideRequest.findMany({
+    where: { churchId },
+    include: {
+      student: { select: { id: true, name: true, photoUrl: true } },
+      volunteer: { select: { id: true, name: true } },
+    },
+    orderBy: { date: "desc" },
   });
   return rides.map((r) => ({
     ...r,

@@ -25,7 +25,7 @@ test("church admin can sign up and host an event that appears in the feed", asyn
   await page.getByLabel("Ends").fill(toLocalInputValue(end));
   await page.getByLabel("Location").fill("Fellowship Hall");
 
-  await page.getByRole("button", { name: "Publish event" }).click();
+  await page.getByRole("button", { name: "Publish gathering" }).click();
   // Anchored to the exact "/events/<id>" shape — a loose /\/events\/.+/
   // regex also matches "/volunteer/events/new" (the form page we're already
   // on), resolving before the actual publish-redirect ever happens.

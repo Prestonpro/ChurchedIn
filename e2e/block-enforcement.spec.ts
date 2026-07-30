@@ -43,7 +43,12 @@ test("blocking a mentor removes them from the student's directory (and any futur
   await expect(studentPage.getByText("Blockable Mentor")).toBeVisible();
 
   studentPage.once("dialog", (dialog) => dialog.accept());
-  await studentPage.getByTitle("Block this person").click();
+  await studentPage.getByTitle("Block Blockable Mentor").click();
 
-  await expect(studentPage.getByText("Blockable Mentor")).not.toBeVisible();
+  // Removed from the friend directory itself (rendered as an h2 there) —
+  // but it now legitimately reappears in the "Blocked" list at the bottom
+  // of the page (a plain row, not an h2), since blocking got an undo.
+  await expect(studentPage.getByRole("heading", { name: "Blockable Mentor" })).not.toBeVisible();
+  await expect(studentPage.getByText("Blockable Mentor")).toBeVisible();
+  await expect(studentPage.getByRole("button", { name: "Unblock" })).toBeVisible();
 });

@@ -9,7 +9,7 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 const description =
-  "Your church community, gathered in one place — plan gatherings, welcome new friends, and connect students with guides.";
+  "Your church community, gathered in one place — plan gatherings, welcome new friends, and connect students with a friend at their church.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),

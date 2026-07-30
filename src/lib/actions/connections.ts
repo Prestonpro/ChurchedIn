@@ -77,7 +77,7 @@ export async function requestConnectionAction(
     }
     if (existing.status === CONNECTION_STATUS.ENDED) {
       return {
-        error: "This connection has ended and can't be restarted. Contact your church leader if you'd like to reconnect.",
+        error: "This connection has ended and can't be restarted.",
       };
     }
     try {

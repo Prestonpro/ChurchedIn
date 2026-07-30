@@ -1,12 +1,15 @@
-import { UsersThree, Translate, Sparkle, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, Translate, Sparkle, EnvelopeSimple, Prohibit } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
-import { listMentorsForChurch, listConnectionsAsStudent } from "@/lib/queries";
+import { prisma } from "@/lib/prisma";
+import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
+import { LinkButton } from "@/components/ui/Button";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BlockButton } from "@/components/BlockButton";
+import { UnblockButton } from "@/components/UnblockButton";
 import { EndConnectionButton, CancelRequestButton } from "@/components/ConnectionActions";
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
 import { ConnectionRequestForm } from "./ConnectionRequestForm";
@@ -19,21 +22,48 @@ function tags(value: string): string[] {
     .filter(Boolean);
 }
 
+function sharedTags(a: string[], b: string[]): Set<string> {
+  const bLower = new Set(b.map((t) => t.toLowerCase()));
+  return new Set(a.filter((t) => bLower.has(t.toLowerCase())));
+}
+
 export default async function MentorDirectoryPage() {
   const user = await requireRole(ROLES.STUDENT);
   if (!user.activeMembership) {
     return (
       <AuthShell user={user}>
-        <EmptyState icon={UsersThree} title="Join a church to meet your friends" />
+        <EmptyState
+          icon={UsersThree}
+          title="Join a church to meet your friends"
+          body="Enter a join code to get started."
+          action={
+            <LinkButton href="/join" size="sm">
+              Enter a join code
+            </LinkButton>
+          }
+        />
       </AuthShell>
     );
   }
 
-  const [mentors, myConnections] = await Promise.all([
+  const [mentors, myConnections, blockedUsers, studentProfile] = await Promise.all([
     listMentorsForChurch(user.activeMembership.churchId, user.id),
     listConnectionsAsStudent(user.id),
+    listBlockedUsers(user.id),
+    prisma.studentProfile.findUnique({ where: { userId: user.id }, select: { languages: true } }),
   ]);
   const connectionByMentor = new Map(myConnections.map((c) => [c.mentorId, c]));
+
+  // Shared-language mentors surface first — this was previously just
+  // whatever order the query returned, with no way to tell at a glance
+  // who you could actually talk to right away.
+  const myLanguages = studentProfile?.languages ? tags(studentProfile.languages) : [];
+  const rankedMentors = mentors
+    .map((m) => ({ mentor: m, shared: sharedTags(m.languages ? tags(m.languages) : [], myLanguages) }))
+    .sort((a, b) => {
+      if (a.shared.size !== b.shared.size) return b.shared.size - a.shared.size;
+      return 0;
+    });
 
   return (
     <AuthShell user={user}>
@@ -51,8 +81,8 @@ export default async function MentorDirectoryPage() {
           body="Check back soon — church members haven't signed up to be a friend yet."
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {mentors.map((m, i) => {
+        <div className="grid items-start gap-4 sm:grid-cols-2">
+          {rankedMentors.map(({ mentor: m, shared }, i) => {
             const connection = connectionByMentor.get(m.userId);
             return (
               <Card
@@ -64,9 +94,17 @@ export default async function MentorDirectoryPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-3">
                     <Avatar name={m.user.name} />
-                    <h2 className="font-bold text-ink">{m.user.name}</h2>
+                    <div>
+                      <h2 className="font-bold text-ink">{m.user.name}</h2>
+                      {shared.size > 0 && (
+                        <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
+                          <Translate weight="bold" className="size-3" /> Speaks{" "}
+                          {Array.from(shared).join(", ")}, like you
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <BlockButton userId={m.userId} />
+                  <BlockButton userId={m.userId} name={m.user.name} />
                 </div>
                 {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
                 {(m.languages || m.interests) && (
@@ -75,7 +113,11 @@ export default async function MentorDirectoryPage() {
                       tags(m.languages).map((t) => (
                         <span
                           key={`lang-${t}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700"
+                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                            shared.has(t)
+                              ? "bg-brand-600 text-white ring-2 ring-brand-200"
+                              : "bg-brand-50 text-brand-700"
+                          }`}
                         >
                           <Translate weight="bold" className="size-3" /> {t}
                         </span>
@@ -126,6 +168,28 @@ export default async function MentorDirectoryPage() {
               </Card>
             );
           })}
+        </div>
+      )}
+
+      {blockedUsers.length > 0 && (
+        <div className="mt-8">
+          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-faint">
+            <Prohibit weight="bold" className="size-4" /> Blocked
+          </h2>
+          <div className="space-y-2">
+            {blockedUsers.map((b) => (
+              <div
+                key={b.id}
+                className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"
+              >
+                <div className="flex items-center gap-2.5">
+                  <Avatar name={b.blocked.name} size="sm" />
+                  <p className="text-sm font-semibold text-ink">{b.blocked.name}</p>
+                </div>
+                <UnblockButton userId={b.blockedId} />
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </AuthShell>

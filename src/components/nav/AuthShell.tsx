@@ -18,6 +18,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): N
       { href: "/admin/dashboard", label: "Dashboard", iconKey: "dashboard" },
       events,
       discover,
+      { href: "/admin/rides", label: "Rides", iconKey: "rides" },
       { href: `/churches/${churchId}/settings`, label: "Church settings", iconKey: "settings" },
     ];
   }
@@ -26,6 +27,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): N
       { href: "/volunteer/dashboard", label: "Dashboard", iconKey: "dashboard" },
       events,
       discover,
+      { href: "/volunteer/rides", label: "Rides", iconKey: "rides" },
     ];
   }
   return [
@@ -33,6 +35,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): N
     events,
     discover,
     { href: "/student/mentors", label: "Friends", iconKey: "mentors" },
+    { href: "/student/rides", label: "Rides", iconKey: "rides" },
   ];
 }
 

@@ -40,7 +40,7 @@ export default async function HomePage() {
       ? [{ href: "/student/mentors", label: "Find a friend", icon: UsersThree, tone: "brand" as const }]
       : []),
     {
-      href: role === ROLES.STUDENT ? "/student/rides" : "/volunteer/rides",
+      href: role === ROLES.STUDENT ? "/student/rides" : role === ROLES.CHURCH_ADMIN ? "/admin/rides" : "/volunteer/rides",
       label: "Rides",
       icon: Car,
       tone: "accent" as const,

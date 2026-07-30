@@ -11,7 +11,7 @@ export default function SignupPage() {
   return (
     <AuthPageLayout
       panelTitle="Give your church a home base for hospitality."
-      panelBody="You'll become the first admin and get a join code to invite volunteers and international students in seconds."
+      panelBody="You'll become its first church leader and get a join code to invite volunteers and international students in seconds."
     >
       <h1 className="text-2xl font-extrabold text-ink">Start your church&apos;s space</h1>
       <p className="mt-1.5 text-sm text-ink-muted">Free to set up. Takes about a minute.</p>

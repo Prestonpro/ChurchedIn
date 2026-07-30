@@ -5,7 +5,7 @@ import { eventPinStatus } from "@/lib/eventMapStatus";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
-import { RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
+import { ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
 import { EventMapClient, type MapEvent } from "./EventMapClient";
 
 export default async function EventsMapPage() {
@@ -66,7 +66,11 @@ export default async function EventsMapPage() {
           <EmptyState
             icon={MapTrifold}
             title="No events on the map yet"
-            body="Events show up here once they're given a location with the map picker."
+            body={
+              user.activeMembership.role === ROLES.STUDENT
+                ? "Nothing has been pinned to the map yet — check back soon."
+                : "Events show up here once they're given a location with the map picker."
+            }
           />
         </div>
       ) : (

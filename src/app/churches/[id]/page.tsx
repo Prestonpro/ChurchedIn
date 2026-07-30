@@ -176,7 +176,7 @@ export default async function ChurchProfilePage({
               <h2 className="mb-3 flex items-center gap-1.5 font-bold text-ink">
                 <UsersThree weight="bold" className="size-4 text-brand-600" /> Join this church
               </h2>
-              <JoinChurchForm churchId={id} />
+              <JoinChurchForm churchId={id} requireJoinCode={church.claimedAt !== null} />
             </Card>
           )}
 

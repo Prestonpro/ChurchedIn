@@ -52,7 +52,7 @@ export default async function VolunteerDashboardPage() {
         </LinkButton>
       </div>
 
-      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={CalendarBlank}
           label="Upcoming gatherings"
@@ -155,7 +155,9 @@ export default async function VolunteerDashboardPage() {
                 <Link
                   key={event.id}
                   href={`/events/${event.id}`}
-                  className="flex items-center justify-between rounded-xl border border-line p-3 transition-brand hover:border-brand-200 hover:bg-paper"
+                  className={`flex items-center justify-between rounded-xl border border-line p-3 transition-brand hover:border-brand-200 hover:bg-paper ${
+                    event.startsAt < new Date() ? "opacity-60" : ""
+                  }`}
                 >
                   <div className="flex items-center gap-3">
                     <span className={`flex size-9 items-center justify-center rounded-lg ${style.bg} ${style.text}`}>
@@ -166,6 +168,7 @@ export default async function VolunteerDashboardPage() {
                   </div>
                   <span className="flex items-center gap-2 text-xs text-ink-muted">
                     {event.startsAt.toLocaleDateString()}
+                    {event.startsAt < new Date() && event.status !== "CANCELLED" && <Badge tone="neutral">Past</Badge>}
                     {event.status === "CANCELLED" && <Badge tone="danger">Cancelled</Badge>}
                   </span>
                 </Link>

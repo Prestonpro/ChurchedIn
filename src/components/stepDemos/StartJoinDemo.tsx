@@ -105,7 +105,7 @@ export function StartJoinDemo({ playKey }: { playKey: number }) {
             className="mt-3 flex items-center gap-1.5 text-sm font-semibold text-success transition-opacity duration-300"
             style={{ opacity: created ? 1 : 0 }}
           >
-            <CheckCircle weight="fill" className="size-4" /> Created! You&apos;re the church admin.
+            <CheckCircle weight="fill" className="size-4" /> Created! You&apos;re the church leader.
           </div>
         </div>
       </div>

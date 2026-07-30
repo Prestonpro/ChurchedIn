@@ -155,7 +155,7 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
           if (e.target.checked) setLocation(churchName);
         }}
       />
-      <CheckboxField label="This is a virtual event" name="isVirtual" defaultChecked={prefill?.isVirtual} />
+      <CheckboxField label="This is a virtual gathering" name="isVirtual" defaultChecked={prefill?.isVirtual} />
 
       <LocationPicker
         title="Add to the event map (optional)"
@@ -187,7 +187,7 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
       </div>
 
       <SubmitButton pendingText="Creating…" className="w-full">
-        Publish event
+        Publish gathering
       </SubmitButton>
     </form>
   );

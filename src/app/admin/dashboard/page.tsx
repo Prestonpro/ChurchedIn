@@ -77,7 +77,7 @@ export default async function AdminDashboardPage() {
         />
         <StatCard
           icon={CalendarBlank}
-          label="Events"
+          label="Gatherings"
           value={events.length}
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
@@ -146,7 +146,7 @@ export default async function AdminDashboardPage() {
           <div>
             <h2 className="font-bold text-ink">Collaborate with another church</h2>
             <p className="text-sm text-ink-muted">
-              Partner with a nearby church to browse each other&apos;s gatherings. RSVPs, reports, and
+              Partner with a nearby church to browse each other&apos;s gatherings. RSVPs and
               the friend directory stay separate.
             </p>
           </div>
@@ -155,7 +155,7 @@ export default async function AdminDashboardPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-4 font-bold text-ink">Events</h2>
+        <h2 className="mb-4 font-bold text-ink">Gatherings</h2>
         {events.length === 0 ? (
           <EmptyState
             icon={CalendarBlank}

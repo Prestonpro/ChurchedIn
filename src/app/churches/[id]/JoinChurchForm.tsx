@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useActionState } from "react";
-import { HandHeart, GraduationCap } from "@phosphor-icons/react/dist/ssr";
+import { HandHeart, GraduationCap, Key } from "@phosphor-icons/react/dist/ssr";
 import { joinDiscoveredChurchAction } from "@/lib/actions/churches";
 import { FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -13,8 +13,16 @@ const ROLE_OPTIONS = [
 
 /** For an already-logged-in user joining a church found on /discover —
  * same role choice as the (public) signup-time join flow, minus the
- * account fields since they already have one. */
-export function JoinChurchForm({ churchId }: { churchId: string }) {
+ * account fields since they already have one.
+ *
+ * `requireJoinCode` is true for any church with a real leader (`claimedAt`
+ * set) — same invite-code boundary the brand-new-account /join/[code] flow
+ * already enforces, closing a self-service path where an uninvited stranger
+ * could join a live church and reach its members' rides/events. A church
+ * that's just an unclaimed map listing (no leader yet to hand out a code)
+ * skips this, so the "claim this church" flow it's meant to feed into
+ * still works. */
+export function JoinChurchForm({ churchId, requireJoinCode }: { churchId: string; requireJoinCode: boolean }) {
   const action = joinDiscoveredChurchAction.bind(null, churchId);
   const [state, formAction] = useActionState(action, undefined);
   const [role, setRole] = useState<(typeof ROLE_OPTIONS)[number]["value"]>("VOLUNTEER");
@@ -41,6 +49,24 @@ export function JoinChurchForm({ churchId }: { churchId: string }) {
           </label>
         ))}
       </div>
+      {requireJoinCode && (
+        <div>
+          <label className="block space-y-1.5">
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-ink-soft">
+              <Key weight="bold" className="size-3.5" /> Invite code
+            </span>
+            <input
+              type="text"
+              name="joinCode"
+              required
+              maxLength={6}
+              placeholder="ABC123"
+              className="w-full rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-sm uppercase tracking-widest text-ink placeholder:text-ink-faint placeholder:tracking-normal focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            />
+          </label>
+          <p className="mt-1 text-xs text-ink-muted">Ask this church&apos;s leader for the code they use to invite people.</p>
+        </div>
+      )}
       <SubmitButton pendingText="Joining…" className="w-full">
         Join this church
       </SubmitButton>

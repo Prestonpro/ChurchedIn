@@ -211,7 +211,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
               className="size-4 rounded border-line-strong text-brand-600"
             />
             <CalendarCheck weight="bold" className="size-4 text-ink-faint" />
-            Has upcoming events
+            Has upcoming gatherings
           </label>
         </div>
 

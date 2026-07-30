@@ -80,6 +80,14 @@ const joinRoleSchema = z.enum(["VOLUNTEER", "STUDENT"]);
  * user, distinct from the (public)/join/[code] flow (which creates a
  * brand-new account). Multi-membership is already supported everywhere
  * else in this app (ChurchSwitcher); this just adds one more.
+ *
+ * A church with a real leader (`claimedAt` set) requires its join code,
+ * same boundary the brand-new-account /join/[code] flow already enforces —
+ * without this, anyone could join any live church with no invitation and
+ * reach its members' rides/events/friend requests. An unclaimed map
+ * listing (no leader yet to hand out a code) skips this check, since it
+ * has to stay joinable for the "claim this church" flow to have anyone to
+ * claim it.
  */
 export async function joinDiscoveredChurchAction(
   churchId: string,
@@ -100,6 +108,13 @@ export async function joinDiscoveredChurchAction(
   }
   if (user.memberships.some((m) => m.churchId === churchId)) {
     return { error: "You're already a member of this church." };
+  }
+
+  if (church.claimedAt) {
+    const submittedCode = formData.get("joinCode");
+    if (typeof submittedCode !== "string" || submittedCode.trim().toUpperCase() !== church.joinCode) {
+      return { error: "That invite code doesn't match. Ask this church's leader for the code they use to invite people." };
+    }
   }
 
   await prisma.membership.create({ data: { userId: user.id, churchId, role } });

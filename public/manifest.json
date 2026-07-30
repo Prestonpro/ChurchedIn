@@ -1,7 +1,7 @@
 {
   "name": "ChurchedIn",
   "short_name": "ChurchedIn",
-  "description": "Your church community, gathered in one place — plan gatherings, welcome new friends, and connect students with guides.",
+  "description": "Your church community, gathered in one place — plan gatherings, welcome new friends, and connect students with a friend at their church.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf8f4",

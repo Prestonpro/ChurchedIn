@@ -47,10 +47,10 @@ export default async function StudentDashboardPage() {
         </LinkButton>
       </div>
 
-      <div className="mb-6 grid gap-4 grid-cols-2 lg:grid-cols-4">
+      <div className="mb-6 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           icon={CalendarBlank}
-          label="Upcoming events"
+          label="Upcoming gatherings"
           value={upcoming.length}
           sublabel={nextRsvp ? `Next: ${nextRsvp.event.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
@@ -82,11 +82,11 @@ export default async function StudentDashboardPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-bold text-ink">Your upcoming events</h2>
-        {rsvps.length === 0 ? (
+        <h2 className="mb-3 font-bold text-ink">Your upcoming gatherings</h2>
+        {upcoming.length === 0 ? (
           <EmptyState
             icon={CalendarBlank}
-            title="No RSVPs yet"
+            title={rsvps.length === 0 ? "No RSVPs yet" : "Nothing upcoming"}
             body="Browse events at your church and RSVP to join."
             action={
               <LinkButton href="/events" size="sm">
@@ -96,7 +96,7 @@ export default async function StudentDashboardPage() {
           />
         ) : (
           <div className="space-y-2">
-            {rsvps.map((r) => {
+            {upcoming.map((r) => {
               const style = categoryStyle(r.event.category as EventCategory);
               const Icon = style.icon;
               return (

@@ -73,7 +73,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
         title: "Host gatherings",
         body: "Plan dinners, coffee chats, study groups, and more. Invite other volunteers as co-hosts so it doesn't all fall on you.",
         linkHref: "/events",
-        linkLabel: "See events",
+        linkLabel: "See gatherings",
       },
       {
         icon: MapTrifold,
@@ -85,15 +85,16 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: HandsClapping,
         title: "Partner with other churches",
-        body: "Send a partnership request to another church so members on both sides can see each other's public events, right alongside their own.",
-        linkHref: `/churches/${churchId}/settings`,
-        linkLabel: "Go to church settings",
+        body: "Send a partnership request to another church, right from your dashboard, so members on both sides can see each other's public events alongside their own.",
+        linkHref: "/admin/dashboard",
+        linkLabel: "Go to dashboard",
       },
       {
         icon: Car,
         title: "Keep an eye on rides",
-        body: "See ride requests from students at your church who need a lift somewhere, or need a first ride to a service.",
-        linkHref: "/events",
+        body: "See every ride request at your church — open, claimed, or completed. Volunteers do the actual claiming from their own rides board.",
+        linkHref: "/admin/rides",
+        linkLabel: "See rides",
       },
       {
         icon: Compass,

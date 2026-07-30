@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree, Car } from "@phosphor-icons/react/dist/ssr";
 
 // Server Components can't pass component/function references (like a Phosphor
 // icon) as props to Client Components — only plain serializable data crosses
@@ -15,6 +15,7 @@ export const NAV_ICONS = {
   discover: Compass,
   settings: GearSix,
   mentors: UsersThree,
+  rides: Car,
 } as const;
 
 export type NavIconKey = keyof typeof NAV_ICONS;

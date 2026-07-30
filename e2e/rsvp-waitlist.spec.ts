@@ -25,7 +25,7 @@ test("a capped event waitlists the second helper and promotes them when the firs
   await adminPage.getByLabel("Ends").fill(toLocalInputValue(end));
   await adminPage.getByLabel("Location").fill("Room A");
   await adminPage.getByLabel("Volunteer capacity").fill("1");
-  await adminPage.getByRole("button", { name: "Publish event" }).click();
+  await adminPage.getByRole("button", { name: "Publish gathering" }).click();
   // Anchored to the exact "/events/<id>" shape — a loose /\/events\/.+/
   // regex also matches "/volunteer/events/new" (the form page we're already
   // on), resolving before the actual publish-redirect ever happens.
