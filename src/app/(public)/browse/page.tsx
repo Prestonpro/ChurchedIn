@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import type { Metadata } from "next";
+import { getCurrentUser } from "@/lib/auth";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { BrowseSignupForm } from "./BrowseSignupForm";
 
@@ -7,7 +9,16 @@ export const metadata: Metadata = {
   title: "Browse churches",
 };
 
-export default function BrowsePage() {
+export default async function BrowsePage() {
+  // Someone already signed in (Google or otherwise) doesn't need a new
+  // account to "just look around" — they already have everything /discover
+  // requires. Without this, they'd be shown a fresh signup form here even
+  // though they're logged in.
+  const user = await getCurrentUser();
+  if (user) {
+    redirect("/discover");
+  }
+
   return (
     <AuthPageLayout
       panelTitle="Not ready to commit to a church yet?"
