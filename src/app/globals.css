@@ -132,11 +132,11 @@
   }
 
   /* Page-content transition on navigation — main wrapper only, not the
-     persistent header/nav around it. Same rise + spring-ease language as
-     fade-up/Reveal's "up" variant, just lighter, so every tab transitions
-     in the same way landing on /home does. */
+     persistent header/nav around it. Same rise, spring-ease, and duration
+     as Reveal's "up" variant, so every tab transitions in the same way
+     landing on /home does. */
   .animate-fade-in {
-    animation: fade-in 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fade-in 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
 
   /* Gentle breathing motion to draw the eye to an empty state's icon,
