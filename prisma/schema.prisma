@@ -315,6 +315,11 @@ model EventRsvp {
   role      RsvpRole
   status    RsvpStatus @default(CONFIRMED)
   createdAt DateTime   @default(now())
+  // Null until the day-before reminder cron sends one — per-RSVP rather
+  // than per-event so a late RSVP (already inside the reminder window when
+  // it's made) is never falsely treated as "already reminded", and a
+  // cancelled-then-re-RSVP'd attendee can be reminded again.
+  reminderSentAt DateTime?
 
   eventId String
   event   Event  @relation(fields: [eventId], references: [id])

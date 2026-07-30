@@ -99,6 +99,26 @@ export function newEventNotificationEmail(opts: {
   return { subject, text, html };
 }
 
+export function eventReminderEmail(opts: {
+  eventTitle: string;
+  eventId: string;
+  startsAt: Date;
+  location: string;
+}): EmailContent {
+  const when = opts.startsAt.toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
+  const subject = `Tomorrow: ${opts.eventTitle}`;
+  const text = `Just a reminder — you're confirmed for ${opts.eventTitle} on ${when} at ${opts.location}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "See you tomorrow!",
+    bodyHtml: paragraph(
+      `Just a reminder — you're confirmed for <strong>${escapeHtml(opts.eventTitle)}</strong> on ${escapeHtml(when)} at ${escapeHtml(opts.location)}.`,
+    ),
+    cta: { label: "View event details", url: appUrl(`/events/${opts.eventId}`) },
+  });
+  return { subject, text, html };
+}
+
 // ---------------------------------------------------------------------------
 // Mentor connections
 // ---------------------------------------------------------------------------
