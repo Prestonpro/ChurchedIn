@@ -2,7 +2,8 @@
 
 import { useActionState } from "react";
 import { updateMentorProfileAction } from "@/lib/actions/mentors";
-import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
+import { TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { LANGUAGES } from "@/lib/constants";
 
@@ -23,12 +24,13 @@ export function MentorProfileForm({
           defaultChecked={initial.openToMentor}
         />
       </div>
-      <Field
+      <SearchableSelect
         label="Languages you speak"
         name="languages"
         defaultValue={initial.languages}
         placeholder="English, Mandarin, Spanish…"
-        datalist={LANGUAGES}
+        options={LANGUAGES}
+        isMulti
       />
       <TextAreaField
         label="Interests / how you can help"

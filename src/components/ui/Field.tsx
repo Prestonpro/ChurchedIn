@@ -28,22 +28,10 @@ export function Field({
   hint,
   className = "",
   icon: IconComponent,
-  datalist,
   ...props
-}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; icon?: Icon; datalist?: string[] }) {
-  const datalistId = datalist ? `${props.name}-datalist` : undefined;
-  
+}: InputHTMLAttributes<HTMLInputElement> & { label: string; hint?: string; icon?: Icon }) {
   const inputEl = (
-    <>
-      <input className={`${INPUT_CLASSES} ${IconComponent ? 'pl-10 ' : ''}${className}`} list={datalistId} {...props} />
-      {datalist && (
-        <datalist id={datalistId}>
-          {datalist.map((option) => (
-            <option key={option} value={option} />
-          ))}
-        </datalist>
-      )}
-    </>
+    <input className={`${INPUT_CLASSES} ${IconComponent ? 'pl-10 ' : ''}${className}`} {...props} />
   );
 
   return (

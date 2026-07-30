@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Buildings, Globe, Translate, Clock } from "@phosphor-icons/react/dist/ssr";
 import { updateChurchProfileAction } from "@/lib/actions/churches";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { LocationPicker } from "@/components/LocationPicker";
 import { LANGUAGES } from "@/lib/constants";
@@ -45,13 +46,14 @@ export function EditChurchProfileForm({ churchId, church }: { churchId: string; 
           defaultValue={church.serviceTimes ?? ""}
           placeholder="Sundays at 10am"
         />
-        <Field
+        <SearchableSelect
           label="Languages (optional)"
           name="languages"
           icon={Translate}
           defaultValue={church.languages ?? ""}
           placeholder="English, Mandarin"
-          datalist={LANGUAGES}
+          options={LANGUAGES}
+          isMulti
         />
       </div>
       <TextAreaField label="Short description (optional)" name="bio" defaultValue={church.bio ?? ""} />

@@ -4,6 +4,7 @@ import { useActionState } from "react";
 import { Globe, GraduationCap } from "@phosphor-icons/react/dist/ssr";
 import { updateStudentProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
+import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { COUNTRIES, LANGUAGES, SCHOOLS } from "@/lib/constants";
 
@@ -17,25 +18,26 @@ export function StudentProfileForm({
   return (
     <form action={formAction} className="space-y-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
-      <Field 
+      <SearchableSelect 
         label="Country of origin" 
         name="countryOfOrigin" 
         icon={Globe} 
         defaultValue={initial.countryOfOrigin} 
-        datalist={COUNTRIES}
+        options={COUNTRIES}
       />
-      <Field 
+      <SearchableSelect 
         label="School / program" 
         name="school" 
         icon={GraduationCap} 
         defaultValue={initial.school} 
-        datalist={SCHOOLS}
+        options={SCHOOLS}
       />
-      <Field 
+      <SearchableSelect 
         label="Languages you speak" 
         name="languages" 
         defaultValue={initial.languages} 
-        datalist={LANGUAGES}
+        options={LANGUAGES}
+        isMulti
       />
       <TextAreaField
         label="Interests"
