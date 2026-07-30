@@ -19,6 +19,17 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const churchId = new URL(request.url).searchParams.get("churchId");
+  if (churchId) {
+    const members = await prisma.membership.findMany({
+      where: { churchId },
+      include: { user: { select: { id: true, name: true, email: true, createdAt: true } } },
+    });
+    return NextResponse.json(
+      members.map((m) => ({ role: m.role, name: m.user.name, email: m.user.email, joinedAt: m.user.createdAt })),
+    );
+  }
+
   const churches = await prisma.church.findMany({
     include: { _count: { select: { memberships: true, events: true } } },
     orderBy: { createdAt: "asc" },
