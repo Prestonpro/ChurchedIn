@@ -1,9 +1,11 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { NavigationArrow, CalendarCheck } from "@phosphor-icons/react/dist/ssr";
+import { fetchDrivingRoute, type LatLng } from "@/lib/routing";
 import { ChurchCard } from "./ChurchCard";
+import type { RouteState } from "./RouteSummary";
 
 const DiscoverMap = dynamic(() => import("./DiscoverMap").then((mod) => mod.DiscoverMap), {
   ssr: false,
@@ -43,6 +45,16 @@ function distanceMiles(aLat: number, aLng: number, bLat: number, bLng: number): 
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+const EMPTY_ROUTE: RouteState = {
+  churchId: null,
+  churchName: null,
+  destination: null,
+  route: null,
+  computedAt: null,
+  loading: false,
+  error: null,
+};
+
 export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] }) {
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const [locationDenied, setLocationDenied] = useState(false);
@@ -51,6 +63,60 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
   const [language, setLanguage] = useState("");
   const [minMembers, setMinMembers] = useState(0);
   const [hasEventsOnly, setHasEventsOnly] = useState(false);
+
+  const [routeState, setRouteState] = useState<RouteState>(EMPTY_ROUTE);
+  const routeAbort = useRef<AbortController | null>(null);
+
+  useEffect(() => () => routeAbort.current?.abort(), []);
+
+  const handleRoute = useCallback(
+    async (church: DiscoverableChurch) => {
+      if (church.locationLat === null || church.locationLng === null) return;
+      const destination: LatLng = [church.locationLat, church.locationLng];
+      const base = { churchId: church.id, churchName: church.name, destination };
+
+      if (!userLocation) {
+        setRouteState({
+          ...base,
+          route: null,
+          computedAt: null,
+          loading: false,
+          error: "Share your location in your browser and we can route from where you are.",
+        });
+        return;
+      }
+
+      // A second "Route" press while one is still resolving supersedes it —
+      // otherwise a slow first response could land after a newer one and
+      // draw the wrong trip.
+      routeAbort.current?.abort();
+      const controller = new AbortController();
+      routeAbort.current = controller;
+
+      setRouteState({ ...base, route: null, computedAt: null, loading: true, error: null });
+
+      const route = await fetchDrivingRoute(userLocation, destination, controller.signal);
+      if (controller.signal.aborted) return;
+
+      setRouteState(
+        route
+          ? { ...base, route, computedAt: new Date(), loading: false, error: null }
+          : {
+              ...base,
+              route: null,
+              computedAt: null,
+              loading: false,
+              error: "Couldn't work out a driving route just now.",
+            },
+      );
+    },
+    [userLocation],
+  );
+
+  const handleClearRoute = useCallback(() => {
+    routeAbort.current?.abort();
+    setRouteState(EMPTY_ROUTE);
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) {
@@ -176,7 +242,15 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
       </div>
 
       <div className="min-h-[320px]">
-        <DiscoverMap churches={filtered} selectedId={selectedId} onSelect={setSelectedId} userLocation={userLocation} />
+        <DiscoverMap
+          churches={filtered}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
+          userLocation={userLocation}
+          routeState={routeState}
+          onRoute={handleRoute}
+          onClearRoute={handleClearRoute}
+        />
       </div>
     </div>
   );

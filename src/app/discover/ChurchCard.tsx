@@ -1,13 +1,29 @@
 import Link from "next/link";
-import { Clock, Translate, UsersThree, MapPinLine, Car, NavigationArrow } from "@phosphor-icons/react/dist/ssr";
+import { Clock, Translate, UsersThree, MapPinLine, Car, NavigationArrow, Path } from "@phosphor-icons/react/dist/ssr";
 import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { Badge } from "@/components/ui/Badge";
 import type { DiscoverableChurch } from "./DiscoverClient";
 
 /** Shared between the sidebar list and the map popup — same info either
  * way, per the brief ("Clicking a pin shows a popup with the church card
- * info"). */
-export function ChurchCard({ church, compact = false }: { church: DiscoverableChurch; compact?: boolean }) {
+ * info").
+ *
+ * `onRoute` is only passed by the map popup, which is also why the in-map
+ * "Route" button replaces the plain Google Maps link there rather than
+ * adding a fourth action: the sidebar renders this card inside a big
+ * selection <button>, so putting another <button> in here would nest
+ * interactive elements. */
+export function ChurchCard({
+  church,
+  compact = false,
+  onRoute,
+  routeLoading = false,
+}: {
+  church: DiscoverableChurch;
+  compact?: boolean;
+  onRoute?: () => void;
+  routeLoading?: boolean;
+}) {
   const languageList = church.languages
     ? church.languages.split(",").map((l) => l.trim()).filter(Boolean)
     : [];
@@ -68,16 +84,36 @@ export function ChurchCard({ church, compact = false }: { church: DiscoverableCh
           <Car weight="bold" className="size-3.5" /> Need a ride?
         </Link>
       </div>
-      {church.locationLat !== null && church.locationLng !== null && (
-        <a
-          href={`https://www.google.com/maps/dir/?api=1&destination=${church.locationLat},${church.locationLng}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100"
-        >
-          <NavigationArrow weight="bold" className="size-3.5" /> Get directions
-        </a>
-      )}
+      {church.locationLat !== null &&
+        church.locationLng !== null &&
+        (onRoute ? (
+          <button
+            type="button"
+            onClick={onRoute}
+            disabled={routeLoading}
+            className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100 disabled:opacity-60"
+          >
+            {routeLoading ? (
+              <>
+                <span className="size-3 animate-spin rounded-full border-2 border-brand-600 border-t-transparent" />
+                Routing…
+              </>
+            ) : (
+              <>
+                <Path weight="bold" className="size-3.5" /> Route from my location
+              </>
+            )}
+          </button>
+        ) : (
+          <a
+            href={`https://www.google.com/maps/dir/?api=1&destination=${church.locationLat},${church.locationLng}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100"
+          >
+            <NavigationArrow weight="bold" className="size-3.5" /> Get directions
+          </a>
+        ))}
     </div>
   );
 }

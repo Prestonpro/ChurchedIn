@@ -6,6 +6,8 @@ import type L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { leafletPin } from "@/lib/leafletPin";
 import { ChurchCard } from "./ChurchCard";
+import { RouteLayer } from "./RouteLayer";
+import { RouteSummary, type RouteState } from "./RouteSummary";
 import type { DiscoverableChurch } from "./DiscoverClient";
 
 const LIGHT_TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
@@ -49,11 +51,17 @@ export function DiscoverMap({
   selectedId,
   onSelect,
   userLocation,
+  routeState,
+  onRoute,
+  onClearRoute,
 }: {
   churches: DiscoverableChurch[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   userLocation: [number, number] | null;
+  routeState: RouteState;
+  onRoute: (church: DiscoverableChurch) => void;
+  onClearRoute: () => void;
 }) {
   const markerRefs = useRef<Record<string, L.Marker | null>>({});
   // Hovering a marker opens its popup immediately; leaving it (the marker
@@ -82,39 +90,58 @@ export function DiscoverMap({
   const center: [number, number] = userLocation ?? (first ? [first.locationLat!, first.locationLng!] : DEFAULT_CENTER);
 
   return (
-    <MapContainer center={center} zoom={userLocation ? 11 : first ? 8 : 4} className="h-full w-full leaflet-popup-card">
-      <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
-      <RecenterOnLocation center={userLocation} />
-      {userLocation && (
-        <Marker
-          position={userLocation}
-          icon={leafletPin("#111827", 14)}
-        />
-      )}
-      {withPins.map((church) => (
-        <Marker
-          key={church.id}
-          position={[church.locationLat!, church.locationLng!]}
-          icon={leafletPin(
-            pinColor(church.hasRealMembers),
-            pinSizeForMemberCount(church.memberCount) + (church.id === selectedId ? 6 : 0),
-          )}
-          eventHandlers={{
-            click: () => onSelect(church.id),
-            mouseover: () => openNow(church.id),
-            mouseout: () => closeSoon(church.id),
-          }}
-          ref={(ref) => {
-            markerRefs.current[church.id] = ref;
-          }}
-        >
-          <Popup minWidth={220} closeButton={false}>
-            <div onMouseEnter={() => openNow(church.id)} onMouseLeave={() => closeSoon(church.id)}>
-              <ChurchCard church={church} compact />
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+    <div className="relative h-full w-full">
+      <MapContainer
+        center={center}
+        zoom={userLocation ? 11 : first ? 8 : 4}
+        className="h-full w-full leaflet-popup-card"
+      >
+        <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
+        {/* Skipped while a route is on screen, so recentering on the viewer
+            doesn't fight RouteLayer's fitBounds over the whole trip. */}
+        {!routeState.route && <RecenterOnLocation center={userLocation} />}
+        {userLocation && <Marker position={userLocation} icon={leafletPin("#111827", 14)} />}
+        {routeState.route && (
+          <RouteLayer key={`${routeState.churchId}-${routeState.computedAt?.getTime()}`} route={routeState.route} />
+        )}
+        {withPins.map((church) => (
+          <Marker
+            key={church.id}
+            position={[church.locationLat!, church.locationLng!]}
+            icon={leafletPin(
+              pinColor(church.hasRealMembers),
+              pinSizeForMemberCount(church.memberCount) + (church.id === selectedId ? 6 : 0),
+            )}
+            eventHandlers={{
+              click: () => onSelect(church.id),
+              mouseover: () => openNow(church.id),
+              mouseout: () => closeSoon(church.id),
+            }}
+            ref={(ref) => {
+              markerRefs.current[church.id] = ref;
+            }}
+          >
+            <Popup minWidth={220} closeButton={false}>
+              <div onMouseEnter={() => openNow(church.id)} onMouseLeave={() => closeSoon(church.id)}>
+                <ChurchCard
+                  church={church}
+                  compact
+                  onRoute={() => {
+                    // Close the popup first: Leaflet auto-pans to keep an open
+                    // popup in view, which fights RouteLayer's fitBounds and
+                    // can shove part of the drawn trip off screen. The ETA
+                    // card takes over from here anyway.
+                    markerRefs.current[church.id]?.closePopup();
+                    onRoute(church);
+                  }}
+                  routeLoading={routeState.loading && routeState.churchId === church.id}
+                />
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+      <RouteSummary state={routeState} userLocation={userLocation} onClear={onClearRoute} />
+    </div>
   );
 }
