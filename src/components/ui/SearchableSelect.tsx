@@ -56,12 +56,12 @@ export function SearchableSelect({
     return found || { value: defaultValue, label: defaultValue };
   };
 
-  const [selected, setSelected] = useState<any>(parseDefaultValue());
+  const [selected, setSelected] = useState<{ value: string; label: string } | { value: string; label: string }[] | null>(parseDefaultValue());
 
   // Derive the string value to insert into the hidden input
   const hiddenValue = isMulti
-    ? (selected as { value: string }[])?.map((s) => s.value).join(", ") || ""
-    : (selected as { value: string })?.value || "";
+    ? (selected as { value: string; label: string }[])?.map((s) => s.value).join(", ") || ""
+    : (selected as { value: string; label: string })?.value || "";
 
   return (
     <Wrapper label={label} hint={hint}>

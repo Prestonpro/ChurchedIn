@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Globe, GraduationCap, LinkedinLogo, Target, CalendarBlank, BookOpenText } from "@phosphor-icons/react/dist/ssr";
+import { Globe, GraduationCap, LinkedinLogo, CalendarBlank, BookOpenText } from "@phosphor-icons/react/dist/ssr";
 import { updateStudentProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
