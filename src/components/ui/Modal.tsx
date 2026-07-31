@@ -50,8 +50,12 @@ export function Modal({
         return;
       }
       if (e.key === "Tab" && dialogRef.current) {
+        // `:not([disabled])` matters here: a disabled control (e.g. the "Back"
+        // button on step 0 of the help guide) still matched the old selector,
+        // so it counted as the first/last focusable element and broke the
+        // Shift+Tab wrap-around. select/textarea were missing outright.
         const focusable = dialogRef.current.querySelectorAll<HTMLElement>(
-          'button, a[href], input, [tabindex]:not([tabindex="-1"])',
+          'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
         );
         if (focusable.length === 0) return;
         const first = focusable[0];

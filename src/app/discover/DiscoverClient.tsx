@@ -2,7 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { NavigationArrow, CalendarCheck } from "@phosphor-icons/react/dist/ssr";
+import { NavigationArrow, CalendarCheck, Compass } from "@phosphor-icons/react/dist/ssr";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { fetchDrivingRoute, type LatLng } from "@/lib/routing";
 import { ChurchCard } from "./ChurchCard";
 import type { RouteState } from "./RouteSummary";
@@ -166,6 +167,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
 
   return (
     <div className="grid h-full grid-rows-[auto_1fr] lg:grid-cols-[380px_1fr] lg:grid-rows-1">
+      <h1 className="sr-only">Discover churches</h1>
       <div className="flex flex-col overflow-hidden border-b border-line bg-surface lg:border-b-0 lg:border-r">
         <div className="space-y-3 border-b border-line p-4">
           {locationDenied && (
@@ -175,9 +177,10 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             </p>
           )}
           <select
+            aria-label="Filter by denomination"
             value={denomination}
             onChange={(e) => setDenomination(e.target.value)}
-            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink"
+            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value="">All denominations</option>
             {denominationOptions.map((d) => (
@@ -187,9 +190,10 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             ))}
           </select>
           <select
+            aria-label="Filter by church size"
             value={minMembers}
             onChange={(e) => setMinMembers(Number(e.target.value))}
-            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink"
+            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value={0}>Any size</option>
             <option value={3}>3+ members</option>
@@ -198,10 +202,11 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
           </select>
           <input
             type="text"
+            aria-label="Filter by language spoken"
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             placeholder="Language spoken (e.g. Mandarin)"
-            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-faint"
+            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-faint transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
           />
           <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input
@@ -220,20 +225,37 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             {filtered.length} {filtered.length === 1 ? "church" : "churches"}
           </p>
           {filtered.length === 0 ? (
-            <p className="p-3 text-sm text-ink-muted">No churches match these filters.</p>
+            <EmptyState
+              icon={Compass}
+              title="No churches match these filters"
+              body="Try widening your search, like allowing any size or clearing the language filter."
+            />
           ) : (
             <ul className="space-y-2">
               {filtered.map((church) => (
                 <li key={church.id}>
-                  <button
-                    type="button"
+                  {/* A plain div, not a <button>: ChurchCard renders real
+                    Link/anchor elements for its own actions, and a <button>
+                    wrapping an <a> is invalid HTML (and used to make
+                    "Visit profile" both navigate and re-select the row).
+                    role="button" + a key handler keeps this row keyboard-
+                    operable without that nesting. */}
+                  <div
+                    role="button"
+                    tabIndex={0}
                     onClick={() => setSelectedId(church.id)}
-                    className={`w-full rounded-xl border p-3 text-left transition-brand ${
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedId(church.id);
+                      }
+                    }}
+                    className={`w-full cursor-pointer rounded-xl border p-3 text-left transition-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-200 ${
                       selectedId === church.id ? "border-brand-400 bg-brand-50" : "border-line hover:border-brand-200 hover:bg-paper"
                     }`}
                   >
                     <ChurchCard church={church} />
-                  </button>
+                  </div>
                 </li>
               ))}
             </ul>

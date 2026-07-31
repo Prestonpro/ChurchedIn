@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { leafletPin } from "@/lib/leafletPin";
+import { MAP_COLORS } from "@/lib/mapColors";
 
 const LIGHT_TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const TILE_ATTRIBUTION =
@@ -24,7 +25,7 @@ export function MiniMap({ lat, lng }: { lat: number; lng: number }) {
       className="h-40 w-full rounded-xl"
     >
       <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
-      <Marker position={[lat, lng]} icon={leafletPin("#2563eb")} />
+      <Marker position={[lat, lng]} icon={leafletPin(MAP_COLORS.brand600)} />
     </MapContainer>
   );
 }

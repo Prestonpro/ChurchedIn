@@ -1,10 +1,15 @@
+import { MAP_COLORS } from "@/lib/mapColors";
+
 export type PinStatus = "rsvped" | "available" | "almost-full" | "full";
 
 /** Solid hex colors for the Leaflet divIcon pins — kept as real hex (not
  * Tailwind classes) since the color is injected into a raw HTML string
- * handed to Leaflet, outside Tailwind's class-scanning reach. */
+ * handed to Leaflet, outside Tailwind's class-scanning reach. "rsvped" uses
+ * the app's own brand teal (it's a "you" signal, not a stoplight status);
+ * the other three are a conventional green/amber/red availability read,
+ * which stays outside the brand palette on purpose. */
 export const PIN_STATUS_COLOR: Record<PinStatus, string> = {
-  rsvped: "#2563eb",
+  rsvped: MAP_COLORS.brand600,
   available: "#16a34a",
   "almost-full": "#ca8a04",
   full: "#dc2626",

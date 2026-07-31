@@ -153,7 +153,7 @@ export default async function MentorDirectoryPage() {
                       tags(m.hobbies).map((t) => (
                         <span
                           key={`hob-${t}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+                          className="inline-flex items-center gap-1 rounded-full bg-cat-coffee-soft px-2.5 py-1 text-xs font-medium text-cat-coffee"
                         >
                           {t}
                         </span>
