@@ -163,6 +163,11 @@ export default function LandingPage() {
         <span className="inline-flex items-center gap-1.5">
           <ForkKnife weight="fill" className="size-4" /> Made with love for church communities welcoming students far from home.
         </span>
+        <p className="mt-3">
+          <Link href="/privacy" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
+            Privacy Policy
+          </Link>
+        </p>
       </footer>
     </div>
   );
