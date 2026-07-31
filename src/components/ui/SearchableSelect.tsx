@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import CreatableSelect from "react-select/creatable";
 import type { MultiValue, SingleValue } from "react-select";
 import type { Icon } from "@phosphor-icons/react";
@@ -61,6 +61,18 @@ export function SearchableSelect({
 
   const [selected, setSelected] = useState<Option | Option[] | null>(parseDefaultValue());
 
+  // Renders the open menu into a portal on <body> instead of inline — inline,
+  // it's just an absolutely-positioned child of this field's own wrapper, so
+  // a tall menu visually overlapping a neighboring field's icon (which has
+  // its own z-index) doesn't reliably stay on top of everything below it.
+  // Portaling escapes that entirely. `mounted` guards the document.body
+  // reference, which doesn't exist during server rendering.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timeout);
+  }, []);
+
   // Derive the string value to insert into the hidden input
   const hiddenValue = isMulti
     ? (selected as Option[])?.map((s) => s.value).join(", ") || ""
@@ -89,6 +101,8 @@ export function SearchableSelect({
           onChange={handleChange}
           placeholder={placeholder}
           formatCreateLabel={(inputValue) => `Add "${inputValue}"`}
+          menuPortalTarget={mounted ? document.body : undefined}
+          styles={{ menuPortal: (base) => ({ ...base, zIndex: 60 }) }}
           classNames={{
             control: (state) =>
               `min-h-11 rounded-lg border bg-white transition-brand ${

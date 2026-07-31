@@ -69,7 +69,7 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
                 key={preset.category}
                 type="button"
                 onClick={() => setPicked({ category: preset.category, title: preset.title })}
-                className="flex animate-fade-up flex-col items-center gap-2 rounded-xl border border-line-strong p-4 text-center transition-brand hover:border-brand-300 hover:bg-paper"
+                className="flex animate-fade-up cursor-pointer flex-col items-center gap-2 rounded-xl border border-line-strong p-4 text-center transition-brand hover:border-brand-300 hover:bg-paper"
                 style={{ animationDelay: `${i * 40}ms` }}
               >
                 <span className={`flex size-11 items-center justify-center rounded-xl ${style.bg} ${style.text}`}>
@@ -83,7 +83,7 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
           <button
             type="button"
             onClick={() => setPicked({ category: "OTHER", title: "" })}
-            className="flex animate-fade-up flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong p-4 text-center transition-brand hover:border-brand-300 hover:bg-paper"
+            className="flex animate-fade-up cursor-pointer flex-col items-center gap-2 rounded-xl border border-dashed border-line-strong p-4 text-center transition-brand hover:border-brand-300 hover:bg-paper"
             style={{ animationDelay: `${PRESETS.length * 40}ms` }}
           >
             <span className="flex size-11 items-center justify-center rounded-xl bg-paper text-ink-faint">
@@ -106,7 +106,7 @@ export function EventForm({ churchName, prefill }: { churchName: string; prefill
       <button
         type="button"
         onClick={() => setPicked(null)}
-        className="flex items-center gap-1.5 text-sm font-semibold text-ink-muted transition-brand hover:text-ink"
+        className="flex cursor-pointer items-center gap-1.5 text-sm font-semibold text-ink-muted transition-brand hover:text-ink"
       >
         <ArrowLeft weight="bold" className="size-3.5" /> Change type
       </button>
