@@ -111,11 +111,42 @@ the existing `src/components/ui/*` primitives (`Button`, `Card`, `Field`,
 `Modal`, `Badge`, `EmptyState`, `StatCard`, `SubmitButton`, …).
 
 ## 📝 Development Notes
+- **`.env` points at production.** There is no separate local database:
+  `DATABASE_URL` and `DIRECT_URL` both target the live Neon instance. So
+  `npx prisma migrate dev` would author against production and can offer a
+  destructive reset if it sees drift. **Author migrations without touching
+  `public`:**
+  ```bash
+  npx prisma migrate diff \
+    --from-migrations prisma/migrations \
+    --to-schema-datamodel prisma/schema.prisma \
+    --shadow-database-url "$DIRECT_URL?schema=migrate_scratch" \
+    --script > prisma/migrations/<timestamp>_<name>/migration.sql
+  ```
+  Then verify it by running `npm run test:e2e` — `e2e/global-setup.ts` applies
+  every migration into the throwaway `e2e_test` schema, so the SQL is genuinely
+  exercised against real Postgres before it can reach production.
 - **Migrations:** `npm run build` runs `scripts/migrate-deploy.mjs`
   (`prisma migrate deploy`) before `next build`, so a committed migration reaches
-  production automatically. You still must generate it yourself
-  (`npx prisma migrate dev`) and **commit the `prisma/migrations/` folder** —
-  only the *apply* step is automatic.
+  production automatically. You still must generate it yourself and **commit the
+  `prisma/migrations/` folder** — only the *apply* step is automatic.
+- **e2e is safely isolated, but only by schema.** `playwright.config.ts` appends
+  `?schema=e2e_test` and `global-setup.ts` drops *only* that schema — never
+  `public`. It also blanks `RESEND_API_KEY` so `sendEmail` takes its
+  console-logging branch; without that, every run fired real Resend requests
+  that got 403-rejected.
+- **No-JS support is narrower than it looks.** The `useActionState` forms really
+  do post and redirect without JavaScript (`e2e/no-js-auth.spec.ts` pins this).
+  But authenticated *content* routes are streamed — the markup ships inside
+  `<div hidden>` and an inline `$RC(...)` script moves it into place — so with
+  scripting off the visitor is stranded on the Suspense fallback: a spinner
+  where a `loading.tsx` exists, a blank page where one doesn't. Adding a
+  `loading.tsx` improves perceived speed *and* makes that route's no-JS
+  rendering worse; that trade is real, so decide it deliberately.
+- **`react-hooks/set-state-in-effect` is an ERROR here, not a warning**, and
+  ESLint errors fail the Vercel build. `SearchableSelect`'s `mounted` flag is set
+  from a `setTimeout` for exactly this reason — it looks like a redundant defer
+  and is not. Don't "simplify" it.
 - **Lint/types gate deploys.** Vercel fails the build on ESLint or TS errors.
   Run `npx tsc --noEmit` and `npm run lint` before pushing.
 - **Server Actions:** a file with `"use server"` may only export async
@@ -146,3 +177,28 @@ Prefer extracting pure logic into a testable module over testing through Prisma.
 ## 🚧 Not Built Yet
 - **Direct messaging** between mentors and students (must respect rules 1 & 2 above)
 - **Church announcements / bulletin** platform
+
+## 🐛 Known gaps (audited, not yet fixed)
+Findings from the full-app audit that are real but deliberately deferred:
+- **The schema declares zero `@@index`.** Every index present comes from `@id`,
+  `@unique`, or `@@unique` — and a btree on `(a, b)` cannot serve a filter on `b`
+  alone, so several hot paths are unindexed despite looking covered:
+  `Membership.churchId` (four dashboards + every member count),
+  `MentorConnection.mentorId`, `EventRsvp.userId`, `EventCohost.userId`,
+  `Block.blockedId` (half of `blockedPairUserIds`, which runs on every RSVP and
+  connection request), all of `Event`, and all of `RideRequest` (which has no
+  unique constraint at all, so no secondary index whatsoever).
+- **`Report` is a dead model.** No action, no UI, no admin review queue;
+  `REPORT_STATUS` is unreferenced. Nothing can create a row. Either build the
+  reporting flow (messaging needs it) or delete the model and enum.
+- **Over-fetching.** `listEventsForChurch` has no date bound and no `take`, and
+  eagerly loads every RSVP and attendee for four callers — `/home` uses it to
+  print one title. `listDiscoverableChurches` reads the whole church table and
+  filters/sorts client-side.
+- **Semantic dead ends.** A first-visit ride request created by anyone who isn't
+  a STUDENT is invisible to its creator (only `/student/rides` lists them).
+  `/home`'s Rides card and the Help guide both hand a church-less account links
+  that bounce to `/join`. `/churches/new` works but nothing links to it. Only
+  students can block anyone — volunteers and admins have no block control.
+- **`page.tsx:59` overpromises**: "message only after a friend accepts" describes
+  messaging, which doesn't exist yet; today acceptance reveals an email address.
