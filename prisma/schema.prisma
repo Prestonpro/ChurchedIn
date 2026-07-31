@@ -146,6 +146,9 @@ model ChurchPartnership {
   partnerChurch      Church @relation("PartnershipsReceived", fields: [partnerChurchId], references: [id])
 
   @@unique([requestingChurchId, partnerChurchId])
+  // Both partnership lookups OR over the two directions; the @@unique above
+  // only covers the requestingChurchId leg.
+  @@index([partnerChurchId])
 }
 
 /**
@@ -214,6 +217,10 @@ model PasswordResetToken {
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
+
+  // Reissuing a reset invalidates this user's prior tokens, which filters
+  // userId; the @unique above is on tokenHash, so it can't serve that.
+  @@index([userId])
 }
 
 model Membership {
@@ -231,6 +238,12 @@ model Membership {
   church   Church @relation(fields: [churchId], references: [id])
 
   @@unique([userId, churchId])
+  // A btree on (userId, churchId) cannot serve a churchId-only filter, and
+  // that's the shape used by all four dashboards' member counts, the role
+  // groupBy, listMembersForChurch, getChurchProfile, and the new-event email
+  // fan-out. Easy to assume the @@unique above already covered this; it
+  // doesn't, because churchId isn't the leading column.
+  @@index([churchId])
 }
 
 model MentorProfile {
@@ -298,6 +311,19 @@ model Event {
 
   rsvps   EventRsvp[]
   cohosts EventCohost[]
+
+  // The event feed, calendar, and map all filter churchId + status and range
+  // over startsAt.
+  @@index([churchId, status, startsAt])
+  // hasUnseenEvents (queries.ts) counts churchId + status with a createdAt
+  // lower bound, and runs on *every* authenticated page render via AuthShell's
+  // nav badge — a different range column from the index above, so it needs its
+  // own rather than reusing it.
+  @@index([churchId, createdAt])
+  // The reminder cron scans startsAt across every church, unscoped.
+  @@index([startsAt])
+  // "Events I'm hosting" on the volunteer dashboard.
+  @@index([createdById])
 }
 
 /**
@@ -318,6 +344,10 @@ model EventCohost {
   user    User   @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+  // `cohosts: { some: { userId } }` on the volunteer dashboard and
+  // `cohostedEvents: { none: { eventId } }` in listCohostCandidates both filter
+  // userId alone, which the eventId-leading @@unique can't serve.
+  @@index([userId])
 }
 
 model EventRsvp {
@@ -337,6 +367,9 @@ model EventRsvp {
   user    User   @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+  // "My RSVPs" on the student dashboard filters userId + status. The
+  // eventId-leading @@unique already covers the per-event capacity counts.
+  @@index([userId, status])
 }
 
 model MentorConnection {
@@ -355,6 +388,9 @@ model MentorConnection {
   meetingPlan MentorMeetingPlan?
 
   @@unique([studentId, mentorId])
+  // listConnectionsAsMentor filters on mentorId alone, which the studentId-
+  // leading @@unique above can't serve. Loaded on every volunteer dashboard.
+  @@index([mentorId])
 }
 
 /**
@@ -412,6 +448,12 @@ model RideRequest {
   volunteer   User?   @relation("RideRequestsAsVolunteer", fields: [volunteerId], references: [id])
   churchId  String
   church    Church @relation(fields: [churchId], references: [id])
+
+  // RideRequest has no unique constraint anywhere, so before these it had no
+  // secondary index at all and every rides query was a full table scan.
+  @@index([churchId, status, date])
+  @@index([studentId])
+  @@index([volunteerId])
 }
 
 model Block {
@@ -424,6 +466,10 @@ model Block {
   blocked   User   @relation("BlocksReceived", fields: [blockedId], references: [id])
 
   @@unique([blockerId, blockedId])
+  // blockedPairUserIds ORs both directions; the @@unique above only covers the
+  // blockerId leg. This runs on every RSVP, every connection request, every
+  // friend-directory load, and now every rides-board load too.
+  @@index([blockedId])
 }
 
 model Report {
