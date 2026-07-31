@@ -78,7 +78,7 @@ export default async function EventsPage() {
 
   return (
     <AuthShell user={user}>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-extrabold text-ink">Events</h1>
           <p className="mt-1 text-sm text-ink-muted">
@@ -187,7 +187,7 @@ export default async function EventsPage() {
                     className="animate-fade-up"
                     style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}
                   >
-                    <Card interactive className="flex h-full gap-3 border-l-4 border-l-cat-study">
+                    <Card interactive className={`flex h-full gap-3 border-l-4 ${style.border}`}>
                       <DateBadge date={event.startsAt} />
                       <div className="flex min-w-0 flex-1 flex-col">
                         <StyledBadge icon={Icon} className={style.chipClass}>
@@ -262,7 +262,7 @@ export default async function EventsPage() {
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-faint">
             Past events
           </h2>
-          <div className="grid gap-4 opacity-70 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             {past.map((event) => {
               const style = categoryStyle(event.category as EventCategory);
               return (

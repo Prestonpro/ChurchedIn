@@ -16,7 +16,7 @@ export default async function VolunteerRidesPage() {
   const churchId = user.activeMembership!.churchId;
 
   const [openRides, myClaimedRides] = await Promise.all([
-    listOpenRideRequestsForChurch(churchId),
+    listOpenRideRequestsForChurch(churchId, user.id),
     listClaimedRideRequestsForVolunteer(user.id),
   ]);
   const activeClaimed = myClaimedRides.filter((r) => r.status === RIDE_STATUS.CLAIMED);
@@ -109,7 +109,13 @@ export default async function VolunteerRidesPage() {
                       </p>
                     </div>
                   </div>
-                  {isFirstVisit ? <Badge tone="accent">🆕 First visit</Badge> : <Badge tone="warning">Open</Badge>}
+                  {isFirstVisit ? (
+                    <Badge tone="accent" icon={Sparkle}>
+                      First visit
+                    </Badge>
+                  ) : (
+                    <Badge tone="warning">Open</Badge>
+                  )}
                 </div>
                 <p className="mt-2 flex items-center gap-2 text-xs text-ink-muted">
                   <Avatar name={ride.student.name} size="xs" />
@@ -134,7 +140,7 @@ export default async function VolunteerRidesPage() {
       {pastClaimed.length > 0 && (
         <div className="mt-8">
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-faint">Past rides</h2>
-          <div className="grid gap-4 opacity-70 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             {pastClaimed.map((ride) => (
               <Card key={ride.id}>
                 <p className="font-bold text-ink">{ride.destination}</p>

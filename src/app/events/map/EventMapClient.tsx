@@ -41,6 +41,7 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [pending, startTransition] = useTransition();
+  const [rsvpError, setRsvpError] = useState<string | undefined>(undefined);
 
   const filtered = useMemo(() => {
     return events
@@ -50,8 +51,16 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
   }, [events, category, mineOnly, hasSpotsOnly]);
 
   function handleRsvp(eventId: string) {
+    setRsvpError(undefined);
     startTransition(async () => {
-      await rsvpToEventAction(eventId);
+      const result = await rsvpToEventAction(eventId);
+      if (result && "error" in result) {
+        // The result was previously discarded entirely, so a full/cancelled
+        // event, a non-member, or a blocked pair saw the spinner end with no
+        // visible change at all.
+        setRsvpError(result.error);
+        return;
+      }
       router.refresh();
     });
   }
@@ -64,6 +73,7 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
         onSelect={setSelectedId}
         onRsvp={handleRsvp}
         rsvpPending={pending}
+        rsvpError={rsvpError}
       />
 
       <button
@@ -143,7 +153,11 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
 
         <div className="flex-1 overflow-y-auto p-2">
           {filtered.length === 0 ? (
-            <p className="p-3 text-sm text-white/50">No events match these filters.</p>
+            <div className="flex flex-col items-center gap-2 p-6 text-center">
+              <MapPin weight="bold" className="size-6 text-white/30" />
+              <p className="text-sm font-semibold text-white/70">No events match these filters</p>
+              <p className="text-xs text-white/50">Try a different category or clear the filters above.</p>
+            </div>
           ) : (
             <ul className="space-y-1.5">
               {filtered.map((event) => {

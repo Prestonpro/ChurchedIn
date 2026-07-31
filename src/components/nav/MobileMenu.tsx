@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, X, SignOut, Question } from "@phosphor-icons/react/dist/ssr";
@@ -38,23 +38,58 @@ export function MobileMenu({
   const [open, setOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const pathname = usePathname();
+  const openButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-    };
-    document.addEventListener("keydown", onKeyDown);
+
+    // The drawer claims aria-modal="true", but until now it never actually
+    // trapped focus or moved it anywhere — Tab walked straight past the
+    // drawer into the still-visible page behind it, and closing never
+    // returned focus to the button that opened it. ui/Modal.tsx already gets
+    // this right; this mirrors it.
+    // Captured now rather than read from the ref in the cleanup below — by
+    // the time cleanup runs, openButtonRef.current could point at a
+    // different (or unmounted) node.
+    const restoreFocusTo = (document.activeElement as HTMLElement | null) ?? openButtonRef.current;
+    drawerRef.current?.querySelector<HTMLElement>("a, button")?.focus();
     document.body.style.overflow = "hidden";
+
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        return;
+      }
+      if (e.key === "Tab" && drawerRef.current) {
+        const focusable = drawerRef.current.querySelectorAll<HTMLElement>(
+          'button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])',
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.addEventListener("keydown", onKeyDown);
     return () => {
       document.removeEventListener("keydown", onKeyDown);
       document.body.style.overflow = "";
+      restoreFocusTo?.focus();
     };
   }, [open]);
 
   return (
     <div className="lg:hidden">
       <button
+        ref={openButtonRef}
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Open menu"
@@ -67,13 +102,12 @@ export function MobileMenu({
 
       {open && (
         <>
-          <button
-            type="button"
-            aria-label="Close menu"
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-40 bg-ink/40"
-          />
+          {/* A plain div, not a second button — the real close button below
+            already has the "Close menu" label; a focusable, identically-
+            labeled backdrop just duplicated it for screen-reader users. */}
+          <div aria-hidden onClick={() => setOpen(false)} className="fixed inset-0 z-40 bg-ink/40" />
           <div
+            ref={drawerRef}
             id="mobile-nav-drawer"
             role="dialog"
             aria-modal="true"
@@ -155,6 +189,11 @@ export function MobileMenu({
                       )}
                     </span>
                     {link.label}
+                    {!!link.badgeCount && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-500 px-1.5 text-xs font-bold leading-none text-white">
+                        {link.badgeCount > 9 ? "9+" : link.badgeCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

@@ -21,7 +21,7 @@ import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { Badge } from "@/components/ui/Badge";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { type EventCategory } from "@/lib/constants";
+import { ROLES, type EventCategory } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
 import { ClaimAdminButton } from "./ClaimAdminButton";
 import { FirstVisitRideForm } from "./FirstVisitRideForm";
@@ -36,16 +36,24 @@ export default async function ChurchProfilePage({
   const { id } = await params;
   const { ride } = await searchParams;
   const user = await requireUser();
-  const church = await getChurchProfile(id);
+
+  const membership = user.memberships.find((m) => m.churchId === id);
+  const isMember = !!membership;
+  const canManageSettings = membership?.role === ROLES.CHURCH_ADMIN;
+
+  // A church's own profile (name, bio, service times, location) is public by
+  // design — see listDiscoverableChurches' doc comment. Its *event feed* is
+  // not: that's per-church operational data, and rendering titles/dates here
+  // to any signed-in visitor (including a church-less /browse account, which
+  // reaches this page straight off /discover) leaked it. Non-members get the
+  // upcoming count only, which /discover already publishes anyway.
+  const [church, events] = await Promise.all([
+    getChurchProfile(id),
+    isMember ? listEventsForChurch(id) : Promise.resolve([]),
+  ]);
   if (!church) {
     notFound();
   }
-
-  const isMember = user.memberships.some((m) => m.churchId === id);
-  const membership = user.memberships.find((m) => m.churchId === id);
-  const canManageSettings = membership?.role === "CHURCH_ADMIN";
-
-  const events = await listEventsForChurch(id);
   const upcoming = events.filter((e) => e.startsAt >= new Date());
 
   const languageList = church.languages
@@ -124,7 +132,17 @@ export default async function ChurchProfilePage({
             <h2 className="mb-4 flex items-center gap-1.5 font-bold text-ink">
               <CalendarBlank weight="bold" className="size-4.5 text-brand-600" /> Upcoming gatherings
             </h2>
-            {upcoming.length === 0 ? (
+            {!isMember ? (
+              <EmptyState
+                icon={CalendarBlank}
+                title={
+                  church.upcomingEventCount === 0
+                    ? "Nothing on the calendar yet"
+                    : `${church.upcomingEventCount} upcoming ${church.upcomingEventCount === 1 ? "gathering" : "gatherings"}`
+                }
+                body="Join this church to see what's happening and RSVP."
+              />
+            ) : upcoming.length === 0 ? (
               <EmptyState icon={CalendarBlank} title="Nothing on the calendar yet" />
             ) : (
               <div className="space-y-2">

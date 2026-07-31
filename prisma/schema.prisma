@@ -120,6 +120,7 @@ model Church {
   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
   rideRequests RideRequest[]
+  conversations Conversation[]
 }
 
 /**
@@ -146,6 +147,9 @@ model ChurchPartnership {
   partnerChurch      Church @relation("PartnershipsReceived", fields: [partnerChurchId], references: [id])
 
   @@unique([requestingChurchId, partnerChurchId])
+  // Both partnership lookups OR over the two directions; the @@unique above
+  // only covers the requestingChurchId leg.
+  @@index([partnerChurchId])
 }
 
 /**
@@ -191,6 +195,7 @@ model User {
   rsvps                EventRsvp[]
   connectionsAsStudent MentorConnection[] @relation("ConnectionsAsStudent")
   connectionsAsMentor  MentorConnection[] @relation("ConnectionsAsMentor")
+  messagesSent         Message[]          @relation("MessagesSent")
   reportsFiled         Report[]           @relation("ReportsFiled")
   reportsReceived      Report[]           @relation("ReportsReceived")
   blocksInitiated      Block[]            @relation("BlocksInitiated")
@@ -214,6 +219,10 @@ model PasswordResetToken {
 
   userId String
   user   User   @relation(fields: [userId], references: [id])
+
+  // Reissuing a reset invalidates this user's prior tokens, which filters
+  // userId; the @unique above is on tokenHash, so it can't serve that.
+  @@index([userId])
 }
 
 model Membership {
@@ -231,6 +240,12 @@ model Membership {
   church   Church @relation(fields: [churchId], references: [id])
 
   @@unique([userId, churchId])
+  // A btree on (userId, churchId) cannot serve a churchId-only filter, and
+  // that's the shape used by all four dashboards' member counts, the role
+  // groupBy, listMembersForChurch, getChurchProfile, and the new-event email
+  // fan-out. Easy to assume the @@unique above already covered this; it
+  // doesn't, because churchId isn't the leading column.
+  @@index([churchId])
 }
 
 model MentorProfile {
@@ -298,6 +313,19 @@ model Event {
 
   rsvps   EventRsvp[]
   cohosts EventCohost[]
+
+  // The event feed, calendar, and map all filter churchId + status and range
+  // over startsAt.
+  @@index([churchId, status, startsAt])
+  // hasUnseenEvents (queries.ts) counts churchId + status with a createdAt
+  // lower bound, and runs on *every* authenticated page render via AuthShell's
+  // nav badge — a different range column from the index above, so it needs its
+  // own rather than reusing it.
+  @@index([churchId, createdAt])
+  // The reminder cron scans startsAt across every church, unscoped.
+  @@index([startsAt])
+  // "Events I'm hosting" on the volunteer dashboard.
+  @@index([createdById])
 }
 
 /**
@@ -318,6 +346,10 @@ model EventCohost {
   user    User   @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+  // `cohosts: { some: { userId } }` on the volunteer dashboard and
+  // `cohostedEvents: { none: { eventId } }` in listCohostCandidates both filter
+  // userId alone, which the eventId-leading @@unique can't serve.
+  @@index([userId])
 }
 
 model EventRsvp {
@@ -337,6 +369,9 @@ model EventRsvp {
   user    User   @relation(fields: [userId], references: [id])
 
   @@unique([eventId, userId])
+  // "My RSVPs" on the student dashboard filters userId + status. The
+  // eventId-leading @@unique already covers the per-event capacity counts.
+  @@index([userId, status])
 }
 
 model MentorConnection {
@@ -353,8 +388,73 @@ model MentorConnection {
   mentor    User   @relation("ConnectionsAsMentor", fields: [mentorId], references: [id])
 
   meetingPlan MentorMeetingPlan?
+  conversation Conversation?
 
   @@unique([studentId, mentorId])
+  // listConnectionsAsMentor filters on mentorId alone, which the studentId-
+  // leading @@unique above can't serve. Loaded on every volunteer dashboard.
+  @@index([mentorId])
+}
+
+/**
+ * The messaging thread for one ACCEPTED MentorConnection — a 1:1 pairing, not
+ * a separate permission object. The connection itself is the source of truth
+ * for whether messaging is allowed at all (respondToConnectionAction creates
+ * this row the moment a request is accepted, alongside the existing
+ * contact-info-reveal emails); this table only holds the conversation
+ * container and its messages.
+ *
+ * `studentId`/`mentorId`/`churchId` are denormalized off the connection at
+ * creation time rather than read through it on every check. That's safe
+ * because a MentorConnection's studentId/mentorId never change after
+ * creation, and it turns "list my conversations"/"my unread count" — both hot
+ * paths, the unread count runs on every authenticated page render via the
+ * nav badge — into a flat filter instead of a join through `connection` each
+ * time. `churchId` specifically has to be resolved and stored here because
+ * MentorConnection itself carries no churchId; see the doc comment on the
+ * `conversationId` field in respondToConnectionAction for how it's chosen.
+ */
+model Conversation {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  // Bumped on every new message so the "my conversations" list can sort by
+  // recency without aggregating over Message.
+  lastMessageAt DateTime @default(now())
+
+  connectionId String           @unique
+  connection   MentorConnection @relation(fields: [connectionId], references: [id])
+
+  studentId String
+  mentorId  String
+  churchId  String
+  church    Church @relation(fields: [churchId], references: [id])
+
+  messages Message[]
+  reports  Report[]
+
+  @@index([studentId, lastMessageAt])
+  @@index([mentorId, lastMessageAt])
+}
+
+model Message {
+  id        String    @id @default(cuid())
+  body      String
+  createdAt DateTime  @default(now())
+  // Null until the recipient opens the thread — see markConversationReadAction.
+  // Per-message rather than a per-participant read cursor so an unread count
+  // is a plain count and marking read is idempotent, the same reasoning
+  // EventRsvp.reminderSentAt uses for per-row tracking over a single cursor.
+  readAt    DateTime?
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id])
+  senderId       String
+  sender         User         @relation("MessagesSent", fields: [senderId], references: [id])
+
+  @@index([conversationId, createdAt])
+  // Powers both markConversationReadAction (readAt: null, senderId != viewer)
+  // and the unread-count check (same shape, viewer-wide instead of one thread).
+  @@index([conversationId, senderId, readAt])
 }
 
 /**
@@ -412,6 +512,12 @@ model RideRequest {
   volunteer   User?   @relation("RideRequestsAsVolunteer", fields: [volunteerId], references: [id])
   churchId  String
   church    Church @relation(fields: [churchId], references: [id])
+
+  // RideRequest has no unique constraint anywhere, so before these it had no
+  // secondary index at all and every rides query was a full table scan.
+  @@index([churchId, status, date])
+  @@index([studentId])
+  @@index([volunteerId])
 }
 
 model Block {
@@ -424,6 +530,10 @@ model Block {
   blocked   User   @relation("BlocksReceived", fields: [blockedId], references: [id])
 
   @@unique([blockerId, blockedId])
+  // blockedPairUserIds ORs both directions; the @@unique above only covers the
+  // blockerId leg. This runs on every RSVP, every connection request, every
+  // friend-directory load, and now every rides-board load too.
+  @@index([blockedId])
 }
 
 model Report {
@@ -443,4 +553,13 @@ model Report {
   reportedUser   User?   @relation("ReportsReceived", fields: [reportedUserId], references: [id])
 
   eventId String?
+
+  // A message-thread report — reportConversationAction. Nullable since
+  // eventId above is (unwired) provision for a future event-report flow;
+  // this is the first Report producer this app actually has.
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id])
+
+  // The admin review queue filters churchId + status.
+  @@index([churchId, status])
 }

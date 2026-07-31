@@ -165,14 +165,28 @@ export async function claimChurchAdminAction(churchId: string): Promise<ActionRe
   await setSessionCookie(token);
 
   revalidatePath(`/churches/${churchId}`);
+  // /discover renders a "Not yet claimed" badge off this same flag, so it has
+  // to be refreshed too or the church stays visibly unclaimed to everyone.
+  revalidatePath("/discover");
+  revalidatePath("/admin/dashboard");
   redirect(dashboardPathForRole(ROLES.CHURCH_ADMIN));
 }
 
+const NOT_A_CHURCH_ADMIN = { error: "Only a church leader can do this." } as const;
+
+/**
+ * Returns null instead of throwing when the caller isn't an admin of this
+ * church. Throwing turned an ordinary, recoverable authorization miss into an
+ * uncaught exception that bubbled up to app/error.tsx's full-page fallback —
+ * every other guard in this codebase (churchPartnerships, connections, rides)
+ * returns `{ error }` so the form can show it inline, and these four actions now
+ * match. Callers pair this with NOT_A_CHURCH_ADMIN above.
+ */
 async function requireChurchAdmin(churchId: string) {
   const user = await requireUser();
   const membership = user.memberships.find((m) => m.churchId === churchId);
   if (!membership || membership.role !== ROLES.CHURCH_ADMIN) {
-    throw new Error("Only a church leader can do this.");
+    return null;
   }
   return { user, membership };
 }
@@ -184,7 +198,9 @@ export async function updateChurchProfileAction(
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  await requireChurchAdmin(churchId);
+  if (!(await requireChurchAdmin(churchId))) {
+    return NOT_A_CHURCH_ADMIN;
+  }
 
   const parsed = churchProfileSchema.safeParse({
     name: formData.get("name"),
@@ -227,7 +243,9 @@ export async function updateChurchProfileAction(
 /** Regenerates a church's join code — admin-only, e.g. if the old one
  * leaked or the church just wants a fresh one. */
 export async function regenerateJoinCodeAction(churchId: string): Promise<ActionResult> {
-  await requireChurchAdmin(churchId);
+  if (!(await requireChurchAdmin(churchId))) {
+    return NOT_A_CHURCH_ADMIN;
+  }
 
   await prisma.church.update({
     where: { id: churchId },
@@ -240,7 +258,9 @@ export async function regenerateJoinCodeAction(churchId: string): Promise<Action
 
 /** Promotes a member to CHURCH_ADMIN — admin-only. */
 export async function promoteToAdminAction(churchId: string, memberUserId: string): Promise<ActionResult> {
-  await requireChurchAdmin(churchId);
+  if (!(await requireChurchAdmin(churchId))) {
+    return NOT_A_CHURCH_ADMIN;
+  }
 
   const membership = await prisma.membership.findUnique({
     where: { userId_churchId: { userId: memberUserId, churchId } },
@@ -261,7 +281,9 @@ export async function promoteToAdminAction(churchId: string, memberUserId: strin
  * demote the church's last remaining admin, so a church can never end up
  * with no one able to manage it. */
 export async function demoteFromAdminAction(churchId: string, memberUserId: string): Promise<ActionResult> {
-  await requireChurchAdmin(churchId);
+  if (!(await requireChurchAdmin(churchId))) {
+    return NOT_A_CHURCH_ADMIN;
+  }
 
   const adminCount = await prisma.membership.count({ where: { churchId, role: ROLES.CHURCH_ADMIN } });
   const membership = await prisma.membership.findUnique({

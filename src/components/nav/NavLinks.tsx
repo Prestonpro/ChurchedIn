@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree, Car, Buildings } from "@phosphor-icons/react/dist/ssr";
+import { House, SquaresFour, CalendarBlank, Compass, GearSix, UsersThree, Car, Buildings, ChatCircleDots, Flag } from "@phosphor-icons/react/dist/ssr";
 
 // Server Components can't pass component/function references (like a Phosphor
 // icon) as props to Client Components — only plain serializable data crosses
@@ -17,10 +17,21 @@ export const NAV_ICONS = {
   mentors: UsersThree,
   rides: Car,
   church: Buildings,
+  messages: ChatCircleDots,
+  reports: Flag,
 } as const;
 
 export type NavIconKey = keyof typeof NAV_ICONS;
-export type NavLink = { href: string; label: string; iconKey: NavIconKey; hasBadge?: boolean };
+export type NavLink = {
+  href: string;
+  label: string;
+  iconKey: NavIconKey;
+  hasBadge?: boolean;
+  /** An unread count (Messages) rather than a plain dot (Events' "something's
+   * new") — a number communicates real information a dot can't. Renders as
+   * "9+" once it's too wide to read at a glance. */
+  badgeCount?: number;
+};
 
 export function NavLinks({ links }: { links: NavLink[] }) {
   const pathname = usePathname();
@@ -44,6 +55,11 @@ export function NavLinks({ links }: { links: NavLink[] }) {
               <Icon weight={active ? "fill" : "regular"} className="size-4" />
               {link.hasBadge && (
                 <span className="absolute -right-1 -top-1 size-1.5 rounded-full bg-accent-500" />
+              )}
+              {!!link.badgeCount && (
+                <span className="absolute -right-2.5 -top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent-500 px-1 text-[10px] font-bold leading-none text-white">
+                  {link.badgeCount > 9 ? "9+" : link.badgeCount}
+                </span>
               )}
             </span>
             <span className="hidden sm:inline">{link.label}</span>

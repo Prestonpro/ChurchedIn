@@ -17,6 +17,27 @@ import { eventSchema, firstIssueMessage } from "@/lib/validation";
 
 export type ActionResult = { error: string } | { ok: true; eventId: string } | void;
 
+/**
+ * Every surface that renders event data, and so goes stale when an event is
+ * created, cancelled, or has its co-hosts changed: the feed, the calendar grid,
+ * the map's pins, /home's "Next up" line, and the "upcoming gatherings" stats on
+ * all three dashboards. Only `/events` (and sometimes the detail page) was
+ * revalidated before, so a freshly published gathering was missing from the
+ * calendar and map, and a cancelled one kept inflating dashboard counts.
+ */
+function revalidateEventSurfaces(eventId?: string): void {
+  if (eventId) {
+    revalidatePath(`/events/${eventId}`);
+  }
+  revalidatePath("/events");
+  revalidatePath("/events/calendar");
+  revalidatePath("/events/map");
+  revalidatePath("/home");
+  revalidatePath("/student/dashboard");
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/admin/dashboard");
+}
+
 export async function createEventAction(
   _prev: ActionResult,
   formData: FormData,
@@ -82,7 +103,7 @@ export async function createEventAction(
     include: { church: { select: { name: true } } },
   });
 
-  revalidatePath("/events");
+  revalidateEventSurfaces(event.id);
   await notifyChurchOfNewEvent(event);
   return { ok: true, eventId: event.id };
 }
@@ -180,7 +201,9 @@ export async function inviteCohostAction(eventId: string, userId: string): Promi
     update: {},
   });
 
-  revalidatePath(`/events/${eventId}`);
+  // The feed folds co-hosts into its "Helping" count and avatar row, so this
+  // has to reach more than the detail page.
+  revalidateEventSurfaces(eventId);
 }
 
 /** Removes a co-host — creator-only, same as inviting one. */
@@ -195,14 +218,22 @@ export async function removeCohostAction(eventId: string, userId: string): Promi
   }
 
   await prisma.eventCohost.deleteMany({ where: { eventId, userId } });
-  revalidatePath(`/events/${eventId}`);
+  revalidateEventSurfaces(eventId);
 }
 
 export async function cancelEventAction(eventId: string): Promise<ActionResult> {
   const user = await requireUser();
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    include: { rsvps: { where: { status: { not: RSVP_STATUS.CANCELLED } }, include: { user: true } } },
+    // `user: true` pulled every attendee's whole row, passwordHash and googleId
+    // included, when only the address is used to email them — same `select` that
+    // notifyChurchOfNewEvent above already uses.
+    include: {
+      rsvps: {
+        where: { status: { not: RSVP_STATUS.CANCELLED } },
+        include: { user: { select: { email: true } } },
+      },
+    },
   });
   if (!event) {
     return { error: "Event not found." };
@@ -233,6 +264,5 @@ export async function cancelEventAction(eventId: string): Promise<ActionResult> 
     ),
   );
 
-  revalidatePath("/events");
-  revalidatePath(`/events/${eventId}`);
+  revalidateEventSurfaces(eventId);
 }

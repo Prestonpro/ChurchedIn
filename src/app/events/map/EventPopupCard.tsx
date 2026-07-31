@@ -16,10 +16,16 @@ export function EventPopupCard({
   event,
   onRsvp,
   rsvpPending,
+  rsvpError,
 }: {
   event: MapEvent;
   onRsvp: (eventId: string) => void;
   rsvpPending: boolean;
+  /** Only set when this is the popup the last RSVP attempt was made from — see
+   * LeafletMap. RSVPing here used to discard the action's result entirely, so
+   * a full/cancelled event or a blocked pair saw the button go idle again with
+   * no visible outcome. */
+  rsvpError?: string;
 }) {
   const style = categoryStyle(event.category);
   const startsAt = new Date(event.startsAt);
@@ -47,6 +53,12 @@ export function EventPopupCard({
         <CapacityBar label="Attending" count={event.confirmedAttendees} cap={event.studentCap} />
         <CapacityBar label="Helping" count={event.confirmedHelpers} cap={event.volunteerCap} />
       </div>
+
+      {rsvpError && (
+        <p className="mt-2 rounded-lg border border-danger/30 bg-danger-soft/90 px-2.5 py-1.5 text-xs font-medium text-danger">
+          {rsvpError}
+        </p>
+      )}
 
       <div className="mt-3 flex gap-1.5">
         <Link

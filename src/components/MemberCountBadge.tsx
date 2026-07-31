@@ -1,4 +1,5 @@
 import { UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { Badge } from "@/components/ui/Badge";
 
 /**
  * Trust signal shown on church cards and profile pages — replaces an
@@ -23,12 +24,13 @@ function tierLabel(memberCount: number): string {
 
 export function MemberCountBadge({ memberCount }: { memberCount: number }) {
   return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-700"
+    <Badge
+      tone="brand"
+      icon={UsersThree}
+      iconWeight="fill"
       title={`${memberCount} ${memberCount === 1 ? "member has" : "members have"} joined this church`}
     >
-      <UsersThree weight="fill" className="size-3.5" />
       {memberCount} {memberCount === 1 ? "member" : "members"} · {tierLabel(memberCount)}
-    </span>
+    </Badge>
   );
 }

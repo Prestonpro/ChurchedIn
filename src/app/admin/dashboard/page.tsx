@@ -12,7 +12,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { listPartnershipsForChurch } from "@/lib/queries";
-import { ROLES, type EventCategory, type Role } from "@/lib/constants";
+import { EVENT_STATUS, ROLES, type EventCategory, type Role } from "@/lib/constants";
 import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { PartnershipManager } from "./PartnershipManager";
 
@@ -26,7 +26,8 @@ export default async function AdminDashboardPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
   const churchId = user.activeMembership!.churchId;
 
-  const [church, memberCount, events, roleCounts, recentJoins, partnerships] =
+  const now = new Date();
+  const [church, memberCount, events, publishedEventCount, nextEvent, roleCounts, recentJoins, partnerships] =
     await Promise.all([
       prisma.church.findUnique({ where: { id: churchId } }),
       prisma.membership.count({ where: { churchId } }),
@@ -35,6 +36,18 @@ export default async function AdminDashboardPage() {
         orderBy: { startsAt: "desc" },
         take: 20,
         include: { createdBy: { select: { name: true } } },
+      }),
+      // Counted rather than read off `events.length`, which capped the stat at
+      // the list's `take: 20` forever. Cancelled events are excluded here to
+      // match how nextEvent is chosen — previously the stat counted them and
+      // the "Next:" label didn't, so the same card disagreed with itself.
+      prisma.event.count({ where: { churchId, status: EVENT_STATUS.PUBLISHED } }),
+      // Asked of the database instead of sorting the descending page of 20:
+      // with 21+ events the genuinely-next one could fall outside that page.
+      prisma.event.findFirst({
+        where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: now } },
+        orderBy: { startsAt: "asc" },
+        select: { id: true, title: true, startsAt: true },
       }),
       prisma.membership.groupBy({ by: ["role"], where: { churchId }, _count: true }),
       prisma.membership.findMany({
@@ -45,14 +58,11 @@ export default async function AdminDashboardPage() {
       }),
       listPartnershipsForChurch(churchId),
     ]);
-  const nextEvent = events
-    .filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED")
-    .sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
   const countByRole = Object.fromEntries(roleCounts.map((r) => [r.role, r._count])) as Partial<Record<Role, number>>;
 
   return (
     <AuthShell user={user}>
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-extrabold text-ink">{church?.name}</h1>
@@ -79,7 +89,7 @@ export default async function AdminDashboardPage() {
         <StatCard
           icon={CalendarBlank}
           label="Gatherings"
-          value={events.length}
+          value={publishedEventCount}
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
@@ -189,7 +199,7 @@ export default async function AdminDashboardPage() {
                   </div>
                   <span className="flex items-center gap-2 text-xs text-ink-muted">
                     {event.startsAt.toLocaleDateString()}
-                    {event.status === "CANCELLED" && <Badge tone="danger">Cancelled</Badge>}
+                    {event.status === EVENT_STATUS.CANCELLED && <Badge tone="danger">Cancelled</Badge>}
                   </span>
                 </Link>
               );

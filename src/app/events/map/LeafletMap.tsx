@@ -29,12 +29,14 @@ export function LeafletMap({
   onSelect,
   onRsvp,
   rsvpPending,
+  rsvpError,
 }: {
   events: MapEvent[];
   selectedId: string | null;
   onSelect: (id: string) => void;
   onRsvp: (eventId: string) => void;
   rsvpPending: boolean;
+  rsvpError?: string;
 }) {
   const markerRefs = useRef<Record<string, L.Marker | null>>({});
   const selectedEvent = events.find((e) => e.id === selectedId) ?? null;
@@ -69,7 +71,12 @@ export function LeafletMap({
           }}
         >
           <Popup minWidth={240} closeButton={false}>
-            <EventPopupCard event={event} onRsvp={onRsvp} rsvpPending={rsvpPending} />
+            <EventPopupCard
+              event={event}
+              onRsvp={onRsvp}
+              rsvpPending={rsvpPending}
+              rsvpError={event.id === selectedId ? rsvpError : undefined}
+            />
           </Popup>
         </Marker>
       ))}

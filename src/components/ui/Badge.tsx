@@ -14,19 +14,24 @@ const TONE_CLASSES: Record<Tone, string> = {
 export function Badge({
   tone = "neutral",
   icon: IconComponent,
+  iconWeight = "bold",
   className = "",
+  title,
   children,
 }: {
   tone?: Tone;
   icon?: Icon;
+  iconWeight?: "bold" | "fill" | "regular";
   className?: string;
+  title?: string;
   children: React.ReactNode;
 }) {
   return (
     <span
+      title={title}
       className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${TONE_CLASSES[tone]} ${className}`}
     >
-      {IconComponent && <IconComponent weight="bold" className="size-3.5" />}
+      {IconComponent && <IconComponent weight={iconWeight} className="size-3.5" />}
       {children}
     </span>
   );

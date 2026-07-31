@@ -3,6 +3,7 @@
 import { MapContainer, TileLayer, Marker, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { leafletPin } from "@/lib/leafletPin";
+import { MAP_COLORS } from "@/lib/mapColors";
 
 const LIGHT_TILE_URL = "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
 const TILE_ATTRIBUTION =
@@ -37,7 +38,7 @@ export function PinDropMap({
     <MapContainer center={center} zoom={hasPin ? 14 : 4} scrollWheelZoom={false} className="h-48 w-full rounded-xl">
       <TileLayer url={LIGHT_TILE_URL} attribution={TILE_ATTRIBUTION} />
       <ClickToPlacePin onPick={onPick} />
-      {hasPin && <Marker position={[lat, lng]} icon={leafletPin("#2563eb")} />}
+      {hasPin && <Marker position={[lat, lng]} icon={leafletPin(MAP_COLORS.brand600)} />}
     </MapContainer>
   );
 }

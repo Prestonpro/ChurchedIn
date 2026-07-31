@@ -1,4 +1,4 @@
-import { UsersThree, Translate, Sparkle, EnvelopeSimple, Prohibit } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, Translate, Sparkle, EnvelopeSimple, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
@@ -153,7 +153,7 @@ export default async function MentorDirectoryPage() {
                       tags(m.hobbies).map((t) => (
                         <span
                           key={`hob-${t}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-medium text-blue-700"
+                          className="inline-flex items-center gap-1 rounded-full bg-cat-coffee-soft px-2.5 py-1 text-xs font-medium text-cat-coffee"
                         >
                           {t}
                         </span>
@@ -176,6 +176,9 @@ export default async function MentorDirectoryPage() {
                         <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
                         {connection.mentor.email}
                       </p>
+                      <LinkButton href={`/messages/${connection.id}`} variant="secondary" size="sm">
+                        <ChatCircleDots weight="bold" className="size-4" /> Message
+                      </LinkButton>
                       <MeetingPlanEditor connectionId={connection.id} plan={connection.meetingPlan} />
                       <EndConnectionButton connectionId={connection.id} />
                     </div>
@@ -189,7 +192,12 @@ export default async function MentorDirectoryPage() {
                     </div>
                   )}
                   {connection?.status === CONNECTION_STATUS.ENDED && (
-                    <p className="text-sm text-ink-muted">This connection has ended.</p>
+                    <div className="space-y-2">
+                      <p className="text-sm text-ink-muted">This connection has ended.</p>
+                      <LinkButton href={`/messages/${connection.id}`} variant="ghost" size="sm">
+                        <ChatCircleDots weight="bold" className="size-4" /> View past messages
+                      </LinkButton>
+                    </div>
                   )}
                 </div>
               </Card>

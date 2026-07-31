@@ -5,11 +5,24 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { sendEmail } from "@/lib/email";
 import { rideClaimedForStudentEmail, rideClaimedForVolunteerEmail } from "@/lib/emailTemplates";
+import { isBlockedPair } from "@/lib/queries";
 import { nextRideStatus, InvalidRideTransitionError } from "@/lib/rideState";
 import { ROLES, RIDE_REQUEST_TYPE } from "@/lib/constants";
 import { rideRequestSchema, firstIssueMessage } from "@/lib/validation";
 
 export type ActionResult = { error: string } | { ok: true } | void;
+
+/**
+ * All three ride surfaces. /admin/rides — the church leader's read-only
+ * oversight board — was previously left out, so every claim, completion, and
+ * cancellation left it showing stale statuses.
+ */
+function revalidateRideSurfaces(): void {
+  revalidatePath("/student/rides");
+  revalidatePath("/volunteer/rides");
+  revalidatePath("/admin/rides");
+  revalidatePath("/volunteer/dashboard");
+}
 
 export async function createRideRequestAction(
   _prev: ActionResult,
@@ -47,8 +60,7 @@ export async function createRideRequestAction(
     },
   });
 
-  revalidatePath("/student/rides");
-  revalidatePath("/volunteer/rides");
+  revalidateRideSurfaces();
   return { ok: true };
 }
 
@@ -102,8 +114,7 @@ export async function createFirstVisitRideRequestAction(
     },
   });
 
-  revalidatePath("/student/rides");
-  revalidatePath("/volunteer/rides");
+  revalidateRideSurfaces();
   revalidatePath(`/churches/${churchId}`);
   return { ok: true };
 }
@@ -134,6 +145,13 @@ export async function claimRideRequestAction(rideId: string): Promise<ActionResu
   }
   if (ride.churchId !== user.activeMembership.churchId) {
     return { error: "This ride request isn't at your church." };
+  }
+  // Claiming reveals both parties' email addresses to each other below, so a
+  // blocked pair must never get here (safety rules 1 and 2). The board query
+  // already hides these rows; this is the server-side backstop, matching how
+  // rsvpToEventAction and requestConnectionAction both re-check on the action.
+  if (await isBlockedPair(user.id, ride.studentId)) {
+    return { error: "You can't claim this ride request." };
   }
 
   let nextStatus;
@@ -178,8 +196,7 @@ export async function claimRideRequestAction(rideId: string): Promise<ActionResu
     }),
   ]);
 
-  revalidatePath("/student/rides");
-  revalidatePath("/volunteer/rides");
+  revalidateRideSurfaces();
 }
 
 /** Marks a claimed ride as completed — either participant can do this. */
@@ -201,8 +218,7 @@ export async function completeRideRequestAction(rideId: string): Promise<ActionR
 
   await prisma.rideRequest.update({ where: { id: rideId }, data: { status: nextStatus } });
 
-  revalidatePath("/student/rides");
-  revalidatePath("/volunteer/rides");
+  revalidateRideSurfaces();
 }
 
 /** Cancels a ride request — only the student who made it can cancel,
@@ -228,6 +244,5 @@ export async function cancelRideRequestAction(rideId: string): Promise<ActionRes
     data: { status: nextStatus },
   });
 
-  revalidatePath("/student/rides");
-  revalidatePath("/volunteer/rides");
+  revalidateRideSurfaces();
 }

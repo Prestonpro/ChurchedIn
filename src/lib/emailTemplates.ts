@@ -288,3 +288,27 @@ export function rideClaimedForVolunteerEmail(opts: {
   });
   return { subject, text, html };
 }
+
+// ---------------------------------------------------------------------------
+// Messaging
+// ---------------------------------------------------------------------------
+
+/** Sent at most once per "unread streak" in a thread — see
+ * shouldNotifyByEmail in src/lib/messaging.ts — so a fast back-and-forth
+ * doesn't send one email per reply. Deliberately doesn't quote the message
+ * body: the recipient has to open the app to read it, and this is a
+ * notification, not a copy of private correspondence sitting in an inbox. */
+export function newMessageEmail(opts: {
+  senderName: string;
+  connectionId: string;
+}): EmailContent {
+  const subject = `New message from ${opts.senderName}`;
+  const text = `${opts.senderName} sent you a message.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "New message",
+    bodyHtml: paragraph(`<strong>${escapeHtml(opts.senderName)}</strong> sent you a message.`),
+    cta: { label: "Read and reply", url: appUrl(`/messages/${opts.connectionId}`) },
+  });
+  return { subject, text, html };
+}

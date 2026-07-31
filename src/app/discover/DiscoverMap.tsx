@@ -5,6 +5,7 @@ import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import type L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { leafletPin } from "@/lib/leafletPin";
+import { MAP_COLORS } from "@/lib/mapColors";
 import { ChurchCard } from "./ChurchCard";
 import { RouteLayer } from "./RouteLayer";
 import { RouteSummary, type RouteState } from "./RouteSummary";
@@ -95,7 +96,7 @@ export function DiscoverMap({
         {/* Skipped while a route is on screen, so recentering on the viewer
             doesn't fight RouteLayer's fitBounds over the whole trip. */}
         {!routeState.route && <RecenterOnLocation center={userLocation} />}
-        {userLocation && <Marker position={userLocation} icon={leafletPin("#111827", 14)} />}
+        {userLocation && <Marker position={userLocation} icon={leafletPin(MAP_COLORS.ink, 14)} />}
         {routeState.route && (
           <RouteLayer key={`${routeState.churchId}-${routeState.computedAt?.getTime()}`} route={routeState.route} />
         )}

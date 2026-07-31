@@ -4,11 +4,12 @@ import { useEffect, useState } from "react";
 import { Polyline, Marker, useMap } from "react-leaflet";
 import { leafletPin } from "@/lib/leafletPin";
 import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { MAP_COLORS } from "@/lib/mapColors";
 import type { DrivingRoute } from "@/lib/routing";
 
 const DRAW_DURATION_MS = 1600;
 const CASING_COLOR = "#ffffff";
-const ROUTE_COLOR = "#2563eb";
+const ROUTE_COLOR = MAP_COLORS.brand600;
 
 /**
  * Draws the route progressively so pressing "Route" reads as the map working
