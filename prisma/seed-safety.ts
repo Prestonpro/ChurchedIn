@@ -243,7 +243,7 @@ async function main() {
         memberships: {
           create: {
             churchId: church.id,
-            role: vol.role || 'VOLUNTEER',
+            role: (vol as any).role || 'VOLUNTEER' as any,
             createdAt: vol.createdAt
           }
         },
