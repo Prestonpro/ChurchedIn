@@ -257,6 +257,8 @@ model MentorProfile {
   hobbies      String?
   interests    String?
   linkedinUrl  String?
+  facebookUrl  String?
+  instagramUrl String?
   openToMentor Boolean @default(true)
 
   userId String @unique
@@ -274,6 +276,8 @@ model StudentProfile {
   interests       String?
   careerGoals     String?
   linkedinUrl     String?
+  facebookUrl     String?
+  instagramUrl    String?
 
   userId String @unique
   user   User   @relation(fields: [userId], references: [id])
