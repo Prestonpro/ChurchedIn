@@ -202,7 +202,7 @@ export function MobileMenu({
             <form action={logoutAction} className="border-t border-line px-3 py-3">
               <button
                 type="submit"
-                className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-base font-medium text-danger transition-brand hover:bg-danger-soft"
+                className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-lg px-3 text-base font-medium text-danger transition-brand hover:bg-danger-soft"
               >
                 <SignOut weight="bold" className="size-5" />
                 Log out

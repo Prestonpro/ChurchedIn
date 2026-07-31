@@ -117,7 +117,7 @@ export async function AuthShell({
             <HelpGuideButton role={role} churchId={user.activeMembership?.churchId ?? ""} />
             <form action={logoutAction}>
               <button
-                className="flex size-8 items-center justify-center rounded-lg text-ink-faint transition-brand hover:bg-danger-soft hover:text-danger"
+                className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-ink-faint transition-brand hover:bg-danger-soft hover:text-danger"
                 type="submit"
                 title="Log out"
               >

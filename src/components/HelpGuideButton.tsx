@@ -106,7 +106,7 @@ export function HelpGuideButton({ role, churchId }: { role: Role; churchId: stri
         onClick={() => setOpen(true)}
         title="Help"
         aria-label="Help"
-        className="flex size-8 items-center justify-center rounded-lg text-ink-faint transition-brand hover:bg-paper hover:text-brand-600"
+        className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-ink-faint transition-brand hover:bg-paper hover:text-brand-600"
       >
         <Question weight="bold" className="size-4.5" />
       </button>
