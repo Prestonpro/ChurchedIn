@@ -8,6 +8,7 @@ import { CaretLeft, CaretRight, MapPin, Rows, CalendarDots } from "@phosphor-ico
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { PIN_STATUS_COLOR, PIN_STATUS_LABEL, type PinStatus } from "@/lib/eventMapStatus";
 import { rsvpToEventAction } from "@/lib/actions/rsvps";
+import { EventViewToggle } from "@/components/EventViewToggle";
 import { EVENT_CATEGORY_LABELS, type EventCategory } from "@/lib/constants";
 
 const LeafletMap = dynamic(() => import("./LeafletMap").then((mod) => mod.LeafletMap), {
@@ -85,6 +86,10 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
         {sidebarOpen ? <CaretLeft weight="bold" className="size-4" /> : <CaretRight weight="bold" className="size-4" />}
       </button>
 
+      <div className="absolute right-3 top-3 z-[1000]">
+        <EventViewToggle currentView="map" dark />
+      </div>
+
       <div
         className={`absolute inset-y-0 left-0 z-[999] flex w-[300px] max-w-[85vw] flex-col border-r border-white/10 bg-ink/85 text-white backdrop-blur-md transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -93,20 +98,6 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
         <div className="hidden items-center justify-between border-b border-white/10 px-4 py-3 sm:flex">
           <h1 className="font-bold">Event map</h1>
           <div className="flex items-center gap-1">
-            <Link
-              href="/events"
-              title="List view"
-              className="flex size-7 items-center justify-center rounded-lg text-white/60 transition-brand hover:bg-white/10 hover:text-white"
-            >
-              <Rows weight="bold" className="size-4" />
-            </Link>
-            <Link
-              href="/events/calendar"
-              title="Calendar view"
-              className="flex size-7 items-center justify-center rounded-lg text-white/60 transition-brand hover:bg-white/10 hover:text-white"
-            >
-              <CalendarDots weight="bold" className="size-4" />
-            </Link>
             <button
               type="button"
               onClick={() => setSidebarOpen(false)}

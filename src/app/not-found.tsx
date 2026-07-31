@@ -12,7 +12,7 @@ export default function NotFound() {
         That page doesn&apos;t exist, or you may not have access to it.
       </p>
       <div className="mt-7">
-        <LinkButton href="/">Go home</LinkButton>
+        <LinkButton href="/home">Go home</LinkButton>
       </div>
     </div>
   );

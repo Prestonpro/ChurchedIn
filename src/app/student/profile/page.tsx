@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/auth";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -44,6 +45,11 @@ export default async function StudentProfilePage() {
             }}
           />
         </Card>
+        <div className="pt-4 text-center">
+          <Link href="/privacy" className="text-sm text-ink-muted hover:text-ink hover:underline">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </AuthShell>
   );

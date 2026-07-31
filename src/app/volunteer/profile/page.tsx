@@ -1,4 +1,5 @@
 import { UsersThree } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -48,6 +49,11 @@ export default async function VolunteerProfilePage() {
             }}
           />
         </Card>
+        <div className="pt-4 text-center">
+          <Link href="/privacy" className="text-sm text-ink-muted hover:text-ink hover:underline">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </AuthShell>
   );

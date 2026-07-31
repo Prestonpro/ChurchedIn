@@ -8,6 +8,7 @@ import {
   PARTNERSHIP_STATUS,
   RIDE_STATUS,
   RIDE_REQUEST_TYPE,
+  CONNECTION_STATUS,
 } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
 import { rideContactVisible } from "@/lib/rideState";
@@ -73,17 +74,28 @@ export function listCohostCandidates(churchId: string, eventId: string) {
   });
 }
 
-/** Pairs (in either direction) count as a block, since blocking is unilateral. */
+/** Pairs (in either direction) count as a block, since blocking is unilateral.
+ * Also includes users with active (OPEN) reports against them, as they should be hidden
+ * from the community as if they were banned. */
 async function blockedPairUserIds(userId: string): Promise<Set<string>> {
-  const blocks = await prisma.block.findMany({
-    where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
-    // Only the two ids are ever read below, and this runs on every RSVP,
-    // every connection request, and every directory/rides-board load.
-    select: { blockerId: true, blockedId: true },
-  });
+  const [blocks, openReports] = await Promise.all([
+    prisma.block.findMany({
+      where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+      select: { blockerId: true, blockedId: true },
+    }),
+    prisma.report.findMany({
+      where: { status: "OPEN", reportedUserId: { not: null } },
+      select: { reportedUserId: true },
+    }),
+  ]);
   const ids = new Set<string>();
   for (const b of blocks) {
     ids.add(b.blockerId === userId ? b.blockedId : b.blockerId);
+  }
+  for (const r of openReports) {
+    if (r.reportedUserId && r.reportedUserId !== userId) {
+      ids.add(r.reportedUserId);
+    }
   }
   return ids;
 }
@@ -492,7 +504,7 @@ export async function countUnreadMessagesForUser(userId: string): Promise<number
  * state instead of a 500.
  */
 export async function getConversationForConnection(connectionId: string, viewerId: string) {
-  const conversation = await prisma.conversation.findUnique({
+  let conversation = await prisma.conversation.findUnique({
     where: { connectionId },
     include: {
       connection: {
@@ -505,7 +517,51 @@ export async function getConversationForConnection(connectionId: string, viewerI
       messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
     },
   });
-  if (!conversation) return null;
+
+  if (!conversation) {
+    const connection = await prisma.mentorConnection.findUnique({
+      where: { id: connectionId },
+      include: {
+        student: { select: { id: true, name: true } },
+        mentor: { select: { id: true, name: true } }
+      }
+    });
+
+    if (connection && (connection.status === CONNECTION_STATUS.ACCEPTED || connection.status === CONNECTION_STATUS.ENDED)) {
+      const [studentMemberships, mentorMemberships] = await Promise.all([
+        prisma.membership.findMany({ where: { userId: connection.studentId }, select: { churchId: true } }),
+        prisma.membership.findMany({ where: { userId: connection.mentorId }, select: { churchId: true } }),
+      ]);
+      const mentorChurchIds = new Set(mentorMemberships.map((m) => m.churchId));
+      const sharedChurchId = studentMemberships.find((m) => mentorChurchIds.has(m.churchId))?.churchId;
+      
+      if (sharedChurchId) {
+        await prisma.conversation.upsert({
+          where: { connectionId },
+          create: { connectionId, studentId: connection.studentId, mentorId: connection.mentorId, churchId: sharedChurchId, lastMessageAt: new Date() },
+          update: {},
+        });
+        
+        conversation = await prisma.conversation.findUnique({
+          where: { connectionId },
+          include: {
+            connection: {
+              select: {
+                status: true,
+                student: { select: { id: true, name: true } },
+                mentor: { select: { id: true, name: true } },
+              },
+            },
+            messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
+          },
+        });
+      }
+    }
+  }
+
+  // TypeScript loses the deep types of conversation when we assign it inside the if block.
+  // We can assert or just verify it's there.
+  if (!conversation || !conversation.connection || !conversation.messages) return null;
   if (conversation.studentId !== viewerId && conversation.mentorId !== viewerId) return null;
 
   const isBlocked = await isBlockedPair(conversation.studentId, conversation.mentorId);

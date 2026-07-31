@@ -36,7 +36,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <p>
               ChurchedIn (&quot;ChurchedIn,&quot; &quot;we,&quot; &quot;us&quot;) helps churches run
-              events, coordinate rides, and match international students with volunteer mentors. This
+              events, coordinate rides, and match international students with volunteer friends. This
               policy explains what information we collect, how we use it, and the choices you have. By
               using ChurchedIn, you agree to the practices described here.
             </p>
@@ -59,7 +59,7 @@ export default function PrivacyPolicyPage() {
               </li>
               <li>
                 <span className="font-semibold text-ink">Activity within your church</span> — events you
-                create or RSVP to, ride requests and offers, mentor connection requests, and messages
+                create or RSVP to, ride requests and offers, friend connection requests, and messages
                 exchanged as part of arranging a connection.
               </li>
               <li>
@@ -77,7 +77,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-bold text-ink">How we use this information</h2>
             <ul className="mt-3 list-disc space-y-2 pl-5">
-              <li>To operate core features: events, RSVPs, ride coordination, and mentor matching.</li>
+              <li>To operate core features: events, RSVPs, ride coordination, and friend matching.</li>
               <li>To let church admins manage their church&apos;s members, events, and join codes.</li>
               <li>To send account-related emails, such as event reminders and password resets.</li>
               <li>To keep the community safe, including reviewing reports and enforcing blocks.</li>
@@ -92,7 +92,7 @@ export default function PrivacyPolicyPage() {
               Your profile and activity are visible only within your own church — ChurchedIn is scoped so
               that members of one church cannot see another church&apos;s members or events. Contact
               information, such as your email address, is never shown to another member until you both
-              agree to connect (for example, by accepting a mentor connection request). Church admins can
+              agree to connect (for example, by accepting a friend connection request). Church admins can
               see their church&apos;s member list and event activity in order to manage their community.
             </p>
           </section>
@@ -147,7 +147,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-bold text-ink">Children&apos;s privacy</h2>
             <p className="mt-3">
-              ChurchedIn is intended for adults coordinating church events, rides, and mentorship, and is
+              ChurchedIn is intended for adults coordinating church events, rides, and friendship, and is
               not directed at children under 13. We do not knowingly collect information from children
               under 13.
             </p>
@@ -164,11 +164,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-bold text-ink">Contact us</h2>
             <p className="mt-3">
-              Questions about this policy or your data? Reach out to your church admin, or email us at{" "}
-              <a href="mailto:privacy@churchedin.app" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
-                privacy@churchedin.app
-              </a>
-              .
+              Questions about this policy or your data? Reach out to your church admin.
             </p>
           </section>
         </div>

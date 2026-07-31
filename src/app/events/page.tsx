@@ -13,6 +13,7 @@ import { Card } from "@/components/ui/Card";
 import { StyledBadge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
 import { CapacityBar } from "@/components/ui/CapacityBar";
+import { EventViewToggle } from "@/components/EventViewToggle";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DateBadge } from "@/components/ui/DateBadge";
 import { AttendeeAvatars } from "@/components/ui/AttendeeAvatars";
@@ -86,18 +87,7 @@ export default async function EventsPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/events/calendar"
-            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
-          >
-            <CalendarDots weight="bold" className="size-4" /> Calendar view
-          </Link>
-          <Link
-            href="/events/map"
-            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
-          >
-            <MapTrifold weight="bold" className="size-4" /> Map view
-          </Link>
+          <EventViewToggle currentView="list" />
           {canHost && (
             <LinkButton href="/volunteer/events/new">
               <Plus weight="bold" className="size-4" /> Plan a gathering

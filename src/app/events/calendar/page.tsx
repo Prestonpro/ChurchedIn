@@ -11,6 +11,8 @@ import { listEventsForChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
+import { EventViewToggle } from "@/components/EventViewToggle";
+import { DateBadge } from "@/components/ui/DateBadge";
 import { StyledBadge } from "@/components/ui/Badge";
 import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -114,18 +116,7 @@ export default async function EventsCalendarPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Link
-            href="/events"
-            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
-          >
-            <Rows weight="bold" className="size-4" /> List view
-          </Link>
-          <Link
-            href="/events/map"
-            className="flex items-center gap-1.5 rounded-lg border border-line-strong px-3 py-2 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-paper"
-          >
-            <MapTrifold weight="bold" className="size-4" /> Map view
-          </Link>
+          <EventViewToggle currentView="calendar" />
         </div>
       </div>
 

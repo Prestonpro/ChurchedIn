@@ -53,6 +53,11 @@ export default async function AdminProfilePage() {
             Manage church settings →
           </Link>
         </Card>
+        <div className="pt-4 text-center">
+          <Link href="/privacy" className="text-sm text-ink-muted hover:text-ink hover:underline">
+            Privacy Policy
+          </Link>
+        </div>
       </div>
     </AuthShell>
   );
