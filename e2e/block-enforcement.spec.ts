@@ -52,3 +52,79 @@ test("blocking a mentor removes them from the student's directory (and any futur
   await expect(studentPage.getByText("Blockable Mentor")).toBeVisible();
   await expect(studentPage.getByRole("button", { name: "Unblock" })).toBeVisible();
 });
+
+/**
+ * The rides board used to ignore blocks entirely, which mattered more here than
+ * on the friend directory: claiming a ride emails the student and the volunteer
+ * each other's real address, so a blocked pair could be put straight into
+ * contact. That crossed both safety rule 1 (contact info) and rule 2 (blocks) in
+ * one action, hence a dedicated regression test.
+ */
+test("a blocked volunteer never sees the blocking student's ride request", async ({ browser }) => {
+  const churchName = `Ride Block Church ${Date.now()}`;
+  const password = "password123";
+
+  const adminPage = await (await browser.newContext()).newPage();
+  await signupChurch(adminPage, {
+    name: "Admin",
+    email: uniqueEmail("admin-rideblock"),
+    password,
+    churchName,
+  });
+  const joinCode = await getJoinCode(adminPage);
+
+  // The volunteer has to be listable as a friend for the student to reach the
+  // block control at all — /student/mentors is the only surface that has one.
+  const volunteerPage = await (await browser.newContext()).newPage();
+  await joinChurch(volunteerPage, {
+    joinCode,
+    role: "VOLUNTEER",
+    name: "Blocked Driver",
+    email: uniqueEmail("vol-rideblock"),
+    password,
+  });
+  await volunteerPage.goto("/volunteer/profile");
+  await volunteerPage.getByLabel("I'm open to being a friend to a student").check();
+  await volunteerPage.getByRole("button", { name: "Save my profile" }).click();
+
+  const studentPage = await (await browser.newContext()).newPage();
+  await joinChurch(studentPage, {
+    joinCode,
+    role: "STUDENT",
+    name: "Blocking Rider",
+    email: uniqueEmail("student-rideblock"),
+    password,
+  });
+
+  await studentPage.goto("/student/mentors");
+  studentPage.once("dialog", (dialog) => dialog.accept());
+  await studentPage.getByTitle("Block Blocked Driver").click();
+  await expect(studentPage.getByRole("button", { name: "Unblock" })).toBeVisible();
+
+  // Now the blocking student asks for a ride at the same church.
+  await studentPage.goto("/student/rides");
+  await studentPage.getByLabel("Where do you need to go?").fill("Airport terminal C");
+  await studentPage.getByLabel("Date").fill("2027-03-14");
+  await studentPage.getByLabel("Time").fill("9:00 AM");
+  await studentPage.getByRole("button", { name: "Request a ride" }).click();
+  await expect(studentPage.getByText("Airport terminal C")).toBeVisible();
+
+  // The blocked volunteer must not be offered it, so there is no claim to make
+  // and no contact exchange to trigger.
+  await volunteerPage.goto("/volunteer/rides");
+  await expect(volunteerPage.getByText("Airport terminal C")).not.toBeVisible();
+  await expect(volunteerPage.getByText("Blocking Rider")).not.toBeVisible();
+
+  // Control: an unrelated volunteer at the same church still sees it, so the
+  // filter is scoped to the blocked pair rather than hiding the row outright.
+  const otherVolunteerPage = await (await browser.newContext()).newPage();
+  await joinChurch(otherVolunteerPage, {
+    joinCode,
+    role: "VOLUNTEER",
+    name: "Unrelated Driver",
+    email: uniqueEmail("vol2-rideblock"),
+    password,
+  });
+  await otherVolunteerPage.goto("/volunteer/rides");
+  await expect(otherVolunteerPage.getByText("Airport terminal C")).toBeVisible();
+});

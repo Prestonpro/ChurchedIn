@@ -60,6 +60,12 @@ export default defineConfig({
       DATABASE_URL: E2E_DATABASE_URL,
       APP_URL: E2E_BASE_URL,
       SESSION_SECRET: "e2e-test-only-secret-0123456789abcdef0123456789abcdef",
+      // Blank, so sendEmail takes its console-logging branch instead of calling
+      // Resend for real. Inherited from .env, every run fired live API requests
+      // for @e2e.test recipients, which Resend rejected 403 ("you can only send
+      // testing emails to your own address") — noise in the output, needless
+      // quota burn, and a hard dependency on network access for a local run.
+      RESEND_API_KEY: "",
     },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],

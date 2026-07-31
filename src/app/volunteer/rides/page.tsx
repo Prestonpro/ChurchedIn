@@ -16,7 +16,7 @@ export default async function VolunteerRidesPage() {
   const churchId = user.activeMembership!.churchId;
 
   const [openRides, myClaimedRides] = await Promise.all([
-    listOpenRideRequestsForChurch(churchId),
+    listOpenRideRequestsForChurch(churchId, user.id),
     listClaimedRideRequestsForVolunteer(user.id),
   ]);
   const activeClaimed = myClaimedRides.filter((r) => r.status === RIDE_STATUS.CLAIMED);

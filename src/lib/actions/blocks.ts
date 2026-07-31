@@ -6,6 +6,21 @@ import { requireUser } from "@/lib/auth";
 
 export type ActionResult = { error: string } | void;
 
+/**
+ * A block changes who is visible on more than the friend directory: the
+ * volunteer dashboard lists incoming connection requests, and the rides boards
+ * now filter blocked students out (see listOpenRideRequestsForChurch). Leaving
+ * those out meant a just-blocked person's request stayed on screen and still
+ * actionable until the cache happened to expire.
+ */
+function revalidateBlockSurfaces(): void {
+  revalidatePath("/student/mentors");
+  revalidatePath("/events");
+  revalidatePath("/volunteer/dashboard");
+  revalidatePath("/volunteer/rides");
+  revalidatePath("/admin/rides");
+}
+
 export async function blockUserAction(blockedId: string): Promise<ActionResult> {
   const user = await requireUser();
   if (user.id === blockedId) {
@@ -18,13 +33,11 @@ export async function blockUserAction(blockedId: string): Promise<ActionResult> 
     update: {},
   });
 
-  revalidatePath("/student/mentors");
-  revalidatePath("/events");
+  revalidateBlockSurfaces();
 }
 
 export async function unblockUserAction(blockedId: string): Promise<ActionResult> {
   const user = await requireUser();
   await prisma.block.deleteMany({ where: { blockerId: user.id, blockedId } });
-  revalidatePath("/student/mentors");
-  revalidatePath("/events");
+  revalidateBlockSurfaces();
 }

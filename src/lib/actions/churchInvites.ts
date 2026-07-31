@@ -144,7 +144,14 @@ export async function acceptNewCoAdminAction(
 
 /** Accepts a co-admin invite for someone who's already logged in with a
  * matching email — just adds the Membership. */
-export async function acceptExistingCoAdminAction(token: string): Promise<ActionResult> {
+/** Bound into `useActionState` by AcceptExistingButton, so it carries the
+ * `(boundArg, prevState, formData)` tail CLAUDE.md requires — same shape as
+ * acceptNewCoAdminAction above, which is the logged-out counterpart. */
+export async function acceptExistingCoAdminAction(
+  token: string,
+  _prev: ActionResult,
+  _formData: FormData,
+): Promise<ActionResult> {
   const user = await requireUser();
   const check = await checkCoAdminInvite(token);
   if (!check.valid) {

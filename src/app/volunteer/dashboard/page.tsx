@@ -13,30 +13,45 @@ import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { RespondToConnectionButtons, EndConnectionButton } from "@/components/ConnectionActions";
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
-import { CONNECTION_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+import { CONNECTION_STATUS, EVENT_STATUS, ROLES, type EventCategory } from "@/lib/constants";
 
 export default async function VolunteerDashboardPage() {
   const user = await requireRole(ROLES.VOLUNTEER);
   const churchId = user.activeMembership!.churchId;
 
-  const [myEvents, memberCount, openRides] = await Promise.all([
-    // Includes events this volunteer is cohosting, not just ones they
-    // created — otherwise an invited mentor has no way to see their own
-    // upcoming commitment from their own dashboard.
+  const now = new Date();
+  // Includes events this volunteer is cohosting, not just ones they created —
+  // otherwise an invited mentor has no way to see their own upcoming
+  // commitment from their own dashboard. Scoped to the *active* church: this
+  // page's header reports that one church's name and member count, so pulling
+  // in a multi-church volunteer's events from elsewhere contradicted it.
+  const eventScope = {
+    churchId,
+    OR: [{ createdById: user.id }, { cohosts: { some: { userId: user.id } } }],
+  };
+  const liveUpcoming = { ...eventScope, status: { not: EVENT_STATUS.CANCELLED }, startsAt: { gte: now } };
+
+  const [upcoming, recentPast, upcomingCount, memberCount, openRides, connections] = await Promise.all([
+    prisma.event.findMany({ where: liveUpcoming, orderBy: { startsAt: "asc" }, take: 10 }),
     prisma.event.findMany({
-      where: { OR: [{ createdById: user.id }, { cohosts: { some: { userId: user.id } } }] },
+      where: { ...eventScope, startsAt: { lt: now } },
       orderBy: { startsAt: "desc" },
-      take: 10,
+      take: 5,
     }),
+    // A count, not `upcoming.length`: the list is capped at 10 for display, and
+    // reusing its length made the stat silently plateau there. Ordering was
+    // also descending before, so the ten *furthest-future* events were the ones
+    // kept — which meant "Next:" could name the wrong gathering entirely.
+    prisma.event.count({ where: liveUpcoming }),
     prisma.membership.count({ where: { churchId } }),
-    listOpenRideRequestsForChurch(churchId),
+    listOpenRideRequestsForChurch(churchId, user.id),
+    listConnectionsAsMentor(user.id),
   ]);
 
-  const connections = await listConnectionsAsMentor(user.id);
   const pending = connections.filter((c) => c.status === CONNECTION_STATUS.PENDING);
   const active = connections.filter((c) => c.status === CONNECTION_STATUS.ACCEPTED);
-  const upcoming = myEvents.filter((e) => e.startsAt >= new Date() && e.status !== "CANCELLED");
-  const nextEvent = [...upcoming].sort((a, b) => a.startsAt.getTime() - b.startsAt.getTime())[0];
+  const nextEvent = upcoming[0];
+  const myEvents = [...upcoming, ...recentPast];
 
   return (
     <AuthShell user={user}>
@@ -56,7 +71,7 @@ export default async function VolunteerDashboardPage() {
         <StatCard
           icon={CalendarBlank}
           label="Upcoming gatherings"
-          value={upcoming.length}
+          value={upcomingCount}
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
@@ -169,8 +184,8 @@ export default async function VolunteerDashboardPage() {
                   </div>
                   <span className="flex items-center gap-2 text-xs text-ink-muted">
                     {event.startsAt.toLocaleDateString()}
-                    {event.startsAt < new Date() && event.status !== "CANCELLED" && <Badge tone="neutral">Past</Badge>}
-                    {event.status === "CANCELLED" && <Badge tone="danger">Cancelled</Badge>}
+                    {event.startsAt < new Date() && event.status !== EVENT_STATUS.CANCELLED && <Badge tone="neutral">Past</Badge>}
+                    {event.status === EVENT_STATUS.CANCELLED && <Badge tone="danger">Cancelled</Badge>}
                   </span>
                 </Link>
               );

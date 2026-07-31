@@ -38,8 +38,13 @@ export function getEventById(eventId: string) {
   return prisma.event.findUnique({
     where: { id: eventId },
     include: {
-      createdBy: { select: { id: true, name: true, email: true } },
-      church: true,
+      // Neither the creator's email nor the church's joinCode is ever rendered
+      // here, and this page is reachable by partner-church members who are not
+      // members of this church at all — so selecting a foreign church's invite
+      // code (or anyone's email) is the wrong default, even though nothing
+      // currently forwards it to a client component.
+      createdBy: { select: { id: true, name: true } },
+      church: { select: { id: true, name: true } },
       rsvps: {
         where: { status: { not: RSVP_STATUS.CANCELLED } },
         include: { user: { select: { id: true, name: true } } },
@@ -71,6 +76,9 @@ export function listCohostCandidates(churchId: string, eventId: string) {
 async function blockedPairUserIds(userId: string): Promise<Set<string>> {
   const blocks = await prisma.block.findMany({
     where: { OR: [{ blockerId: userId }, { blockedId: userId }] },
+    // Only the two ids are ever read below, and this runs on every RSVP,
+    // every connection request, and every directory/rides-board load.
+    select: { blockerId: true, blockedId: true },
   });
   const ids = new Set<string>();
   for (const b of blocks) {
@@ -82,6 +90,15 @@ async function blockedPairUserIds(userId: string): Promise<Set<string>> {
 export async function isBlockedPair(userAId: string, userBId: string): Promise<boolean> {
   const blocked = await blockedPairUserIds(userAId);
   return blocked.has(userBId);
+}
+
+/** True if `userId` is in a block pair with ANY of `otherIds` — one query
+ * regardless of how many ids are checked, for the cases (an event's creator plus
+ * its co-hosts) where more than one person counts as "the other side". */
+export async function isBlockedPairWithAny(userId: string, otherIds: string[]): Promise<boolean> {
+  if (otherIds.length === 0) return false;
+  const blocked = await blockedPairUserIds(userId);
+  return otherIds.some((id) => blocked.has(id));
 }
 
 /** People this user has blocked — specifically the ones THEY initiated
@@ -234,9 +251,6 @@ export async function listPartnershipsForChurch(churchId: string) {
   }));
 }
 
-/** OPEN ride requests at a church, for the volunteer Rides Board — no
- * student contact info here since it's not relevant until claimed (and
- * there's no volunteer assigned yet to reveal it to). */
 /** OPEN rides for a church's board — every row here is pre-claim by
  * definition (status: OPEN), so FIRST_VISIT rides get the brief's "first
  * name + profile photo only until claimed" treatment applied unconditionally
@@ -244,19 +258,29 @@ export async function listPartnershipsForChurch(churchId: string) {
  * rules elsewhere. GENERAL rides keep showing the full name — that
  * restriction is specifically about a stranger visiting a church for the
  * first time, not a student already known to their own church's volunteers. */
-export async function listOpenRideRequestsForChurch(churchId: string) {
-  const rides = await prisma.rideRequest.findMany({
-    where: { churchId, status: RIDE_STATUS.OPEN },
-    include: { student: { select: { id: true, name: true, photoUrl: true } } },
-    orderBy: { date: "asc" },
-  });
-  return rides.map((r) => ({
-    ...r,
-    student:
-      r.type === RIDE_REQUEST_TYPE.FIRST_VISIT
-        ? { ...r.student, name: r.student.name.split(" ")[0] }
-        : r.student,
-  }));
+export async function listOpenRideRequestsForChurch(churchId: string, viewerId: string) {
+  // Blocked pairs must never see each other in a listing (safety rule 2) —
+  // the same exclusion listMentorsForChurch applies to the friend directory.
+  // Without it a blocked volunteer could claim a blocked student's ride, and
+  // claiming emails both parties their real addresses, so this board was a
+  // path around both the block rule *and* the contact-info rule.
+  const [rides, excluded] = await Promise.all([
+    prisma.rideRequest.findMany({
+      where: { churchId, status: RIDE_STATUS.OPEN },
+      include: { student: { select: { id: true, name: true, photoUrl: true } } },
+      orderBy: { date: "asc" },
+    }),
+    blockedPairUserIds(viewerId),
+  ]);
+  return rides
+    .filter((r) => !excluded.has(r.studentId))
+    .map((r) => ({
+      ...r,
+      student:
+        r.type === RIDE_REQUEST_TYPE.FIRST_VISIT
+          ? { ...r.student, name: r.student.name.split(" ")[0] }
+          : r.student,
+    }));
 }
 
 /** Read-only ride overview for a church's leader — every status, no
@@ -375,12 +399,18 @@ export async function listDiscoverableChurches() {
  * this app, e.g. the admin dashboard's memberCount). Member count is the
  * trust signal shown to visitors — see MemberCountBadge. */
 export async function getChurchProfile(churchId: string) {
-  const [church, memberCount] = await Promise.all([
+  const [church, memberCount, upcomingEventCount] = await Promise.all([
     prisma.church.findUnique({ where: { id: churchId } }),
     prisma.membership.count({ where: { churchId } }),
+    // Same figure listDiscoverableChurches publishes, so it's safe to show a
+    // non-member. It lets the profile say "3 upcoming gatherings" without
+    // exposing what or when they are, which is member-only data.
+    prisma.event.count({
+      where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: new Date() } },
+    }),
   ]);
   if (!church) return null;
-  return { ...church, memberCount };
+  return { ...church, memberCount, upcomingEventCount };
 }
 
 /** All members of a church with their role, for the admin settings

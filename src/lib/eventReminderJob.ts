@@ -27,19 +27,37 @@ export async function sendDueEventReminders(now: Date = new Date()): Promise<{ s
     },
   });
 
+  // Batched per event rather than one-await-at-a-time. This runs as a Vercel
+  // serverless function on a cron, and the previous shape cost one serial
+  // round-trip to Resend *plus* one to Postgres per RSVP — a few hundred due
+  // reminders would run out the function's time limit partway through the
+  // batch. The template only depends on the event, so it's built once per event
+  // instead of once per recipient, the sends go out together, and the
+  // reminderSentAt stamps collapse into a single updateMany.
   let sent = 0;
   for (const event of events) {
-    for (const rsvp of event.rsvps) {
-      const email = eventReminderEmail({
-        eventTitle: event.title,
-        eventId: event.id,
-        startsAt: event.startsAt,
-        location: event.location,
-      });
-      await sendEmail({ to: rsvp.user.email, subject: email.subject, body: email.text, html: email.html });
-      await prisma.eventRsvp.update({ where: { id: rsvp.id }, data: { reminderSentAt: now } });
-      sent += 1;
+    if (event.rsvps.length === 0) {
+      continue;
     }
+    const email = eventReminderEmail({
+      eventTitle: event.title,
+      eventId: event.id,
+      startsAt: event.startsAt,
+      location: event.location,
+    });
+    await Promise.all(
+      event.rsvps.map((rsvp) =>
+        sendEmail({ to: rsvp.user.email, subject: email.subject, body: email.text, html: email.html }),
+      ),
+    );
+    // sendEmail never throws (it logs delivery failures), so reaching here means
+    // every send was attempted — safe to stamp them all as reminded, which keeps
+    // the "never double-send on a retried invocation" guarantee intact.
+    await prisma.eventRsvp.updateMany({
+      where: { id: { in: event.rsvps.map((r) => r.id) } },
+      data: { reminderSentAt: now },
+    });
+    sent += event.rsvps.length;
   }
 
   return { sent, events: events.filter((e) => e.rsvps.length > 0).length };
