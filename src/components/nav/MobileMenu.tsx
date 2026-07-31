@@ -189,6 +189,11 @@ export function MobileMenu({
                       )}
                     </span>
                     {link.label}
+                    {!!link.badgeCount && (
+                      <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-accent-500 px-1.5 text-xs font-bold leading-none text-white">
+                        {link.badgeCount > 9 ? "9+" : link.badgeCount}
+                      </span>
+                    )}
                   </Link>
                 );
               })}

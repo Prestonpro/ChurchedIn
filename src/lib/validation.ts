@@ -146,6 +146,23 @@ export const rideRequestSchema = z.object({
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 
+export const messageSchema = z.object({
+  body: z.string().trim().min(1, "Type a message first").max(2000),
+});
+
+export const REPORT_REASONS = [
+  "Made me uncomfortable",
+  "Inappropriate messages",
+  "Harassment",
+  "Spam or scam",
+  "Something else",
+] as const;
+
+export const reportConversationSchema = z.object({
+  reason: z.enum(REPORT_REASONS),
+  details: z.string().trim().max(1000).optional().or(z.literal("")),
+});
+
 /** Formats the first Zod issue as a single plain-language string for form errors. */
 export function firstIssueMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Please check the form and try again.";

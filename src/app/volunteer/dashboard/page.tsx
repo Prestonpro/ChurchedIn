@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree, Car } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree, Car, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listConnectionsAsMentor, listOpenRideRequestsForChurch } from "@/lib/queries";
@@ -140,7 +140,12 @@ export default async function VolunteerDashboardPage() {
                       </p>
                     </div>
                   </div>
-                  <EndConnectionButton connectionId={c.id} />
+                  <div className="flex items-center gap-2">
+                    <LinkButton href={`/messages/${c.id}`} variant="secondary" size="sm">
+                      <ChatCircleDots weight="bold" className="size-4" /> Message
+                    </LinkButton>
+                    <EndConnectionButton connectionId={c.id} />
+                  </div>
                 </div>
                 <MeetingPlanEditor connectionId={c.id} plan={c.meetingPlan} />
               </div>

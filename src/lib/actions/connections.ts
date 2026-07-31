@@ -143,6 +143,46 @@ export async function cancelConnectionRequestAction(connectionId: string): Promi
   revalidatePath("/student/mentors");
 }
 
+/**
+ * Creates the Conversation row the moment a connection is accepted — see the
+ * doc comment on the Conversation model. `upsert` (not `create`) so this stays
+ * safe to call more than once (e.g. a retried request after a network blip):
+ * a second call is a no-op rather than a unique-constraint crash.
+ *
+ * The tricky part is `churchId`: MentorConnection itself carries no churchId
+ * (the two people only need to have shared a church at *request* time — see
+ * requestConnectionAction's sharesChurch check — not necessarily every
+ * moment after). So it's resolved here, once, by finding the first church
+ * both people are still members of right now. In the near-certain common
+ * case that's the same church they connected over. In the rare case
+ * membership has changed since and they no longer share any church, this
+ * silently skips creating the conversation rather than blocking the
+ * ACCEPT itself — the friend connection is the primary action here, and
+ * messaging simply isn't available for that pair, same practical effect as
+ * any other feature that needs a shared church to make sense.
+ */
+async function createConversationForAcceptedConnection(
+  connectionId: string,
+  studentId: string,
+  mentorId: string,
+): Promise<void> {
+  const [studentMemberships, mentorMemberships] = await Promise.all([
+    prisma.membership.findMany({ where: { userId: studentId }, select: { churchId: true } }),
+    prisma.membership.findMany({ where: { userId: mentorId }, select: { churchId: true } }),
+  ]);
+  const mentorChurchIds = new Set(mentorMemberships.map((m) => m.churchId));
+  const sharedChurchId = studentMemberships.find((m) => mentorChurchIds.has(m.churchId))?.churchId;
+  if (!sharedChurchId) {
+    return;
+  }
+
+  await prisma.conversation.upsert({
+    where: { connectionId },
+    create: { connectionId, studentId, mentorId, churchId: sharedChurchId },
+    update: {},
+  });
+}
+
 async function requireConnectionParticipant(connectionId: string) {
   const user = await requireUser();
   const connection = await prisma.mentorConnection.findUnique({
@@ -210,6 +250,8 @@ export async function respondToConnectionAction(
         html: forMentor.html,
       }),
     ]);
+
+    await createConversationForAcceptedConnection(connectionId, connection.studentId, connection.mentorId);
   } else {
     const declinedEmail = connectionDeclinedEmail({ mentorName: connection.mentor.name });
     await sendEmail({

@@ -11,6 +11,7 @@ import {
 } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
 import { rideContactVisible } from "@/lib/rideState";
+import { canSendMessage, canViewConversation } from "@/lib/messaging";
 
 export function listEventsForChurch(churchId: string) {
   return prisma.event.findMany({
@@ -420,5 +421,133 @@ export function listMembersForChurch(churchId: string) {
     where: { churchId },
     include: { user: { select: { id: true, name: true, email: true } } },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Messaging
+// ---------------------------------------------------------------------------
+
+/** Every conversation `userId` is a participant in, most recently active
+ * first, for /messages. `studentId`/`mentorId` are queried directly (not
+ * through `connection`) since they're denormalized onto Conversation for
+ * exactly this — see the model's doc comment. */
+export async function listConversationsForUser(userId: string) {
+  const conversations = await prisma.conversation.findMany({
+    where: { OR: [{ studentId: userId }, { mentorId: userId }] },
+    orderBy: { lastMessageAt: "desc" },
+    include: {
+      // Conversation only stores studentId/mentorId as plain scalars (for the
+      // filter above); the actual User rows for display come through the
+      // connection, which already has that relation.
+      connection: {
+        select: {
+          status: true,
+          student: { select: { id: true, name: true } },
+          mentor: { select: { id: true, name: true } },
+        },
+      },
+      messages: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: { body: true, senderId: true, createdAt: true, readAt: true },
+      },
+    },
+  });
+
+  return conversations.map((c) => {
+    const otherParty = c.studentId === userId ? c.connection.mentor : c.connection.student;
+    return {
+      id: c.id,
+      connectionId: c.connectionId,
+      connectionStatus: c.connection.status,
+      lastMessageAt: c.lastMessageAt,
+      lastMessage: c.messages[0] ?? null,
+      otherParty,
+    };
+  });
+}
+
+/** Total unread messages across every conversation `userId` is in — the nav
+ * badge's count, computed on every authenticated page render the same way
+ * hasUnseenEvents already is. One join level (through `conversation`'s
+ * denormalized studentId/mentorId), not through `connection`. */
+export async function countUnreadMessagesForUser(userId: string): Promise<number> {
+  return prisma.message.count({
+    where: {
+      readAt: null,
+      senderId: { not: userId },
+      conversation: { OR: [{ studentId: userId }, { mentorId: userId }] },
+    },
+  });
+}
+
+/**
+ * Loads one conversation's full thread for `viewerId`, enforcing every
+ * messaging safety rule at the query layer (same defense-in-depth spirit as
+ * listConnectionsAsStudent/Mentor): the viewer must be a participant, the
+ * pair must not be blocked, and the connection must be ACCEPTED or ENDED
+ * (canViewConversation). Returns null rather than throwing when any of
+ * those fail, so the page can render a normal "not found"/"not available"
+ * state instead of a 500.
+ */
+export async function getConversationForConnection(connectionId: string, viewerId: string) {
+  const conversation = await prisma.conversation.findUnique({
+    where: { connectionId },
+    include: {
+      connection: {
+        select: {
+          status: true,
+          student: { select: { id: true, name: true } },
+          mentor: { select: { id: true, name: true } },
+        },
+      },
+      messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
+    },
+  });
+  if (!conversation) return null;
+  if (conversation.studentId !== viewerId && conversation.mentorId !== viewerId) return null;
+
+  const isBlocked = await isBlockedPair(conversation.studentId, conversation.mentorId);
+  if (!canViewConversation(conversation.connection.status, isBlocked)) return null;
+
+  const otherParty = conversation.studentId === viewerId ? conversation.connection.mentor : conversation.connection.student;
+  return {
+    id: conversation.id,
+    connectionId: conversation.connectionId,
+    connectionStatus: conversation.connection.status,
+    churchId: conversation.churchId,
+    otherParty,
+    messages: conversation.messages,
+    canSend: canSendMessage(conversation.connection.status, isBlocked),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Reports (moderation queue)
+// ---------------------------------------------------------------------------
+
+/** A church leader's moderation queue — OPEN reports first (the ones that
+ * actually need action), most recent first within each status. Includes the
+ * reported conversation's messages so an admin reviewing a report has the
+ * actual context, not just a reason string — this is exactly the moment the
+ * app's usual message-privacy stance gives way to a legitimate safety
+ * review, the same reasoning contact-info reveals already operate under. */
+export function listReportsForChurch(churchId: string) {
+  return prisma.report.findMany({
+    where: { churchId },
+    orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    include: {
+      reportedBy: { select: { id: true, name: true } },
+      reportedUser: { select: { id: true, name: true } },
+      conversation: {
+        include: {
+          messages: {
+            orderBy: { createdAt: "asc" },
+            select: { id: true, body: true, senderId: true, createdAt: true },
+          },
+        },
+      },
+    },
   });
 }

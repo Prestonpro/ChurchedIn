@@ -3,7 +3,7 @@ import { UsersThree, SignOut } from "@phosphor-icons/react/dist/ssr";
 import type { CurrentUser } from "@/lib/auth";
 import { ROLES, profilePathForRole, type Role } from "@/lib/constants";
 import { logoutAction } from "@/lib/actions/auth";
-import { hasUnseenEvents } from "@/lib/queries";
+import { hasUnseenEvents, countUnreadMessagesForUser } from "@/lib/queries";
 import { Avatar } from "@/components/ui/Avatar";
 import { HelpGuideButton } from "@/components/HelpGuideButton";
 import { NavLinks, type NavLink } from "./NavLinks";
@@ -19,15 +19,17 @@ const BROWSING_LINKS: NavLink[] = [
   { href: "/join", label: "Join Church with Code", iconKey: "church" }
 ];
 
-function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): NavLink[] {
+function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string, unreadMessages: number): NavLink[] {
   const events: NavLink = { href: "/events", label: "Events", iconKey: "events", hasBadge: unseenEvents };
   const discover: NavLink = { href: "/discover", label: "Discover", iconKey: "discover" };
+  const messages: NavLink = { href: "/messages", label: "Messages", iconKey: "messages", badgeCount: unreadMessages };
   if (role === ROLES.CHURCH_ADMIN) {
     return [
       { href: "/admin/dashboard", label: "Dashboard", iconKey: "dashboard" },
       events,
       discover,
       { href: "/admin/rides", label: "Rides", iconKey: "rides" },
+      { href: "/admin/reports", label: "Reports", iconKey: "reports" },
       { href: `/churches/${churchId}/settings`, label: "Church settings", iconKey: "settings" },
     ];
   }
@@ -36,6 +38,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): N
       { href: "/volunteer/dashboard", label: "Dashboard", iconKey: "dashboard" },
       events,
       discover,
+      messages,
       { href: "/volunteer/rides", label: "Rides", iconKey: "rides" },
     ];
   }
@@ -44,6 +47,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string): N
     events,
     discover,
     { href: "/student/mentors", label: "Friends", iconKey: "mentors" },
+    messages,
     { href: "/student/rides", label: "Rides", iconKey: "rides" },
   ];
 }
@@ -65,8 +69,15 @@ export async function AuthShell({
   const unseenEvents = user.activeMembership
     ? await hasUnseenEvents(user.activeMembership.churchId, user.activeMembership.lastSeenEventsAt)
     : false;
+  // Only STUDENT/VOLUNTEER can have a MentorConnection at all — skip the
+  // query entirely for CHURCH_ADMIN and church-less accounts rather than
+  // running a count that can only ever be zero for them.
+  const unreadMessages =
+    user.activeMembership && (role === ROLES.STUDENT || role === ROLES.VOLUNTEER)
+      ? await countUnreadMessagesForUser(user.id)
+      : 0;
   const links = user.activeMembership
-    ? navLinksForRole(role, unseenEvents, user.activeMembership.churchId)
+    ? navLinksForRole(role, unseenEvents, user.activeMembership.churchId, unreadMessages)
     : BROWSING_LINKS;
 
   return (
