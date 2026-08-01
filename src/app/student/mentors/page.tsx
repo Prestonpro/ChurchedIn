@@ -1,4 +1,5 @@
-import { UsersThree, Translate, Sparkle, EnvelopeSimple, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { UsersThree, Translate, Sparkle, EnvelopeSimple, Prohibit, ChatCircleDots, LinkedinLogo, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
@@ -92,10 +93,10 @@ export default async function MentorDirectoryPage() {
                 style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
+                  <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
                     <Avatar name={m.user.name} />
                     <div>
-                      <h2 className="font-bold text-ink">{m.user.name}</h2>
+                      <h2 className="font-bold text-ink hover:text-brand-700 hover:underline">{m.user.name}</h2>
                       {shared.size > 0 && (
                         <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
                           <Translate weight="bold" className="size-3" /> Speaks{" "}
@@ -103,7 +104,7 @@ export default async function MentorDirectoryPage() {
                         </p>
                       )}
                     </div>
-                  </div>
+                  </Link>
                   <BlockButton userId={m.userId} name={m.user.name} />
                 </div>
                 {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
@@ -121,7 +122,27 @@ export default async function MentorDirectoryPage() {
                     rel="noopener noreferrer"
                     className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline"
                   >
-                    View LinkedIn Profile
+                    <LinkedinLogo className="size-4" /> LinkedIn
+                  </a>
+                )}
+                {m.facebookUrl && (
+                  <a
+                    href={m.facebookUrl.startsWith('http') ? m.facebookUrl : `https://${m.facebookUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-3 mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:underline"
+                  >
+                    <FacebookLogo className="size-4" /> Facebook
+                  </a>
+                )}
+                {m.instagramUrl && (
+                  <a
+                    href={m.instagramUrl.startsWith('http') ? m.instagramUrl : `https://${m.instagramUrl}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="ml-3 mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-pink-600 hover:underline"
+                  >
+                    <InstagramLogo className="size-4" /> Instagram
                   </a>
                 )}
 

@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { requireUser } from "@/lib/auth";
 import { getChurchProfile, listMembersForChurch } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -39,9 +40,10 @@ export default async function ChurchMembersPage({ params }: { params: Promise<{ 
         <Card>
           <div className="space-y-2">
             {members.map((m) => (
-              <div
+              <Link
                 key={m.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"
+                href={`/profile/${m.userId}`}
+                className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-line p-3 transition-brand hover:border-brand-200 hover:bg-brand-50/40"
               >
                 <div className="flex items-center gap-2.5">
                   <Avatar name={m.user.name} size="sm" />
@@ -55,7 +57,7 @@ export default async function ChurchMembersPage({ params }: { params: Promise<{ 
                 <Badge tone={m.role === ROLES.CHURCH_ADMIN ? "brand" : "neutral"}>
                   {roleLabel(m.role as Role)}
                 </Badge>
-              </div>
+              </Link>
             ))}
           </div>
         </Card>

@@ -1,4 +1,5 @@
-import { Car, EnvelopeSimple, MapPin } from "@phosphor-icons/react/dist/ssr";
+import Link from "next/link";
+import { Car, EnvelopeSimple, MapPin, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listRideRequestsForStudent } from "@/lib/queries";
 import { rideContactVisible } from "@/lib/rideState";
@@ -8,6 +9,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
+import { LinkButton } from "@/components/ui/Button";
 import { RideActionButton } from "@/components/RideActionButton";
 import { RideRequestForm } from "./RideRequestForm";
 import { ROLES, RIDE_STATUS } from "@/lib/constants";
@@ -75,14 +77,24 @@ export default async function StudentRidesPage() {
                   {ride.volunteer && rideContactVisible(ride.status) && (
                     <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-line bg-paper p-3">
                       <Avatar name={ride.volunteer.name} size="sm" />
-                      <div>
-                        <p className="text-sm font-semibold text-ink">{ride.volunteer.name}</p>
+                      <div className="flex-1">
+                        <Link
+                          href={`/profile/${ride.volunteer.id}`}
+                          className="text-sm font-semibold text-ink hover:text-brand-700 hover:underline"
+                        >
+                          {ride.volunteer.name}
+                        </Link>
                         {ride.volunteer.email && (
                           <p className="flex items-center gap-1.5 text-xs text-ink-muted">
                             <EnvelopeSimple weight="bold" className="size-3.5" /> {ride.volunteer.email}
                           </p>
                         )}
                       </div>
+                      {ride.connectionId && (
+                        <LinkButton href={`/messages/${ride.connectionId}`} variant="secondary" size="sm">
+                          <ChatCircleDots weight="bold" className="size-4" /> Message
+                        </LinkButton>
+                      )}
                     </div>
                   )}
 

@@ -139,7 +139,9 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
       user: { memberships: { some: { churchId } } },
       OR: [{ openToMentor: true }, { user: { connectionsAsMentor: { some: { studentId: viewerId } } } }],
     },
-    include: { user: { select: { id: true, name: true, bio: true, photoUrl: true } } },
+    include: {
+      user: { select: { id: true, name: true, bio: true, photoUrl: true } },
+    },
   });
 
   return mentors.filter((m) => !excluded.has(m.userId));
@@ -343,11 +345,21 @@ export async function listRideRequestsForStudent(studentId: string) {
     include: { volunteer: { select: { id: true, name: true, email: true } } },
     orderBy: { createdAt: "desc" },
   });
+  // Also fetch accepted connections between this student and any of the volunteers
+  const volunteerIds = rides.map((r) => r.volunteerId).filter(Boolean) as string[];
+  const acceptedConnections = volunteerIds.length
+    ? await prisma.mentorConnection.findMany({
+        where: { studentId, mentorId: { in: volunteerIds }, status: CONNECTION_STATUS.ACCEPTED },
+        select: { id: true, mentorId: true },
+      })
+    : [];
+  const connectionByVolunteer = new Map(acceptedConnections.map((c) => [c.mentorId, c.id]));
   return rides.map((r) => ({
     ...r,
     volunteer: r.volunteer
       ? { ...r.volunteer, email: rideContactVisible(r.status) ? r.volunteer.email : null }
       : null,
+    connectionId: r.volunteerId ? (connectionByVolunteer.get(r.volunteerId) ?? null) : null,
   }));
 }
 
@@ -433,6 +445,54 @@ export function listMembersForChurch(churchId: string) {
     where: { churchId },
     include: { user: { select: { id: true, name: true, email: true } } },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
+  });
+}
+
+/** Full profile for the /profile/[userId] page — includes mentor profile,
+ * student profile, and church memberships so the page can verify the
+ * viewer shares a church with this person. */
+export async function getUserProfile(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      bio: true,
+      photoUrl: true,
+      createdAt: true,
+      memberships: {
+        select: { churchId: true, role: true, church: { select: { name: true } } },
+      },
+      mentorProfile: {
+        select: {
+          jobTitle: true,
+          company: true,
+          industry: true,
+          languages: true,
+          hobbies: true,
+          interests: true,
+          linkedinUrl: true,
+          facebookUrl: true,
+          instagramUrl: true,
+          openToMentor: true,
+        },
+      },
+      studentProfile: {
+        select: {
+          countryOfOrigin: true,
+          school: true,
+          major: true,
+          graduationYear: true,
+          languages: true,
+          hobbies: true,
+          interests: true,
+          careerGoals: true,
+          linkedinUrl: true,
+          facebookUrl: true,
+          instagramUrl: true,
+        },
+      },
+    },
   });
 }
 

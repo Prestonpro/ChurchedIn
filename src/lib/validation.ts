@@ -109,6 +109,8 @@ export const mentorProfileSchema = z.object({
   hobbies: z.string().trim().max(300).optional().or(z.literal("")),
   interests: z.string().trim().max(500).optional().or(z.literal("")),
   linkedinUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
+  facebookUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
+  instagramUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
   openToMentor: z.boolean().default(true),
 });
 
@@ -160,6 +162,20 @@ export const REPORT_REASONS = [
 
 export const reportConversationSchema = z.object({
   reason: z.enum(REPORT_REASONS),
+  details: z.string().trim().max(1000).optional().or(z.literal("")),
+});
+
+export const REPORT_USER_REASONS = [
+  "Made me uncomfortable",
+  "Inappropriate behavior",
+  "Harassment",
+  "Spam or scam",
+  "Something else",
+] as const;
+
+export const reportUserSchema = z.object({
+  reportedUserId: z.string().min(1),
+  reason: z.enum(REPORT_USER_REASONS),
   details: z.string().trim().max(1000).optional().or(z.literal("")),
 });
 

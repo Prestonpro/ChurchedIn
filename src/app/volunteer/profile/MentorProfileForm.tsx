@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Briefcase, Building, LinkedinLogo } from "@phosphor-icons/react/dist/ssr";
+import { Briefcase, Building, LinkedinLogo, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
 import { updateMentorProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
@@ -20,6 +20,8 @@ export function MentorProfileForm({
     industry: string;
     hobbies: string;
     linkedinUrl: string;
+    facebookUrl: string;
+    instagramUrl: string;
   };
 }) {
   const [state, formAction] = useActionState(updateMentorProfileAction, undefined);
@@ -63,6 +65,20 @@ export function MentorProfileForm({
           icon={LinkedinLogo}
           defaultValue={initial.linkedinUrl}
           placeholder="https://linkedin.com/in/..."
+        />
+        <Field
+          label="Facebook profile (optional)"
+          name="facebookUrl"
+          icon={FacebookLogo}
+          defaultValue={initial.facebookUrl}
+          placeholder="https://facebook.com/..."
+        />
+        <Field
+          label="Instagram profile (optional)"
+          name="instagramUrl"
+          icon={InstagramLogo}
+          defaultValue={initial.instagramUrl}
+          placeholder="https://instagram.com/..."
         />
       </div>
       

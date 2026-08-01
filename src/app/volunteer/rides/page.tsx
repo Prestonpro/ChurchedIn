@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Car, EnvelopeSimple, MapPin, Sparkle } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listOpenRideRequestsForChurch, listClaimedRideRequestsForVolunteer } from "@/lib/queries";
@@ -53,7 +54,12 @@ export default async function VolunteerRidesPage() {
                   <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-line bg-paper p-3">
                     <Avatar name={ride.student.name} size="sm" />
                     <div>
-                      <p className="text-sm font-semibold text-ink">{ride.student.name}</p>
+                      <Link
+                        href={`/profile/${ride.student.id}`}
+                        className="text-sm font-semibold text-ink hover:text-brand-700 hover:underline"
+                      >
+                        {ride.student.name}
+                      </Link>
                       {ride.student.email && (
                         <p className="flex items-center gap-1.5 text-xs text-ink-muted">
                           <EnvelopeSimple weight="bold" className="size-3.5" /> {ride.student.email}

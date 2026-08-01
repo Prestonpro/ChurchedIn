@@ -32,6 +32,8 @@ export async function updateMentorProfileAction(
     hobbies: formData.get("hobbies"),
     interests: formData.get("interests"),
     linkedinUrl: formData.get("linkedinUrl"),
+    facebookUrl: formData.get("facebookUrl"),
+    instagramUrl: formData.get("instagramUrl"),
     openToMentor: formData.get("openToMentor") === "on",
   });
   if (!parsed.success) {
@@ -50,6 +52,8 @@ export async function updateMentorProfileAction(
       hobbies: data.hobbies || null,
       interests: data.interests || null, 
       linkedinUrl: data.linkedinUrl || null,
+      facebookUrl: data.facebookUrl || null,
+      instagramUrl: data.instagramUrl || null,
       openToMentor: data.openToMentor 
     },
     update: { 
@@ -60,6 +64,8 @@ export async function updateMentorProfileAction(
       hobbies: data.hobbies || null,
       interests: data.interests || null, 
       linkedinUrl: data.linkedinUrl || null,
+      facebookUrl: data.facebookUrl || null,
+      instagramUrl: data.instagramUrl || null,
       openToMentor: data.openToMentor 
     },
   });

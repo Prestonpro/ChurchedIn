@@ -46,6 +46,8 @@ export default async function VolunteerProfilePage() {
               industry: mentorProfile?.industry ?? "",
               hobbies: mentorProfile?.hobbies ?? "",
               linkedinUrl: mentorProfile?.linkedinUrl ?? "",
+              facebookUrl: mentorProfile?.facebookUrl ?? "",
+              instagramUrl: mentorProfile?.instagramUrl ?? "",
             }}
           />
         </Card>
