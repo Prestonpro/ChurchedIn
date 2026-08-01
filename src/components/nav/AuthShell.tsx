@@ -83,7 +83,7 @@ export async function AuthShell({
   return (
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line bg-surface/90 backdrop-blur-md">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+        <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-5">
             <Link 
               href={user.activeMembership ? (role === ROLES.CHURCH_ADMIN ? "/admin/dashboard" : `/${role.toLowerCase()}/dashboard`) : "/discover"} 

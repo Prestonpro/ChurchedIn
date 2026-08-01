@@ -69,7 +69,7 @@ export default async function LandingPage() {
   return (
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <span className="flex items-center gap-2 text-base font-bold text-brand-700">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
               <UsersThree weight="fill" className="size-4.5" />
