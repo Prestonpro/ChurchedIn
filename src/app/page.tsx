@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/auth";
+import { dashboardPathForRole } from "@/lib/constants";
 import {
   UsersThree,
   ArrowRight,
@@ -58,9 +60,10 @@ const STEPS = [
     title: "Connect one-on-one",
     body: "Students find friends by language and interest, and message only after a friend accepts.",
   },
-];
+export default async function LandingPage() {
+  const user = await getCurrentUser();
+  const dashboardHref = user?.activeMembership ? dashboardPathForRole(user.activeMembership.role) : null;
 
-export default function LandingPage() {
   return (
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
@@ -72,15 +75,23 @@ export default function LandingPage() {
             <span className="hidden sm:inline">ChurchedIn</span>
           </span>
           <nav className="flex items-center gap-1 text-sm sm:gap-2">
-            <Link
-              href="/login"
-              className="whitespace-nowrap rounded-xl px-2.5 py-2 font-medium text-ink-soft transition-brand hover:text-ink sm:px-3.5"
-            >
-              Log in
-            </Link>
-            <LinkButton href="/signup" size="sm" className="whitespace-nowrap">
-              Start a church <ArrowRight weight="bold" className="size-3.5" />
-            </LinkButton>
+            {user ? (
+              <LinkButton href={dashboardHref ?? "/join"} size="sm" className="whitespace-nowrap">
+                Dashboard <ArrowRight weight="bold" className="size-3.5" />
+              </LinkButton>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="whitespace-nowrap rounded-xl px-2.5 py-2 font-medium text-ink-soft transition-brand hover:text-ink sm:px-3.5"
+                >
+                  Log in
+                </Link>
+                <LinkButton href="/signup" size="sm" className="whitespace-nowrap">
+                  Start a church <ArrowRight weight="bold" className="size-3.5" />
+                </LinkButton>
+              </>
+            )}
           </nav>
         </div>
       </header>

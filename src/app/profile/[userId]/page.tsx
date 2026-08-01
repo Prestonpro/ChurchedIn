@@ -239,7 +239,7 @@ export default async function PublicProfilePage({
 
         {/* Back link */}
         <div className="text-center">
-          <Link href="#" onClick={() => history.back()} className="text-sm text-ink-faint hover:text-ink hover:underline">
+          <Link href="/" className="text-sm text-ink-faint hover:text-ink hover:underline">
             ← Back
           </Link>
         </div>

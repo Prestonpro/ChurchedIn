@@ -42,9 +42,13 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
             >
               <ArrowLeft weight="bold" className="size-4.5" />
             </Link>
-            <Avatar name={conversation.otherParty.name} size="sm" />
+            <Link href={`/profile/${conversation.otherParty.id}`} className="hover:opacity-80">
+              <Avatar name={conversation.otherParty.name} size="sm" />
+            </Link>
             <div>
-              <p className="font-bold text-ink">{conversation.otherParty.name}</p>
+              <Link href={`/profile/${conversation.otherParty.id}`} className="font-bold text-ink hover:text-brand-700 hover:underline">
+                {conversation.otherParty.name}
+              </Link>
               {conversation.connectionStatus === CONNECTION_STATUS.ENDED && (
                 <p className="text-xs text-ink-faint">This connection has ended</p>
               )}
