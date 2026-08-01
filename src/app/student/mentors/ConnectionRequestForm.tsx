@@ -19,7 +19,7 @@ export function ConnectionRequestForm({ mentorId }: { mentorId: string }) {
         placeholder="Say a little about what you're hoping for."
       />
       <SubmitButton size="sm" pendingText="Sending…">
-        <PaperPlaneTilt weight="bold" className="size-3.5" /> Say hi
+        <PaperPlaneTilt weight="bold" className="size-3.5" /> Send friend request
       </SubmitButton>
     </form>
   );
