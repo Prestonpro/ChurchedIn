@@ -38,6 +38,7 @@ export default async function VolunteerProfilePage() {
           </div>
           <MentorProfileForm
             initial={{
+              bio: user.bio ?? "",
               languages: mentorProfile?.languages ?? "",
               interests: mentorProfile?.interests ?? "",
               openToMentor: mentorProfile?.openToMentor ?? false,

@@ -102,6 +102,12 @@ export const eventSchema = z.object({
 });
 
 export const mentorProfileSchema = z.object({
+  // Free-text "about me" shown as-is (a paragraph, not tags) everywhere a
+  // profile is displayed — see User.bio. Kept separate from `interests`
+  // below, which is comma-tag-rendered; without a dedicated field for it,
+  // people wrote a natural sentence into `interests` instead, which then
+  // rendered as one oversized single tag with nothing to split on.
+  bio: z.string().trim().max(500).optional().or(z.literal("")),
   jobTitle: z.string().trim().max(100).optional().or(z.literal("")),
   company: z.string().trim().max(100).optional().or(z.literal("")),
   industry: z.string().trim().max(100).optional().or(z.literal("")),
@@ -115,6 +121,7 @@ export const mentorProfileSchema = z.object({
 });
 
 export const studentProfileSchema = z.object({
+  bio: z.string().trim().max(500).optional().or(z.literal("")),
   countryOfOrigin: z.string().trim().max(100).optional().or(z.literal("")),
   school: z.string().trim().max(150).optional().or(z.literal("")),
   major: z.string().trim().max(100).optional().or(z.literal("")),
@@ -124,6 +131,8 @@ export const studentProfileSchema = z.object({
   interests: z.string().trim().max(500).optional().or(z.literal("")),
   careerGoals: z.string().trim().max(500).optional().or(z.literal("")),
   linkedinUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
+  facebookUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
+  instagramUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
 });
 
 export const connectionRequestSchema = z.object({

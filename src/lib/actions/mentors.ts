@@ -25,6 +25,7 @@ export async function updateMentorProfileAction(
   }
 
   const parsed = mentorProfileSchema.safeParse({
+    bio: formData.get("bio"),
     jobTitle: formData.get("jobTitle"),
     company: formData.get("company"),
     industry: formData.get("industry"),
@@ -41,34 +42,39 @@ export async function updateMentorProfileAction(
   }
   const data = parsed.data;
 
-  await prisma.mentorProfile.upsert({
-    where: { userId: user.id },
-    create: { 
-      userId: user.id, 
-      jobTitle: data.jobTitle || null,
-      company: data.company || null,
-      industry: data.industry || null,
-      languages: data.languages || null, 
-      hobbies: data.hobbies || null,
-      interests: data.interests || null, 
-      linkedinUrl: data.linkedinUrl || null,
-      facebookUrl: data.facebookUrl || null,
-      instagramUrl: data.instagramUrl || null,
-      openToMentor: data.openToMentor 
-    },
-    update: { 
-      jobTitle: data.jobTitle || null,
-      company: data.company || null,
-      industry: data.industry || null,
-      languages: data.languages || null, 
-      hobbies: data.hobbies || null,
-      interests: data.interests || null, 
-      linkedinUrl: data.linkedinUrl || null,
-      facebookUrl: data.facebookUrl || null,
-      instagramUrl: data.instagramUrl || null,
-      openToMentor: data.openToMentor 
-    },
-  });
+  // bio lives on User (shown identically on the Friends card and the public
+  // profile page), not on MentorProfile — two separate writes, same request.
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null } }),
+    prisma.mentorProfile.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        jobTitle: data.jobTitle || null,
+        company: data.company || null,
+        industry: data.industry || null,
+        languages: data.languages || null,
+        hobbies: data.hobbies || null,
+        interests: data.interests || null,
+        linkedinUrl: data.linkedinUrl || null,
+        facebookUrl: data.facebookUrl || null,
+        instagramUrl: data.instagramUrl || null,
+        openToMentor: data.openToMentor,
+      },
+      update: {
+        jobTitle: data.jobTitle || null,
+        company: data.company || null,
+        industry: data.industry || null,
+        languages: data.languages || null,
+        hobbies: data.hobbies || null,
+        interests: data.interests || null,
+        linkedinUrl: data.linkedinUrl || null,
+        facebookUrl: data.facebookUrl || null,
+        instagramUrl: data.instagramUrl || null,
+        openToMentor: data.openToMentor,
+      },
+    }),
+  ]);
 
   revalidatePath("/volunteer/profile");
   revalidatePath("/student/mentors");
@@ -84,6 +90,7 @@ export async function updateStudentProfileAction(
   }
 
   const parsed = studentProfileSchema.safeParse({
+    bio: formData.get("bio"),
     countryOfOrigin: formData.get("countryOfOrigin"),
     school: formData.get("school"),
     major: formData.get("major"),
@@ -93,38 +100,47 @@ export async function updateStudentProfileAction(
     interests: formData.get("interests"),
     careerGoals: formData.get("careerGoals"),
     linkedinUrl: formData.get("linkedinUrl"),
+    facebookUrl: formData.get("facebookUrl"),
+    instagramUrl: formData.get("instagramUrl"),
   });
   if (!parsed.success) {
     return { error: firstIssueMessage(parsed.error) };
   }
   const data = parsed.data;
 
-  await prisma.studentProfile.upsert({
-    where: { userId: user.id },
-    create: {
-      userId: user.id,
-      countryOfOrigin: data.countryOfOrigin || null,
-      school: data.school || null,
-      major: data.major || null,
-      graduationYear: data.graduationYear || null,
-      languages: data.languages || null,
-      hobbies: data.hobbies || null,
-      interests: data.interests || null,
-      careerGoals: data.careerGoals || null,
-      linkedinUrl: data.linkedinUrl || null,
-    },
-    update: {
-      countryOfOrigin: data.countryOfOrigin || null,
-      school: data.school || null,
-      major: data.major || null,
-      graduationYear: data.graduationYear || null,
-      languages: data.languages || null,
-      hobbies: data.hobbies || null,
-      interests: data.interests || null,
-      careerGoals: data.careerGoals || null,
-      linkedinUrl: data.linkedinUrl || null,
-    },
-  });
+  await prisma.$transaction([
+    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null } }),
+    prisma.studentProfile.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        countryOfOrigin: data.countryOfOrigin || null,
+        school: data.school || null,
+        major: data.major || null,
+        graduationYear: data.graduationYear || null,
+        languages: data.languages || null,
+        hobbies: data.hobbies || null,
+        interests: data.interests || null,
+        careerGoals: data.careerGoals || null,
+        linkedinUrl: data.linkedinUrl || null,
+        facebookUrl: data.facebookUrl || null,
+        instagramUrl: data.instagramUrl || null,
+      },
+      update: {
+        countryOfOrigin: data.countryOfOrigin || null,
+        school: data.school || null,
+        major: data.major || null,
+        graduationYear: data.graduationYear || null,
+        languages: data.languages || null,
+        hobbies: data.hobbies || null,
+        interests: data.interests || null,
+        careerGoals: data.careerGoals || null,
+        linkedinUrl: data.linkedinUrl || null,
+        facebookUrl: data.facebookUrl || null,
+        instagramUrl: data.instagramUrl || null,
+      },
+    }),
+  ]);
 
   revalidatePath("/student/profile");
 }

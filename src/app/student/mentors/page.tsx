@@ -4,6 +4,7 @@ import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
 import { formatTenure } from "@/lib/tenure";
+import { tags } from "@/lib/tags";
 import { LinkButton } from "@/components/ui/Button";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -16,13 +17,6 @@ import { EndConnectionButton, CancelRequestButton } from "@/components/Connectio
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
 import { ConnectionRequestForm } from "./ConnectionRequestForm";
 import { CONNECTION_STATUS, ROLES } from "@/lib/constants";
-
-function tags(value: string): string[] {
-  return value
-    .split(",")
-    .map((t) => t.trim())
-    .filter(Boolean);
-}
 
 function sharedTags(a: string[], b: string[]): Set<string> {
   const bLower = new Set(b.map((t) => t.toLowerCase()));

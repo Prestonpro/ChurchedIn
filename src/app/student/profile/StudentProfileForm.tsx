@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import { Globe, GraduationCap, LinkedinLogo, CalendarBlank, BookOpenText } from "@phosphor-icons/react/dist/ssr";
+import { Globe, GraduationCap, LinkedinLogo, FacebookLogo, InstagramLogo, CalendarBlank, BookOpenText } from "@phosphor-icons/react/dist/ssr";
 import { updateStudentProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
@@ -11,16 +11,19 @@ import { COUNTRIES, LANGUAGES, SCHOOLS, MAJORS } from "@/lib/constants";
 export function StudentProfileForm({
   initial,
 }: {
-  initial: { 
-    countryOfOrigin: string; 
-    school: string; 
+  initial: {
+    bio: string;
+    countryOfOrigin: string;
+    school: string;
     major: string;
     graduationYear: string;
-    languages: string; 
+    languages: string;
     hobbies: string;
-    interests: string; 
+    interests: string;
     careerGoals: string;
     linkedinUrl: string;
+    facebookUrl: string;
+    instagramUrl: string;
   };
 }) {
   const [state, formAction] = useActionState(updateStudentProfileAction, undefined);
@@ -28,12 +31,21 @@ export function StudentProfileForm({
   return (
     <form action={formAction} className="space-y-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
+
+      <TextAreaField
+        label="Bio / about me"
+        name="bio"
+        defaultValue={initial.bio}
+        placeholder="A sentence or two about yourself — this shows up as-is on your profile and your Friends card."
+        hint="This is shown as a plain description, not split into tags — write it like you'd introduce yourself."
+      />
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <SearchableSelect 
-          label="Country of origin" 
-          name="countryOfOrigin" 
-          icon={Globe} 
-          defaultValue={initial.countryOfOrigin} 
+        <SearchableSelect
+          label="Country of origin"
+          name="countryOfOrigin"
+          icon={Globe}
+          defaultValue={initial.countryOfOrigin}
           options={COUNTRIES}
         />
         <Field
@@ -42,6 +54,20 @@ export function StudentProfileForm({
           icon={LinkedinLogo}
           defaultValue={initial.linkedinUrl}
           placeholder="https://linkedin.com/in/..."
+        />
+        <Field
+          label="Facebook profile (optional)"
+          name="facebookUrl"
+          icon={FacebookLogo}
+          defaultValue={initial.facebookUrl}
+          placeholder="https://facebook.com/..."
+        />
+        <Field
+          label="Instagram profile (optional)"
+          name="instagramUrl"
+          icon={InstagramLogo}
+          defaultValue={initial.instagramUrl}
+          placeholder="https://instagram.com/..."
         />
       </div>
 

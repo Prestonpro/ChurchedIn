@@ -33,6 +33,7 @@ export default async function StudentProfilePage() {
           <h2 className="mb-4 font-bold text-ink">Your profile</h2>
           <StudentProfileForm
             initial={{
+              bio: user.bio ?? "",
               countryOfOrigin: studentProfile?.countryOfOrigin ?? "",
               school: studentProfile?.school ?? "",
               major: studentProfile?.major ?? "",
@@ -42,6 +43,8 @@ export default async function StudentProfilePage() {
               interests: studentProfile?.interests ?? "",
               careerGoals: studentProfile?.careerGoals ?? "",
               linkedinUrl: studentProfile?.linkedinUrl ?? "",
+              facebookUrl: studentProfile?.facebookUrl ?? "",
+              instagramUrl: studentProfile?.instagramUrl ?? "",
             }}
           />
         </Card>

@@ -11,9 +11,10 @@ import { LANGUAGES, INDUSTRIES } from "@/lib/constants";
 export function MentorProfileForm({
   initial,
 }: {
-  initial: { 
-    languages: string; 
-    interests: string; 
+  initial: {
+    bio: string;
+    languages: string;
+    interests: string;
     openToMentor: boolean;
     jobTitle: string;
     company: string;
@@ -36,6 +37,14 @@ export function MentorProfileForm({
           defaultChecked={initial.openToMentor}
         />
       </div>
+
+      <TextAreaField
+        label="Bio / about me"
+        name="bio"
+        defaultValue={initial.bio}
+        placeholder="A sentence or two about yourself — this shows up as-is on your profile and your Friends card."
+        hint="This is shown as a plain description, not split into tags — write it like you'd introduce yourself."
+      />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field

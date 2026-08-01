@@ -15,6 +15,7 @@ import {
 import type { Icon } from "@phosphor-icons/react";
 import { requireUser } from "@/lib/auth";
 import { getUserProfile } from "@/lib/queries";
+import { tags } from "@/lib/tags";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -24,11 +25,6 @@ import { ProfileConnectionButton } from "@/components/ProfileConnectionButton";
 import { ReportButton } from "@/components/ReportButton";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
-
-function tags(value: string | null | undefined) {
-  if (!value) return [];
-  return value.split(",").map((t) => t.trim()).filter(Boolean);
-}
 
 function SocialLink({
   href,
