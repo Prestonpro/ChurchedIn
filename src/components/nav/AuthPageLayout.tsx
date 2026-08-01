@@ -25,7 +25,7 @@ export function AuthPageLayout({
           <p className="mt-4 text-brand-100">{panelBody}</p>
         </div>
         <p className="text-xs text-brand-200">
-          Contact info stays private until a friend accepts a connection.
+          Plan gatherings, find a ride, and meet your church family.
         </p>
       </div>
 

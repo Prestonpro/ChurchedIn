@@ -137,7 +137,7 @@ export default async function LandingPage() {
         </Reveal>
         <Reveal variant="left" delay={100}>
           <h2 className="mt-5 text-2xl font-extrabold text-ink sm:text-3xl">
-            Contact info stays private until a friend says yes.
+            Plan gatherings, find a ride, and meet your church family.
           </h2>
         </Reveal>
         <Reveal delay={200}>

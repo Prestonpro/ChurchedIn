@@ -105,7 +105,7 @@ export function renderEmailLayout({
           </tr>
           <tr>
             <td style="padding: 28px 40px 32px 40px; border-top:1px solid ${COLOR_BORDER};">
-              <p style="margin:0; font-family: ${FONT_STACK}; font-size:12px; line-height:1.6; color:${COLOR_INK_FAINT};">${footerNote ? escapeHtml(footerNote) : "Contact info stays private until a friend accepts a connection."}</p>
+              <p style="margin:0; font-family: ${FONT_STACK}; font-size:12px; line-height:1.6; color:${COLOR_INK_FAINT};">${footerNote ? escapeHtml(footerNote) : "Plan gatherings, find a ride, and meet your church family."}</p>
             </td>
           </tr>
         </table>
