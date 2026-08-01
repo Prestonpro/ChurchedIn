@@ -74,14 +74,14 @@ export function ChurchCard({
         <Link
           href={`/churches/${church.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-ink-soft"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-ink transition-brand hover:bg-brand-700"
         >
           <UsersThree weight="bold" className="size-3.5" /> Visit profile
         </Link>
         <Link
           href={`/churches/${church.id}?ride=1`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-line-strong bg-white px-2.5 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-ink-faint hover:bg-surface"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-accent-300 bg-accent-50 px-2.5 py-1.5 text-xs font-semibold text-ink transition-brand hover:border-accent-400 hover:bg-accent-100"
         >
           <Car weight="bold" className="size-3.5" /> Need a ride?
         </Link>
