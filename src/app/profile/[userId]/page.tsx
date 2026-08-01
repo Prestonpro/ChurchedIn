@@ -1,9 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import {
-  LinkedinLogo,
-  FacebookLogo,
-  InstagramLogo,
   Briefcase,
   Globe,
   Translate,
@@ -147,13 +144,13 @@ export default async function PublicProfilePage({
           {(profile?.linkedinUrl || profile?.facebookUrl || profile?.instagramUrl) && (
             <div className="flex items-center gap-2 pt-2">
               {profile.linkedinUrl && (
-                <SocialIconLink href={profile.linkedinUrl} icon={LinkedinLogo} label="LinkedIn" brand="linkedin" />
+                <SocialIconLink href={profile.linkedinUrl} label="LinkedIn" brand="linkedin" />
               )}
               {profile.facebookUrl && (
-                <SocialIconLink href={profile.facebookUrl} icon={FacebookLogo} label="Facebook" brand="facebook" />
+                <SocialIconLink href={profile.facebookUrl} label="Facebook" brand="facebook" />
               )}
               {profile.instagramUrl && (
-                <SocialIconLink href={profile.instagramUrl} icon={InstagramLogo} label="Instagram" brand="instagram" />
+                <SocialIconLink href={profile.instagramUrl} label="Instagram" brand="instagram" />
               )}
             </div>
           )}

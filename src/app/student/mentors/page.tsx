@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UsersThree, Translate, Sparkle, Heart, Clock, EnvelopeSimple, Prohibit, ChatCircleDots, LinkedinLogo, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, Translate, Sparkle, Heart, Clock, EnvelopeSimple, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
@@ -117,13 +117,13 @@ export default async function MentorDirectoryPage() {
                 {(m.linkedinUrl || m.facebookUrl || m.instagramUrl) && (
                   <div className="mt-2 flex items-center gap-2">
                     {m.linkedinUrl && (
-                      <SocialIconLink href={m.linkedinUrl} icon={LinkedinLogo} label="LinkedIn" brand="linkedin" />
+                      <SocialIconLink href={m.linkedinUrl} label="LinkedIn" brand="linkedin" />
                     )}
                     {m.facebookUrl && (
-                      <SocialIconLink href={m.facebookUrl} icon={FacebookLogo} label="Facebook" brand="facebook" />
+                      <SocialIconLink href={m.facebookUrl} label="Facebook" brand="facebook" />
                     )}
                     {m.instagramUrl && (
-                      <SocialIconLink href={m.instagramUrl} icon={InstagramLogo} label="Instagram" brand="instagram" />
+                      <SocialIconLink href={m.instagramUrl} label="Instagram" brand="instagram" />
                     )}
                   </div>
                 )}
