@@ -60,6 +60,8 @@ const STEPS = [
     title: "Connect one-on-one",
     body: "Students find friends by language and interest, and message only after a friend accepts.",
   },
+];
+
 export default async function LandingPage() {
   const user = await getCurrentUser();
   const dashboardHref = user?.activeMembership ? dashboardPathForRole(user.activeMembership.role) : null;
