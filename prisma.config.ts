@@ -10,5 +10,10 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // .env has no separate dev database — DATABASE_URL points straight at
+    // production. shadowDatabaseUrl scopes migration diffing to its own
+    // schema on the same instance (see CLAUDE.md's migration workflow) so
+    // `migrate diff` never touches `public`.
+    shadowDatabaseUrl: `${process.env["DIRECT_URL"]}&schema=migrate_scratch`,
   },
 });

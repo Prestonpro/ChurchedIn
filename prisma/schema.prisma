@@ -113,6 +113,16 @@ model Church {
   // comment) — a church-email check is the planned next step.
   claimedAt          DateTime?
 
+  // An explicit, admin-set override for a church seeded onto the discovery
+  // map whose real signup count doesn't yet reflect its actual congregation
+  // size (e.g. a freshly-seeded large real-world church nobody there has
+  // joined this app yet). This is a deliberate, explicit exception to "member
+  // count is the trust signal" above — set it only for known-real churches
+  // being represented ahead of real adoption, never as a way to make a
+  // church look bigger than it is. When null, the real computed count
+  // (memberships.length) is used, unchanged from the original design.
+  displayMemberCount Int?
+
   memberships Membership[]
   events      Event[]
   reports     Report[]

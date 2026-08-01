@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { UsersThree, Translate, Sparkle, EnvelopeSimple, Prohibit, ChatCircleDots, LinkedinLogo, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, Translate, Sparkle, Heart, Clock, EnvelopeSimple, Prohibit, ChatCircleDots, LinkedinLogo, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
+import { formatTenure } from "@/lib/tenure";
 import { LinkButton } from "@/components/ui/Button";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -103,6 +104,9 @@ export default async function MentorDirectoryPage() {
                           {Array.from(shared).join(", ")}, like you
                         </p>
                       )}
+                      <p className="flex items-center gap-1 text-xs text-ink-faint">
+                        <Clock weight="bold" className="size-3" /> {formatTenure(m.memberSince)}
+                      </p>
                     </div>
                   </Link>
                   <BlockButton userId={m.userId} name={m.user.name} />
@@ -176,7 +180,7 @@ export default async function MentorDirectoryPage() {
                           key={`hob-${t}`}
                           className="inline-flex items-center gap-1 rounded-full bg-cat-coffee-soft px-2.5 py-1 text-xs font-medium text-cat-coffee"
                         >
-                          {t}
+                          <Heart weight="bold" className="size-3" /> {t}
                         </span>
                       ))}
                   </div>

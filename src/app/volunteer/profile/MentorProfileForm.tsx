@@ -105,6 +105,7 @@ export function MentorProfileForm({
         name="interests"
         defaultValue={initial.interests}
         placeholder="Career advice, homework help, just being a friend…"
+        hint="Separate each one with a comma — these show up as individual tags on your profile, not as a paragraph."
       />
       <SubmitButton pendingText="Saving…">Save my profile</SubmitButton>
     </form>

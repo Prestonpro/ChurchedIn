@@ -98,6 +98,7 @@ export function StudentProfileForm({
         name="interests"
         defaultValue={initial.interests}
         placeholder="What would you like help with, or enjoy doing?"
+        hint="Separate each one with a comma — these show up as individual tags on your profile, not as a paragraph."
       />
       <SubmitButton pendingText="Saving…">Save profile</SubmitButton>
     </form>

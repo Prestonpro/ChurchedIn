@@ -126,25 +126,61 @@ export function listBlockedUsers(userId: string) {
   });
 }
 
-/** A mentor shows up if they're currently open to mentoring, OR the viewer
- * already has a connection with them (any status) — otherwise a mentor
- * closing themselves off would make an existing pending/accepted/ended
- * connection vanish from the student's own page with no way to see or
- * cancel it. */
+/** Every VOLUNTEER/CHURCH_ADMIN member of this church is a potential friend,
+ * the same population that shows up in the plain church member list —
+ * driven by Membership, not by whether someone has gotten around to filling
+ * out a MentorProfile yet. Previously this queried *from* MentorProfile, so
+ * a volunteer with no profile row at all silently never appeared here even
+ * though they were a real, listed church member; a fresh volunteer looked
+ * like a ghost to every student until they visited their own profile
+ * settings once. A member with no MentorProfile row is treated the same as
+ * MentorProfile.openToMentor's own default (open); one who has a profile and
+ * explicitly closed themselves off is excluded, UNLESS the viewer already
+ * has a connection with them (any status) — otherwise closing yourself off
+ * would make an existing pending/accepted/ended connection vanish from the
+ * student's own page with no way to see or cancel it. */
 export async function listMentorsForChurch(churchId: string, viewerId: string) {
   const excluded = await blockedPairUserIds(viewerId);
 
-  const mentors = await prisma.mentorProfile.findMany({
+  const memberships = await prisma.membership.findMany({
     where: {
-      user: { memberships: { some: { churchId } } },
-      OR: [{ openToMentor: true }, { user: { connectionsAsMentor: { some: { studentId: viewerId } } } }],
+      churchId,
+      role: { in: [ROLES.VOLUNTEER, ROLES.CHURCH_ADMIN] },
+      user: {
+        OR: [
+          { mentorProfile: null },
+          { mentorProfile: { openToMentor: true } },
+          { connectionsAsMentor: { some: { studentId: viewerId } } },
+        ],
+      },
     },
     include: {
-      user: { select: { id: true, name: true, bio: true, photoUrl: true } },
+      user: {
+        select: { id: true, name: true, bio: true, photoUrl: true, mentorProfile: true },
+      },
     },
   });
 
-  return mentors.filter((m) => !excluded.has(m.userId));
+  return memberships
+    .filter((m) => !excluded.has(m.userId))
+    .map((m) => {
+      const profile = m.user.mentorProfile;
+      return {
+        id: profile?.id ?? m.userId,
+        userId: m.userId,
+        jobTitle: profile?.jobTitle ?? null,
+        company: profile?.company ?? null,
+        industry: profile?.industry ?? null,
+        languages: profile?.languages ?? null,
+        hobbies: profile?.hobbies ?? null,
+        interests: profile?.interests ?? null,
+        linkedinUrl: profile?.linkedinUrl ?? null,
+        facebookUrl: profile?.facebookUrl ?? null,
+        instagramUrl: profile?.instagramUrl ?? null,
+        user: { id: m.user.id, name: m.user.name, bio: m.user.bio, photoUrl: m.user.photoUrl },
+        memberSince: m.createdAt,
+      };
+    });
 }
 
 // Both listConnections* functions strip the other party's email from
@@ -413,7 +449,12 @@ export async function listDiscoverableChurches() {
   });
   return churches.map((c) => ({
     ...c,
-    memberCount: c._count.memberships,
+    // displayMemberCount is a deliberate, explicit exception to "member
+    // count is the trust signal" (see the field's doc comment in
+    // schema.prisma) — set only for known-real churches seeded onto the
+    // map ahead of real adoption. Falls back to the real computed count for
+    // every other church, unchanged from the original design.
+    memberCount: c.displayMemberCount ?? c._count.memberships,
     upcomingEventCount: c._count.events,
     hasRealMembers: c.memberships.length > 0,
   }));
@@ -435,7 +476,10 @@ export async function getChurchProfile(churchId: string) {
     }),
   ]);
   if (!church) return null;
-  return { ...church, memberCount, upcomingEventCount };
+  // See displayMemberCount's doc comment in schema.prisma — an explicit
+  // override for known-real churches seeded ahead of real adoption, falling
+  // back to the real computed count everywhere else.
+  return { ...church, memberCount: church.displayMemberCount ?? memberCount, upcomingEventCount };
 }
 
 /** All members of a church with their role, for the admin settings

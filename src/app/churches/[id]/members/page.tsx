@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { Clock } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getChurchProfile, listMembersForChurch } from "@/lib/queries";
+import { formatTenure } from "@/lib/tenure";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
@@ -47,12 +49,17 @@ export default async function ChurchMembersPage({ params }: { params: Promise<{ 
               >
                 <div className="flex items-center gap-2.5">
                   <Avatar name={m.user.name} size="sm" />
-                  <p className="text-sm font-semibold text-ink">
-                    {m.user.name}
-                    {m.userId === user.id && (
-                      <span className="ml-1.5 text-xs font-normal text-ink-faint">(you)</span>
-                    )}
-                  </p>
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      {m.user.name}
+                      {m.userId === user.id && (
+                        <span className="ml-1.5 text-xs font-normal text-ink-faint">(you)</span>
+                      )}
+                    </p>
+                    <p className="flex items-center gap-1 text-xs text-ink-faint">
+                      <Clock weight="bold" className="size-3" /> {formatTenure(m.createdAt)}
+                    </p>
+                  </div>
                 </div>
                 <Badge tone={m.role === ROLES.CHURCH_ADMIN ? "brand" : "neutral"}>
                   {roleLabel(m.role as Role)}
