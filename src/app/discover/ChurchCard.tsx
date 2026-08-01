@@ -66,7 +66,7 @@ export function ChurchCard({
         <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-ink-soft">{church.bio}</p>
       )}
       {church.upcomingEventCount > 0 && (
-        <p className="mt-1.5 text-xs font-medium text-brand-600">
+        <p className="mt-1.5 text-xs font-medium text-ink-soft">
           {church.upcomingEventCount} upcoming {church.upcomingEventCount === 1 ? "gathering" : "gatherings"}
         </p>
       )}

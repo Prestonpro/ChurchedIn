@@ -25,7 +25,7 @@ function tierLabel(memberCount: number): string {
 export function MemberCountBadge({ memberCount }: { memberCount: number }) {
   return (
     <Badge
-      tone="brand"
+      tone="neutral"
       icon={UsersThree}
       iconWeight="fill"
       title={`${memberCount} ${memberCount === 1 ? "member has" : "members have"} joined this church`}
