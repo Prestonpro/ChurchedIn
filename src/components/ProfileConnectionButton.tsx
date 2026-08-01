@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useActionState } from "react";
-import { UserPlus, Check, ChatCircleDots, ArrowCounterClockwise } from "@phosphor-icons/react/dist/ssr";
+import { UserPlus, Check, ChatCircleDots, ArrowCounterClockwise, PaperPlaneRight } from "@phosphor-icons/react/dist/ssr";
 import { requestConnectionAction } from "@/lib/actions/connections";
 import { cancelConnectionRequestAction, endConnectionAction } from "@/lib/actions/connections";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -57,12 +57,24 @@ export function ProfileConnectionButton({
   if (!connection) {
     if (!isOpenToMentor) return null;
     return (
-      <div className="space-y-2">
+      <div className="pt-4 mt-4 border-t border-line">
         <FormError message={requestState && "error" in requestState ? requestState.error : undefined} />
-        <form action={requestAction}>
+        <form action={requestAction} className="space-y-3">
           <input type="hidden" name="mentorId" value={mentorId} />
-          <Button type="submit" size="sm">
-            <UserPlus weight="bold" className="size-4" /> Add {mentorName.split(" ")[0]} as a friend
+          <div className="space-y-1">
+            <label htmlFor="message" className="block text-sm font-bold text-ink-soft">
+              Message (optional)
+            </label>
+            <textarea
+              id="message"
+              name="message"
+              rows={3}
+              className="w-full resize-none rounded-xl border border-line bg-paper px-3 py-2 text-sm text-ink placeholder:text-ink-faint focus:border-brand-500 focus:outline-none focus:ring-1 focus:ring-brand-500"
+              placeholder="Say a little about what you're hoping for."
+            />
+          </div>
+          <Button type="submit" size="sm" className="w-fit">
+            <PaperPlaneRight weight="bold" className="size-4" /> Send friend request
           </Button>
         </form>
       </div>

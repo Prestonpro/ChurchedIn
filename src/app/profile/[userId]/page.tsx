@@ -115,7 +115,7 @@ export default async function PublicProfilePage({
     <AuthShell user={viewer}>
       <div className="mx-auto max-w-xl space-y-4">
         {/* Header card */}
-        <Card>
+        <Card className="flex flex-col gap-6">
           <div className="flex items-start gap-4">
             <Avatar name={target.name} size="lg" />
             <div className="min-w-0 flex-1">
@@ -133,39 +133,46 @@ export default async function PublicProfilePage({
             </div>
           </div>
 
-          {target.bio && <p className="mt-4 text-sm text-ink-soft">{target.bio}</p>}
+          <div className="space-y-4">
+            {target.bio && <p className="text-sm text-ink-soft">{target.bio}</p>}
 
-          {/* Job info */}
-          {isMentor && (target.mentorProfile?.jobTitle || target.mentorProfile?.company) && (
-            <p className="mt-3 flex items-center gap-1.5 text-sm text-ink-muted">
-              <Briefcase className="size-4 shrink-0 text-ink-faint" />
-              {[target.mentorProfile.jobTitle, target.mentorProfile.company].filter(Boolean).join(" · ")}
-            </p>
-          )}
+            {/* Job info */}
+            {isMentor && (target.mentorProfile?.jobTitle || target.mentorProfile?.company) && (
+              <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+                <Briefcase className="size-4 shrink-0 text-ink-faint" />
+                {[target.mentorProfile.jobTitle, target.mentorProfile.company].filter(Boolean).join(" · ")}
+              </p>
+            )}
 
-          {/* Student school info */}
-          {!isMentor && target.studentProfile?.school && (
-            <p className="mt-3 flex items-center gap-1.5 text-sm text-ink-muted">
-              <GraduationCap className="size-4 shrink-0 text-ink-faint" />
-              {[target.studentProfile.major, target.studentProfile.school].filter(Boolean).join(" · ")}
-              {target.studentProfile.graduationYear && ` · Class of ${target.studentProfile.graduationYear}`}
-            </p>
-          )}
+            {/* Student school info */}
+            {!isMentor && target.studentProfile?.school && (
+              <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+                <GraduationCap className="size-4 shrink-0 text-ink-faint" />
+                {[target.studentProfile.major, target.studentProfile.school].filter(Boolean).join(" · ")}
+                {target.studentProfile.graduationYear && ` · Class of ${target.studentProfile.graduationYear}`}
+              </p>
+            )}
 
-          {/* Country of origin */}
-          {!isMentor && target.studentProfile?.countryOfOrigin && (
-            <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
-              <Globe className="size-4 shrink-0 text-ink-faint" />
-              From {target.studentProfile.countryOfOrigin}
-            </p>
-          )}
-        </Card>
+            {/* Country of origin */}
+            {!isMentor && target.studentProfile?.countryOfOrigin && (
+              <p className="flex items-center gap-1.5 text-sm text-ink-muted">
+                <Globe className="size-4 shrink-0 text-ink-faint" />
+                From {target.studentProfile.countryOfOrigin}
+              </p>
+            )}
 
-        {/* Social links */}
-        {(profile?.linkedinUrl || profile?.facebookUrl || profile?.instagramUrl) && (
-          <Card>
-            <h2 className="mb-3 text-sm font-bold text-ink-soft uppercase tracking-wide">Online</h2>
-            <div className="flex flex-wrap gap-2">
+            {/* Career goals (student only) */}
+            {!isMentor && target.studentProfile?.careerGoals && (
+              <div className="pt-2">
+                <h2 className="mb-2 text-sm font-bold text-ink-soft uppercase tracking-wide">Career goals</h2>
+                <p className="text-sm text-ink-soft">{target.studentProfile.careerGoals}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Social links */}
+          {(profile?.linkedinUrl || profile?.facebookUrl || profile?.instagramUrl) && (
+            <div className="flex flex-wrap gap-2 pt-2">
               {profile.linkedinUrl && (
                 <SocialLink href={profile.linkedinUrl} icon={LinkedinLogo} label="LinkedIn" />
               )}
@@ -176,13 +183,11 @@ export default async function PublicProfilePage({
                 <SocialLink href={profile.instagramUrl} icon={InstagramLogo} label="Instagram" />
               )}
             </div>
-          </Card>
-        )}
+          )}
 
-        {/* Tags: languages, interests, hobbies */}
-        {(profile?.languages || profile?.interests || profile?.hobbies) && (
-          <Card>
-            <div className="flex flex-wrap gap-2">
+          {/* Tags: languages, interests, hobbies */}
+          {(profile?.languages || profile?.interests || profile?.hobbies) && (
+            <div className="flex flex-wrap gap-2 pt-1">
               {tags(profile?.languages).map((t) => (
                 <span key={t} className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700">
                   <Translate weight="bold" className="size-3" /> {t}
@@ -199,36 +204,27 @@ export default async function PublicProfilePage({
                 </span>
               ))}
             </div>
-          </Card>
-        )}
+          )}
 
-        {/* Career goals (student only) */}
-        {!isMentor && target.studentProfile?.careerGoals && (
-          <Card>
-            <h2 className="mb-2 text-sm font-bold text-ink-soft uppercase tracking-wide">Career goals</h2>
-            <p className="text-sm text-ink-soft">{target.studentProfile.careerGoals}</p>
-          </Card>
-        )}
-
-        {/* Friend request / connection actions — only for students viewing mentors */}
-        {isViewerStudent && isMentor && !isSelf && (
-          <Card>
-            <h2 className="mb-3 text-sm font-bold text-ink-soft uppercase tracking-wide">Connection</h2>
-            {connectionEmail && (
-              <p className="mb-3 flex items-center gap-1.5 text-sm text-ink-muted">
-                <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
-                {connectionEmail}
-              </p>
-            )}
-            <ProfileConnectionButton
-              mentorId={target.id}
-              mentorName={target.name}
-              isOpenToMentor={target.mentorProfile?.openToMentor ?? false}
-              connection={connection}
-              email={connectionEmail}
-            />
-          </Card>
-        )}
+          {/* Friend request / connection actions — only for students viewing mentors */}
+          {isViewerStudent && isMentor && !isSelf && (
+            <div className="mt-2">
+              {connectionEmail && (
+                <p className="mb-3 flex items-center gap-1.5 text-sm text-ink-muted">
+                  <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
+                  {connectionEmail}
+                </p>
+              )}
+              <ProfileConnectionButton
+                mentorId={target.id}
+                mentorName={target.name}
+                isOpenToMentor={target.mentorProfile?.openToMentor ?? false}
+                connection={connection}
+                email={connectionEmail}
+              />
+            </div>
+          )}
+        </Card>
 
         {/* Report button — never shown to self */}
         {!isSelf && (
