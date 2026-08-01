@@ -1,7 +1,7 @@
 import { prisma } from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
 
-async function main() {
+export async function seedSafetyData() {
   console.log('Seeding safety test data...');
   
   // 1. Get St. Mary's church
@@ -349,11 +349,18 @@ async function main() {
   console.log('Seeding complete!');
 }
 
-main()
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+// Only auto-run when executed directly (`npx tsx prisma/seed-safety.ts`),
+// not when imported as a module (e.g. by the temporary production-seed
+// route) — importing must not trigger a run, and process.exit() inside a
+// server route would kill the whole serverless function instance.
+const isDirectRun = import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`;
+if (isDirectRun) {
+  seedSafetyData()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    })
+    .finally(async () => {
+      await prisma.$disconnect();
+    });
+}
