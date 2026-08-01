@@ -74,14 +74,14 @@ export function ChurchCard({
         <Link
           href={`/churches/${church.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-brand hover:bg-brand-700"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-semibold !text-white transition-brand hover:bg-brand-700"
         >
           <UsersThree weight="bold" className="size-3.5" /> Visit profile
         </Link>
         <Link
           href={`/churches/${church.id}?ride=1`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-accent-300 bg-accent-50 px-2.5 py-1.5 text-xs font-semibold text-ink transition-brand hover:border-accent-400 hover:bg-accent-100"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-accent-300 bg-accent-50 px-2.5 py-1.5 text-xs font-semibold !text-ink transition-brand hover:border-accent-400 hover:bg-accent-100"
         >
           <Car weight="bold" className="size-3.5" /> Need a ride?
         </Link>
@@ -115,7 +115,7 @@ export function ChurchCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-line bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-line-dark hover:bg-surface"
+            className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-line bg-paper px-2.5 py-1.5 text-xs font-semibold !text-ink transition-colors hover:border-line-dark hover:bg-surface"
           >
             <NavigationArrow weight="bold" className="size-3.5" /> Get directions
           </a>
