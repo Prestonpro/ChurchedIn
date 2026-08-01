@@ -12,7 +12,6 @@ import {
   EnvelopeSimple,
   CalendarBlank,
 } from "@phosphor-icons/react/dist/ssr";
-import type { Icon } from "@phosphor-icons/react";
 import { requireUser } from "@/lib/auth";
 import { getUserProfile } from "@/lib/queries";
 import { tags } from "@/lib/tags";
@@ -21,33 +20,11 @@ import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { ProfileConnectionButton } from "@/components/ProfileConnectionButton";
 import { ReportButton } from "@/components/ReportButton";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
-
-function SocialLink({
-  href,
-  icon: IconComponent,
-  label,
-}: {
-  href: string;
-  icon: Icon;
-  label: string;
-}) {
-  const url = href.startsWith("http") ? href : `https://${href}`;
-  return (
-    <a
-      href={url}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft transition-brand hover:border-brand-300 hover:bg-brand-50 hover:text-brand-700"
-    >
-      <IconComponent className="size-4" weight="bold" />
-      {label}
-    </a>
-  );
-}
 
 export default async function PublicProfilePage({
   params,
@@ -168,15 +145,15 @@ export default async function PublicProfilePage({
 
           {/* Social links */}
           {(profile?.linkedinUrl || profile?.facebookUrl || profile?.instagramUrl) && (
-            <div className="flex flex-wrap gap-2 pt-2">
+            <div className="flex items-center gap-2 pt-2">
               {profile.linkedinUrl && (
-                <SocialLink href={profile.linkedinUrl} icon={LinkedinLogo} label="LinkedIn" />
+                <SocialIconLink href={profile.linkedinUrl} icon={LinkedinLogo} label="LinkedIn" brand="linkedin" />
               )}
               {profile.facebookUrl && (
-                <SocialLink href={profile.facebookUrl} icon={FacebookLogo} label="Facebook" />
+                <SocialIconLink href={profile.facebookUrl} icon={FacebookLogo} label="Facebook" brand="facebook" />
               )}
               {profile.instagramUrl && (
-                <SocialLink href={profile.instagramUrl} icon={InstagramLogo} label="Instagram" />
+                <SocialIconLink href={profile.instagramUrl} icon={InstagramLogo} label="Instagram" brand="instagram" />
               )}
             </div>
           )}

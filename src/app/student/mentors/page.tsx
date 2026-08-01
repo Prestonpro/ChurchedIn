@@ -10,6 +10,7 @@ import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
+import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BlockButton } from "@/components/BlockButton";
 import { UnblockButton } from "@/components/UnblockButton";
@@ -77,14 +78,14 @@ export default async function MentorDirectoryPage() {
           body="Check back soon — church members haven't signed up to be a friend yet."
         />
       ) : (
-        <div className="grid items-start gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2">
           {rankedMentors.map(({ mentor: m, shared }, i) => {
             const connection = connectionByMentor.get(m.userId);
             return (
               <Card
                 key={m.id}
                 interactive
-                className="flex animate-fade-up flex-col"
+                className="flex h-full animate-fade-up flex-col"
                 style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -113,35 +114,18 @@ export default async function MentorDirectoryPage() {
                   </p>
                 )}
 
-                {m.linkedinUrl && (
-                  <a
-                    href={m.linkedinUrl.startsWith('http') ? m.linkedinUrl : `https://${m.linkedinUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-brand-600 hover:text-brand-700 hover:underline"
-                  >
-                    <LinkedinLogo className="size-4" /> LinkedIn
-                  </a>
-                )}
-                {m.facebookUrl && (
-                  <a
-                    href={m.facebookUrl.startsWith('http') ? m.facebookUrl : `https://${m.facebookUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-3 mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-blue-700 hover:underline"
-                  >
-                    <FacebookLogo className="size-4" /> Facebook
-                  </a>
-                )}
-                {m.instagramUrl && (
-                  <a
-                    href={m.instagramUrl.startsWith('http') ? m.instagramUrl : `https://${m.instagramUrl}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-3 mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-pink-600 hover:underline"
-                  >
-                    <InstagramLogo className="size-4" /> Instagram
-                  </a>
+                {(m.linkedinUrl || m.facebookUrl || m.instagramUrl) && (
+                  <div className="mt-2 flex items-center gap-2">
+                    {m.linkedinUrl && (
+                      <SocialIconLink href={m.linkedinUrl} icon={LinkedinLogo} label="LinkedIn" brand="linkedin" />
+                    )}
+                    {m.facebookUrl && (
+                      <SocialIconLink href={m.facebookUrl} icon={FacebookLogo} label="Facebook" brand="facebook" />
+                    )}
+                    {m.instagramUrl && (
+                      <SocialIconLink href={m.instagramUrl} icon={InstagramLogo} label="Instagram" brand="instagram" />
+                    )}
+                  </div>
                 )}
 
                 {(m.languages || m.interests || m.hobbies) && (
