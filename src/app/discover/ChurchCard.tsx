@@ -74,7 +74,7 @@ export function ChurchCard({
         <Link
           href={`/churches/${church.id}`}
           onClick={(e) => e.stopPropagation()}
-          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-ink transition-brand hover:bg-brand-700"
+          className="flex flex-1 items-center justify-center gap-1 rounded-lg bg-brand-600 px-2.5 py-1.5 text-xs font-semibold text-white transition-brand hover:bg-brand-700"
         >
           <UsersThree weight="bold" className="size-3.5" /> Visit profile
         </Link>
