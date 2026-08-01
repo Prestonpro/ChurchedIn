@@ -96,7 +96,7 @@ export function ChurchCard({
               onRoute();
             }}
             disabled={routeLoading}
-            className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100 disabled:opacity-60"
+            className="mt-1.5 flex w-full cursor-pointer items-center justify-center gap-1 rounded-lg border border-line bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-line-dark hover:bg-surface disabled:opacity-60"
           >
             {routeLoading ? (
               <>
@@ -115,7 +115,7 @@ export function ChurchCard({
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-brand-200 bg-brand-50 px-2.5 py-1.5 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100"
+            className="mt-1.5 flex items-center justify-center gap-1 rounded-lg border border-line bg-paper px-2.5 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-line-dark hover:bg-surface"
           >
             <NavigationArrow weight="bold" className="size-3.5" /> Get directions
           </a>

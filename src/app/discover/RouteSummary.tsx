@@ -53,7 +53,7 @@ export function RouteSummary({
               href={googleMapsDirectionsUrl(state.destination, userLocation)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100"
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-line bg-paper px-3 py-2 text-xs font-semibold text-ink transition-colors hover:border-line-dark hover:bg-surface"
             >
               <NavigationArrow weight="bold" className="size-3.5" /> Open in Google Maps
             </a>
@@ -84,7 +84,7 @@ export function RouteSummary({
               href={googleMapsDirectionsUrl(state.destination, userLocation)}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700 transition-brand hover:border-brand-300 hover:bg-brand-100"
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-line bg-paper px-3 py-2 text-xs font-semibold text-ink transition-colors hover:border-line-dark hover:bg-surface"
             >
               <NavigationArrow weight="bold" className="size-3.5" /> Turn-by-turn in Google Maps
             </a>
