@@ -13,7 +13,13 @@ export async function GET() {
   ]);
 
   const churches = await prisma.church.findMany({
-    select: { id: true, name: true, denomination: true, _count: { select: { memberships: true } } },
+    select: {
+      id: true,
+      name: true,
+      denomination: true,
+      address: true,
+      memberships: { select: { role: true, user: { select: { name: true } } } },
+    },
     orderBy: { createdAt: "desc" },
     take: 40,
   });
@@ -28,11 +34,18 @@ export async function GET() {
     totalUsers,
     communityMemberCount,
     totalChurches,
-    mostRecentChurches: churches.map((c) => ({
-      name: c.name,
-      denomination: c.denomination,
-      members: c._count.memberships,
-    })),
+    churches: churches.map((c) => {
+      const nonJunk = c.memberships.filter((m) => !/^Community Member \d+$/.test(m.user.name));
+      return {
+        id: c.id,
+        name: c.name,
+        denomination: c.denomination,
+        address: c.address,
+        totalMembers: c.memberships.length,
+        junkMembers: c.memberships.length - nonJunk.length,
+        nonJunkMembers: nonJunk.map((m) => `${m.user.name} [${m.role}]`),
+      };
+    }),
     mostRecentUsers: recentUsers.map((u) => ({ name: u.name, createdAt: u.createdAt })),
   });
 }
