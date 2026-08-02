@@ -70,9 +70,9 @@ export default async function LandingPage() {
     <div className="min-h-screen bg-paper">
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
         <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
-          <span className="flex items-center gap-2 text-base font-bold text-brand-700">
-            <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 shrink-0 rounded-full" />
-            <span className="hidden sm:inline">ChurchedIn</span>
+          <span className="flex items-center">
+            <Image src="/icon-192.png" alt="ChurchedIn" width={32} height={32} priority className="size-8 shrink-0 rounded-full sm:hidden" />
+            <Image src="/logo-full.png" alt="ChurchedIn" width={1000} height={270} priority className="hidden h-8 w-auto sm:block" />
           </span>
           <nav className="flex items-center gap-1 text-sm sm:gap-2">
             {user ? (

@@ -88,10 +88,10 @@ export async function AuthShell({
           <div className="flex items-center gap-5">
             <Link
               href={user.activeMembership ? (role === ROLES.CHURCH_ADMIN ? "/admin/dashboard" : `/${role.toLowerCase()}/dashboard`) : "/discover"}
-              className="flex items-center gap-2 text-base font-bold text-brand-700"
+              className="flex items-center text-base font-bold text-brand-700"
             >
-              <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
-              <span className="hidden lg:inline">ChurchedIn</span>
+              <Image src="/icon-192.png" alt="ChurchedIn" width={32} height={32} priority className="size-8 rounded-full lg:hidden" />
+              <Image src="/logo-full.png" alt="ChurchedIn" width={1000} height={270} priority className="hidden h-8 w-auto lg:block" />
             </Link>
             <div className="hidden lg:block">
               <NavLinks links={links} />
