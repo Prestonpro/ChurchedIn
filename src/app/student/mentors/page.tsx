@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UsersThree, Translate, Sparkle, Heart, Clock, EnvelopeSimple, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, UserPlus, Translate, Sparkle, Heart, Clock, EnvelopeSimple, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
@@ -22,6 +22,136 @@ import { CONNECTION_STATUS, ROLES } from "@/lib/constants";
 function sharedTags(a: string[], b: string[]): Set<string> {
   const bLower = new Set(b.map((t) => t.toLowerCase()));
   return new Set(a.filter((t) => bLower.has(t.toLowerCase())));
+}
+
+type RankedMentor = {
+  mentor: Awaited<ReturnType<typeof listMentorsForChurch>>[number];
+  shared: Set<string>;
+};
+type Connection = Awaited<ReturnType<typeof listConnectionsAsStudent>>[number];
+
+function MentorCard({
+  mentor: m,
+  shared,
+  connection,
+  delayMs,
+}: {
+  mentor: RankedMentor["mentor"];
+  shared: Set<string>;
+  connection: Connection | undefined;
+  delayMs: number;
+}) {
+  return (
+    <Card interactive className="flex h-full animate-fade-up flex-col" style={{ animationDelay: `${delayMs}ms` }}>
+      <div className="flex items-start justify-between gap-2">
+        <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
+          <Avatar name={m.user.name} />
+          <div>
+            <h2 className="font-bold text-ink hover:text-brand-700 hover:underline">{m.user.name}</h2>
+            {shared.size > 0 && (
+              <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
+                <Translate weight="bold" className="size-3" /> Speaks{" "}
+                {Array.from(shared).join(", ")}, like you
+              </p>
+            )}
+            <p className="flex items-center gap-1 text-xs text-ink-faint">
+              <Clock weight="bold" className="size-3" /> {formatTenure(m.memberSince)}
+            </p>
+          </div>
+        </Link>
+        <BlockButton userId={m.userId} name={m.user.name} />
+      </div>
+      {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
+
+      {(m.jobTitle || m.company || m.industry) && (
+        <p className="mt-2 text-sm text-ink-muted">
+          {[m.jobTitle, m.company, m.industry].filter(Boolean).join(" • ")}
+        </p>
+      )}
+
+      {(m.linkedinUrl || m.facebookUrl || m.instagramUrl) && (
+        <div className="mt-2 flex items-center gap-2">
+          {m.linkedinUrl && <SocialIconLink href={m.linkedinUrl} label="LinkedIn" brand="linkedin" />}
+          {m.facebookUrl && <SocialIconLink href={m.facebookUrl} label="Facebook" brand="facebook" />}
+          {m.instagramUrl && <SocialIconLink href={m.instagramUrl} label="Instagram" brand="instagram" />}
+        </div>
+      )}
+
+      {(m.languages || m.interests || m.hobbies) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {m.languages &&
+            tags(m.languages).map((t) => (
+              <span
+                key={`lang-${t}`}
+                className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
+                  shared.has(t) ? "bg-brand-600 text-white ring-2 ring-brand-200" : "bg-brand-50 text-brand-700"
+                }`}
+              >
+                <Translate weight="bold" className="size-3" /> {t}
+              </span>
+            ))}
+          {m.interests &&
+            tags(m.interests).map((t) => (
+              <span
+                key={`int-${t}`}
+                className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-medium text-accent-700"
+              >
+                <Sparkle weight="bold" className="size-3" /> {t}
+              </span>
+            ))}
+          {m.hobbies &&
+            tags(m.hobbies).map((t) => (
+              <span
+                key={`hob-${t}`}
+                className="inline-flex items-center gap-1 rounded-full bg-cat-coffee-soft px-2.5 py-1 text-xs font-medium text-cat-coffee"
+              >
+                <Heart weight="bold" className="size-3" /> {t}
+              </span>
+            ))}
+        </div>
+      )}
+
+      <div className="mt-4 flex-1 border-t border-line pt-4">
+        {!connection && <ConnectionRequestForm mentorId={m.userId} />}
+        {connection?.status === CONNECTION_STATUS.PENDING && (
+          <div className="space-y-2">
+            <Badge tone="warning">Request pending</Badge>
+            <CancelRequestButton connectionId={connection.id} />
+          </div>
+        )}
+        {connection?.status === CONNECTION_STATUS.ACCEPTED && (
+          <div className="space-y-2.5">
+            <Badge tone="success">Connected</Badge>
+            <p className="flex items-center gap-1.5 text-sm text-ink-soft">
+              <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
+              {connection.mentor.email}
+            </p>
+            <LinkButton href={`/messages/${connection.id}`} variant="secondary" size="sm">
+              <ChatCircleDots weight="bold" className="size-4" /> Message
+            </LinkButton>
+            <MeetingPlanEditor connectionId={connection.id} plan={connection.meetingPlan} />
+            <EndConnectionButton connectionId={connection.id} />
+          </div>
+        )}
+        {connection?.status === CONNECTION_STATUS.DECLINED && (
+          <div className="space-y-2">
+            <p className="text-sm text-ink-muted">
+              This friend wasn&apos;t able to connect last time. You can try again.
+            </p>
+            <ConnectionRequestForm mentorId={m.userId} />
+          </div>
+        )}
+        {connection?.status === CONNECTION_STATUS.ENDED && (
+          <div className="space-y-2">
+            <p className="text-sm text-ink-muted">This connection has ended.</p>
+            <LinkButton href={`/messages/${connection.id}`} variant="ghost" size="sm">
+              <ChatCircleDots weight="bold" className="size-4" /> View past messages
+            </LinkButton>
+          </div>
+        )}
+      </div>
+    </Card>
+  );
 }
 
 export default async function MentorDirectoryPage() {
@@ -62,6 +192,17 @@ export default async function MentorDirectoryPage() {
       return 0;
     });
 
+  // Split into "your friends" (an accepted connection) and everyone else
+  // you could still add — these used to render mixed together in one grid,
+  // making it hard to tell at a glance who you're actually friends with
+  // yet vs. who's just available to reach out to.
+  const currentFriends = rankedMentors.filter(
+    ({ mentor: m }) => connectionByMentor.get(m.userId)?.status === CONNECTION_STATUS.ACCEPTED,
+  );
+  const addFriends = rankedMentors.filter(
+    ({ mentor: m }) => connectionByMentor.get(m.userId)?.status !== CONNECTION_STATUS.ACCEPTED,
+  );
+
   return (
     <AuthShell user={user}>
       <div className="mb-8">
@@ -78,135 +219,53 @@ export default async function MentorDirectoryPage() {
           body="Check back soon — church members haven't signed up to be a friend yet."
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {rankedMentors.map(({ mentor: m, shared }, i) => {
-            const connection = connectionByMentor.get(m.userId);
-            return (
-              <Card
-                key={m.id}
-                interactive
-                className="flex h-full animate-fade-up flex-col"
-                style={{ animationDelay: `${Math.min(i * 50, 300)}ms` }}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
-                    <Avatar name={m.user.name} />
-                    <div>
-                      <h2 className="font-bold text-ink hover:text-brand-700 hover:underline">{m.user.name}</h2>
-                      {shared.size > 0 && (
-                        <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
-                          <Translate weight="bold" className="size-3" /> Speaks{" "}
-                          {Array.from(shared).join(", ")}, like you
-                        </p>
-                      )}
-                      <p className="flex items-center gap-1 text-xs text-ink-faint">
-                        <Clock weight="bold" className="size-3" /> {formatTenure(m.memberSince)}
-                      </p>
-                    </div>
-                  </Link>
-                  <BlockButton userId={m.userId} name={m.user.name} />
-                </div>
-                {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
-                
-                {(m.jobTitle || m.company || m.industry) && (
-                  <p className="mt-2 text-sm text-ink-muted">
-                    {[m.jobTitle, m.company, m.industry].filter(Boolean).join(" • ")}
-                  </p>
-                )}
+        <>
+          <div className="mb-8">
+            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-muted">
+              <UsersThree weight="bold" className="size-4" /> Your friends ({currentFriends.length})
+            </h2>
+            {currentFriends.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-line p-4 text-sm text-ink-muted">
+                You haven&apos;t connected with anyone yet — send a request below to get started.
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {currentFriends.map(({ mentor: m, shared }, i) => (
+                  <MentorCard
+                    key={m.id}
+                    mentor={m}
+                    shared={shared}
+                    connection={connectionByMentor.get(m.userId)}
+                    delayMs={Math.min(i * 50, 300)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
 
-                {(m.linkedinUrl || m.facebookUrl || m.instagramUrl) && (
-                  <div className="mt-2 flex items-center gap-2">
-                    {m.linkedinUrl && (
-                      <SocialIconLink href={m.linkedinUrl} label="LinkedIn" brand="linkedin" />
-                    )}
-                    {m.facebookUrl && (
-                      <SocialIconLink href={m.facebookUrl} label="Facebook" brand="facebook" />
-                    )}
-                    {m.instagramUrl && (
-                      <SocialIconLink href={m.instagramUrl} label="Instagram" brand="instagram" />
-                    )}
-                  </div>
-                )}
-
-                {(m.languages || m.interests || m.hobbies) && (
-                  <div className="mt-3 flex flex-wrap gap-1.5">
-                    {m.languages &&
-                      tags(m.languages).map((t) => (
-                        <span
-                          key={`lang-${t}`}
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${
-                            shared.has(t)
-                              ? "bg-brand-600 text-white ring-2 ring-brand-200"
-                              : "bg-brand-50 text-brand-700"
-                          }`}
-                        >
-                          <Translate weight="bold" className="size-3" /> {t}
-                        </span>
-                      ))}
-                    {m.interests &&
-                      tags(m.interests).map((t) => (
-                        <span
-                          key={`int-${t}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-medium text-accent-700"
-                        >
-                          <Sparkle weight="bold" className="size-3" /> {t}
-                        </span>
-                      ))}
-                    {m.hobbies &&
-                      tags(m.hobbies).map((t) => (
-                        <span
-                          key={`hob-${t}`}
-                          className="inline-flex items-center gap-1 rounded-full bg-cat-coffee-soft px-2.5 py-1 text-xs font-medium text-cat-coffee"
-                        >
-                          <Heart weight="bold" className="size-3" /> {t}
-                        </span>
-                      ))}
-                  </div>
-                )}
-
-                <div className="mt-4 flex-1 border-t border-line pt-4">
-                  {!connection && <ConnectionRequestForm mentorId={m.userId} />}
-                  {connection?.status === CONNECTION_STATUS.PENDING && (
-                    <div className="space-y-2">
-                      <Badge tone="warning">Request pending</Badge>
-                      <CancelRequestButton connectionId={connection.id} />
-                    </div>
-                  )}
-                  {connection?.status === CONNECTION_STATUS.ACCEPTED && (
-                    <div className="space-y-2.5">
-                      <Badge tone="success">Connected</Badge>
-                      <p className="flex items-center gap-1.5 text-sm text-ink-soft">
-                        <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
-                        {connection.mentor.email}
-                      </p>
-                      <LinkButton href={`/messages/${connection.id}`} variant="secondary" size="sm">
-                        <ChatCircleDots weight="bold" className="size-4" /> Message
-                      </LinkButton>
-                      <MeetingPlanEditor connectionId={connection.id} plan={connection.meetingPlan} />
-                      <EndConnectionButton connectionId={connection.id} />
-                    </div>
-                  )}
-                  {connection?.status === CONNECTION_STATUS.DECLINED && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-ink-muted">
-                        This friend wasn&apos;t able to connect last time. You can try again.
-                      </p>
-                      <ConnectionRequestForm mentorId={m.userId} />
-                    </div>
-                  )}
-                  {connection?.status === CONNECTION_STATUS.ENDED && (
-                    <div className="space-y-2">
-                      <p className="text-sm text-ink-muted">This connection has ended.</p>
-                      <LinkButton href={`/messages/${connection.id}`} variant="ghost" size="sm">
-                        <ChatCircleDots weight="bold" className="size-4" /> View past messages
-                      </LinkButton>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+          <div>
+            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-muted">
+              <UserPlus weight="bold" className="size-4" /> Add friends ({addFriends.length})
+            </h2>
+            {addFriends.length === 0 ? (
+              <p className="rounded-xl border border-dashed border-line p-4 text-sm text-ink-muted">
+                You&apos;re already friends with everyone here!
+              </p>
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-2">
+                {addFriends.map(({ mentor: m, shared }, i) => (
+                  <MentorCard
+                    key={m.id}
+                    mentor={m}
+                    shared={shared}
+                    connection={connectionByMentor.get(m.userId)}
+                    delayMs={Math.min(i * 50, 300)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
 
       {blockedUsers.length > 0 && (
