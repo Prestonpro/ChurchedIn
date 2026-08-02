@@ -289,6 +289,76 @@ export function rideClaimedForVolunteerEmail(opts: {
   return { subject, text, html };
 }
 
+export function rideOfferSeatConfirmedEmail(opts: {
+  volunteerName: string;
+  volunteerEmail: string;
+  date: Date;
+  time: string;
+}): EmailContent {
+  const when = `${opts.date.toLocaleDateString()} · ${opts.time}`;
+  const subject = `You're in: ride with ${opts.volunteerName}`;
+  const text = `You have a confirmed seat on ${opts.volunteerName}'s ride to church on ${when}. You can reach them at ${opts.volunteerEmail}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Your seat is confirmed!",
+    bodyHtml: paragraph(
+      `You have a confirmed seat on <strong>${escapeHtml(opts.volunteerName)}</strong>'s ride to church on <strong>${escapeHtml(when)}</strong>. You can reach them at <a href="mailto:${escapeHtml(opts.volunteerEmail)}" style="color:#409688;">${escapeHtml(opts.volunteerEmail)}</a>.`,
+    ),
+    cta: { label: "View your rides", url: appUrl("/student/rides") },
+  });
+  return { subject, text, html };
+}
+
+export function rideOfferWaitlistedEmail(opts: { volunteerName: string; date: Date; time: string }): EmailContent {
+  const when = `${opts.date.toLocaleDateString()} · ${opts.time}`;
+  const subject = `You're on the waitlist for ${opts.volunteerName}'s ride`;
+  const text = `${opts.volunteerName}'s ride to church on ${when} is currently full. You're on the waitlist and will be notified automatically if a seat opens up.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "You're on the waitlist",
+    bodyHtml: paragraph(
+      `<strong>${escapeHtml(opts.volunteerName)}</strong>'s ride to church on <strong>${escapeHtml(when)}</strong> is currently full. You're on the waitlist and will be notified automatically if a seat opens up.`,
+    ),
+    cta: { label: "View your rides", url: appUrl("/student/rides") },
+  });
+  return { subject, text, html };
+}
+
+export function rideOfferSeatPromotedEmail(opts: {
+  volunteerName: string;
+  volunteerEmail: string;
+  date: Date;
+  time: string;
+}): EmailContent {
+  const when = `${opts.date.toLocaleDateString()} · ${opts.time}`;
+  const subject = `A seat opened up: ride with ${opts.volunteerName}`;
+  const text = `A seat just opened up and you've been moved from the waitlist to confirmed on ${opts.volunteerName}'s ride to church on ${when}. You can reach them at ${opts.volunteerEmail}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "A seat opened up!",
+    bodyHtml: paragraph(
+      `A seat just opened up and you've been moved from the waitlist to <strong>confirmed</strong> on <strong>${escapeHtml(opts.volunteerName)}</strong>'s ride to church on <strong>${escapeHtml(when)}</strong>. You can reach them at <a href="mailto:${escapeHtml(opts.volunteerEmail)}" style="color:#409688;">${escapeHtml(opts.volunteerEmail)}</a>.`,
+    ),
+    cta: { label: "View your rides", url: appUrl("/student/rides") },
+  });
+  return { subject, text, html };
+}
+
+export function rideOfferCancelledEmail(opts: { volunteerName: string; date: Date; time: string }): EmailContent {
+  const when = `${opts.date.toLocaleDateString()} · ${opts.time}`;
+  const subject = `Cancelled: ${opts.volunteerName}'s ride to church`;
+  const text = `${opts.volunteerName}'s ride to church on ${when} has been cancelled. Check the rides board for another option.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Ride cancelled",
+    bodyHtml: paragraph(
+      `<strong>${escapeHtml(opts.volunteerName)}</strong>'s ride to church on <strong>${escapeHtml(when)}</strong> has been cancelled. Check the rides board for another option.`,
+    ),
+    cta: { label: "View available rides", url: appUrl("/student/rides") },
+  });
+  return { subject, text, html };
+}
+
 // ---------------------------------------------------------------------------
 // Messaging
 // ---------------------------------------------------------------------------

@@ -399,6 +399,86 @@ export async function listRideRequestsForStudent(studentId: string) {
   }));
 }
 
+/** Upcoming, non-cancelled ride offers at a church, for the student-facing
+ * "available rides" board. Same blocked-pair exclusion as
+ * listOpenRideRequestsForChurch — a blocked volunteer's offer must never
+ * appear to the student they blocked (or vice versa), same reasoning as
+ * every other directory/board in this app. Includes each offer's confirmed
+ * seat count (for "X of Y seats taken") and the viewer's own claim, if any,
+ * so the page can show "you're in" / "you're waitlisted" without a second
+ * query per card. */
+export async function listActiveRideOffersForChurch(churchId: string, viewerId: string) {
+  const [offers, excluded] = await Promise.all([
+    prisma.rideOffer.findMany({
+      where: { churchId, cancelledAt: null, date: { gte: new Date(new Date().toDateString()) } },
+      include: {
+        volunteer: { select: { id: true, name: true, photoUrl: true } },
+        claims: { where: { status: { not: RSVP_STATUS.CANCELLED } }, select: { studentId: true, status: true } },
+      },
+      orderBy: { date: "asc" },
+    }),
+    blockedPairUserIds(viewerId),
+  ]);
+  return offers
+    .filter((o) => !excluded.has(o.volunteerId))
+    .map((o) => {
+      const confirmedCount = o.claims.filter((c) => c.status === RSVP_STATUS.CONFIRMED).length;
+      const myClaim = o.claims.find((c) => c.studentId === viewerId) ?? null;
+      return {
+        ...o,
+        confirmedCount,
+        seatsLeft: Math.max(0, o.capacity - confirmedCount),
+        myClaimStatus: myClaim?.status ?? null,
+      };
+    });
+}
+
+/** A volunteer's own offered rides — active and past — with each rider's
+ * contact info withheld until their claim is CONFIRMED, same
+ * defense-in-depth pattern as listClaimedRideRequestsForVolunteer. */
+export async function listRideOffersForVolunteer(volunteerId: string) {
+  const offers = await prisma.rideOffer.findMany({
+    where: { volunteerId },
+    include: {
+      claims: {
+        where: { status: { not: RSVP_STATUS.CANCELLED } },
+        include: { student: { select: { id: true, name: true, email: true, photoUrl: true } } },
+        orderBy: { createdAt: "asc" },
+      },
+    },
+    orderBy: { date: "desc" },
+  });
+  return offers.map((o) => ({
+    ...o,
+    claims: o.claims.map((c) => ({
+      ...c,
+      student: { ...c.student, email: c.status === RSVP_STATUS.CONFIRMED ? c.student.email : null },
+    })),
+  }));
+}
+
+/** A student's own claimed/waitlisted rides, with the volunteer's contact
+ * info withheld until their claim is CONFIRMED. */
+export async function listRideOfferClaimsForStudent(studentId: string) {
+  const claims = await prisma.rideOfferClaim.findMany({
+    where: { studentId, status: { not: RSVP_STATUS.CANCELLED } },
+    include: {
+      rideOffer: { include: { volunteer: { select: { id: true, name: true, email: true, photoUrl: true } } } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return claims.map((c) => ({
+    ...c,
+    rideOffer: {
+      ...c.rideOffer,
+      volunteer: {
+        ...c.rideOffer.volunteer,
+        email: c.status === RSVP_STATUS.CONFIRMED ? c.rideOffer.volunteer.email : null,
+      },
+    },
+  }));
+}
+
 /** Upcoming published events at this church that have a map pin (both
  * lat/lng set) — for /events/map. Includes RSVPs so the caller can compute
  * capacity fullness and "is this the viewer's event" without a second

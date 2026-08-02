@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_RIDE_OFFER_CAPACITY } from "@/lib/constants";
 
 export const emailSchema = z
   .string()
@@ -154,6 +155,17 @@ export const rideRequestSchema = z.object({
   destination: z.string().trim().min(1, "Enter where you need to go").max(300),
   date: z.string().min(1, "Choose a date"),
   time: z.string().trim().min(1, "Enter a time").max(100),
+  notes: z.string().trim().max(500).optional().or(z.literal("")),
+});
+
+export const rideOfferSchema = z.object({
+  date: z.string().min(1, "Choose a date"),
+  time: z.string().trim().min(1, "Enter a time").max(100),
+  capacity: z.coerce
+    .number()
+    .int("Enter a whole number")
+    .min(1, "Offer at least 1 seat")
+    .max(MAX_RIDE_OFFER_CAPACITY, `Offer at most ${MAX_RIDE_OFFER_CAPACITY} seats`),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
 });
 

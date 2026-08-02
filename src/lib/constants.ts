@@ -112,6 +112,10 @@ export const RIDE_REQUEST_TYPE = {
 
 export type RideRequestType = (typeof RIDE_REQUEST_TYPE)[keyof typeof RIDE_REQUEST_TYPE];
 
+// A minivan's worth, roughly — high enough for a real carpool, low enough
+// that a typo (e.g. "40") doesn't create a request that looks like a bus.
+export const MAX_RIDE_OFFER_CAPACITY = 8;
+
 export function dashboardPathForRole(role: Role): string {
   switch (role) {
     case ROLES.CHURCH_ADMIN:

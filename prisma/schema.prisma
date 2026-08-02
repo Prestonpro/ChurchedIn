@@ -130,6 +130,7 @@ model Church {
   partnershipsRequested ChurchPartnership[] @relation("PartnershipsRequested")
   partnershipsReceived  ChurchPartnership[] @relation("PartnershipsReceived")
   rideRequests RideRequest[]
+  rideOffers RideOffer[]
   conversations Conversation[]
 }
 
@@ -214,6 +215,8 @@ model User {
   cohostedEvents       EventCohost[]
   rideRequestsAsStudent   RideRequest[] @relation("RideRequestsAsStudent")
   rideRequestsAsVolunteer RideRequest[] @relation("RideRequestsAsVolunteer")
+  rideOffersAsVolunteer   RideOffer[]      @relation("RideOffersAsVolunteer")
+  rideOfferClaims         RideOfferClaim[] @relation("RideOfferClaimsAsStudent")
 }
 
 model PasswordResetToken {
@@ -532,6 +535,58 @@ model RideRequest {
   @@index([churchId, status, date])
   @@index([studentId])
   @@index([volunteerId])
+}
+
+/**
+ * The inverse of RideRequest: a volunteer proactively offering a ride to
+ * church at a set date/time with a fixed number of seats, instead of
+ * waiting for a student to ask. Capacity/waitlist behavior is deliberately
+ * the same as event RSVPs — decideRsvpStatus/pickPromotionCandidate in
+ * src/lib/rsvp.ts are reused as-is for RideOfferClaim, rather than
+ * reinventing a second capacity system.
+ */
+model RideOffer {
+  id          String    @id @default(cuid())
+  date        DateTime
+  time        String
+  capacity    Int
+  notes       String?
+  // Whole-offer cancellation by the volunteer — distinct from a single
+  // rider cancelling their own claim. Nullable timestamp, same idiom as
+  // ChurchAdminInvite.usedAt/PasswordResetToken.usedAt, rather than a
+  // dedicated enum for what's just a binary state.
+  cancelledAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  volunteerId String
+  volunteer   User   @relation("RideOffersAsVolunteer", fields: [volunteerId], references: [id])
+  churchId    String
+  church      Church @relation(fields: [churchId], references: [id])
+
+  claims RideOfferClaim[]
+
+  @@index([churchId, date])
+  @@index([volunteerId])
+}
+
+/**
+ * A student's claimed seat on a RideOffer. Reuses RsvpStatus
+ * (CONFIRMED/WAITLISTED/CANCELLED) rather than a new enum — the semantics
+ * are identical to an EventRsvp row, just against a ride offer's capacity
+ * instead of an event's.
+ */
+model RideOfferClaim {
+  id        String     @id @default(cuid())
+  status    RsvpStatus @default(CONFIRMED)
+  createdAt DateTime   @default(now())
+
+  rideOfferId String
+  rideOffer   RideOffer @relation(fields: [rideOfferId], references: [id])
+  studentId   String
+  student     User      @relation("RideOfferClaimsAsStudent", fields: [studentId], references: [id])
+
+  @@unique([rideOfferId, studentId])
+  @@index([studentId])
 }
 
 model Block {

@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { Car, EnvelopeSimple, MapPin, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import { Car, EnvelopeSimple, MapPin, ChatCircleDots, UsersThree, Clock } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
-import { listRideRequestsForStudent } from "@/lib/queries";
+import { listRideRequestsForStudent, listActiveRideOffersForChurch } from "@/lib/queries";
 import { rideContactVisible } from "@/lib/rideState";
 import { cancelRideRequestAction, completeRideRequestAction } from "@/lib/actions/rides";
+import { joinRideOfferAction, cancelRideOfferClaimAction } from "@/lib/actions/rideOffers";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -12,7 +13,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
 import { RideActionButton } from "@/components/RideActionButton";
 import { RideRequestForm } from "./RideRequestForm";
-import { ROLES, RIDE_STATUS } from "@/lib/constants";
+import { ROLES, RIDE_STATUS, RSVP_STATUS } from "@/lib/constants";
 
 const STATUS_TONE = {
   OPEN: "warning",
@@ -30,17 +31,103 @@ const STATUS_LABEL = {
 
 export default async function StudentRidesPage() {
   const user = await requireRole(ROLES.STUDENT);
-  const rides = await listRideRequestsForStudent(user.id);
+  const churchId = user.activeMembership!.churchId;
+  const [rides, offers] = await Promise.all([
+    listRideRequestsForStudent(user.id),
+    listActiveRideOffersForChurch(churchId, user.id),
+  ]);
 
   return (
     <AuthShell user={user}>
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-ink">Rides</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Need a lift somewhere? Ask, and a volunteer at your church can help.
+          Need a lift somewhere? Ask, and a volunteer at your church can help — or join a ride someone&apos;s already offering.
         </p>
       </div>
 
+      <div className="mb-8">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Available rides to church</h2>
+        {offers.length === 0 ? (
+          <EmptyState icon={Car} title="No rides offered yet" body="Check back later — no volunteer has posted a ride yet." />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {offers.map((offer, i) => {
+              const full = offer.seatsLeft === 0;
+              return (
+                <Card
+                  key={offer.id}
+                  className="animate-fade-up"
+                  style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={offer.volunteer.name} size="sm" />
+                      <div>
+                        <Link
+                          href={`/profile/${offer.volunteer.id}`}
+                          className="text-sm font-semibold text-ink hover:text-brand-700 hover:underline"
+                        >
+                          {offer.volunteer.name}
+                        </Link>
+                        <p className="flex items-center gap-1 text-xs text-ink-muted">
+                          <Clock weight="bold" className="size-3.5" /> {offer.date.toLocaleDateString()} · {offer.time}
+                        </p>
+                      </div>
+                    </div>
+                    <Badge tone={full ? "neutral" : "success"} icon={UsersThree}>
+                      {offer.seatsLeft} of {offer.capacity} left
+                    </Badge>
+                  </div>
+                  {offer.notes && <p className="mt-3 text-sm text-ink-soft">{offer.notes}</p>}
+
+                  <div className="mt-3">
+                    {offer.myClaimStatus === RSVP_STATUS.CONFIRMED && (
+                      <div className="space-y-2">
+                        <Badge tone="success">You&apos;re in</Badge>
+                        <RideActionButton
+                          rideId={offer.id}
+                          action={cancelRideOfferClaimAction}
+                          label="Leave this ride"
+                          pendingLabel="Leaving…"
+                          variant="ghost"
+                          confirmMessage="Leave this ride?"
+                        />
+                      </div>
+                    )}
+                    {offer.myClaimStatus === RSVP_STATUS.WAITLISTED && (
+                      <div className="space-y-2">
+                        <Badge tone="warning">You&apos;re on the waitlist</Badge>
+                        <RideActionButton
+                          rideId={offer.id}
+                          action={cancelRideOfferClaimAction}
+                          label="Leave waitlist"
+                          pendingLabel="Leaving…"
+                          variant="ghost"
+                        />
+                      </div>
+                    )}
+                    {!offer.myClaimStatus && (
+                      <RideActionButton
+                        rideId={offer.id}
+                        action={joinRideOfferAction}
+                        label={full ? "Join waitlist" : "Join this ride"}
+                        pendingLabel="Joining…"
+                        variant="primary"
+                      />
+                    )}
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="mb-4 border-t border-line pt-6">
+        <h2 className="text-lg font-bold text-ink">Request your own ride</h2>
+        <p className="mt-1 text-sm text-ink-muted">Need something more specific? Ask directly.</p>
+      </div>
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-1">
           <h2 className="mb-4 font-bold text-ink">Request a ride</h2>
