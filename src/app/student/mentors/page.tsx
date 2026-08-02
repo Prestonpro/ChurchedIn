@@ -11,6 +11,7 @@ import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { SocialIconLink } from "@/components/ui/SocialIconLink";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BlockButton } from "@/components/BlockButton";
 import { UnblockButton } from "@/components/UnblockButton";
@@ -47,7 +48,10 @@ function MentorCard({
         <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
           <Avatar name={m.user.name} />
           <div>
-            <h2 className="font-bold text-ink hover:text-brand-700 hover:underline">{m.user.name}</h2>
+            <h2 className="flex items-center gap-1 font-bold text-ink hover:text-brand-700 hover:underline">
+              {m.user.name}
+              {m.user.verified && <VerifiedBadge />}
+            </h2>
             {shared.size > 0 && (
               <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
                 <Translate weight="bold" className="size-3" /> Speaks{" "}

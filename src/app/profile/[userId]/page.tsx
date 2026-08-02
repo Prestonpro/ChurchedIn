@@ -18,6 +18,7 @@ import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { SocialIconLink } from "@/components/ui/SocialIconLink";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { ProfileConnectionButton } from "@/components/ProfileConnectionButton";
 import { ReportButton } from "@/components/ReportButton";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
@@ -89,7 +90,10 @@ export default async function PublicProfilePage({
           <div className="flex items-start gap-4">
             <Avatar name={target.name} size="lg" />
             <div className="min-w-0 flex-1">
-              <h1 className="text-xl font-extrabold text-ink">{target.name}</h1>
+              <h1 className="flex items-center gap-1.5 text-xl font-extrabold text-ink">
+                {target.name}
+                {target.verified && <VerifiedBadge />}
+              </h1>
               {primaryRole && (
                 <Badge tone={primaryRole === ROLES.CHURCH_ADMIN ? "brand" : "neutral"} className="mt-1">
                   {roleLabel(primaryRole)}

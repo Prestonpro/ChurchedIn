@@ -197,6 +197,12 @@ model User {
   name         String
   photoUrl     String?
   bio          String?
+  // Identity-verification badge shown next to a name wherever it appears
+  // to another member (Friends directory, public profile, member list).
+  // Deliberately no verification pipeline yet — this is just the display
+  // flag; how a user actually gets verified is a future decision. Never
+  // self-service: nothing in src/lib/actions sets this today.
+  verified     Boolean  @default(false)
   createdAt    DateTime @default(now())
 
   memberships          Membership[]

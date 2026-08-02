@@ -156,7 +156,7 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
     },
     include: {
       user: {
-        select: { id: true, name: true, bio: true, photoUrl: true, mentorProfile: true },
+        select: { id: true, name: true, bio: true, photoUrl: true, verified: true, mentorProfile: true },
       },
     },
   });
@@ -177,7 +177,13 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
         linkedinUrl: profile?.linkedinUrl ?? null,
         facebookUrl: profile?.facebookUrl ?? null,
         instagramUrl: profile?.instagramUrl ?? null,
-        user: { id: m.user.id, name: m.user.name, bio: m.user.bio, photoUrl: m.user.photoUrl },
+        user: {
+          id: m.user.id,
+          name: m.user.name,
+          bio: m.user.bio,
+          photoUrl: m.user.photoUrl,
+          verified: m.user.verified,
+        },
         memberSince: m.createdAt,
       };
     });
@@ -567,7 +573,7 @@ export async function getChurchProfile(churchId: string) {
 export function listMembersForChurch(churchId: string) {
   return prisma.membership.findMany({
     where: { churchId },
-    include: { user: { select: { id: true, name: true, email: true } } },
+    include: { user: { select: { id: true, name: true, email: true, verified: true } } },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
   });
 }
@@ -583,6 +589,7 @@ export async function getUserProfile(userId: string) {
       name: true,
       bio: true,
       photoUrl: true,
+      verified: true,
       createdAt: true,
       memberships: {
         select: { churchId: true, role: true, church: { select: { name: true } } },

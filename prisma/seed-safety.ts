@@ -347,6 +347,19 @@ export async function seedSafetyData() {
   });
   console.log("Created Block.");
 
+  // Verified badges — a handful of personas marked verified so
+  // interviewees can compare perceived safety with/without the badge
+  // (what "verified" actually means is undecided; this only sets the
+  // display flag for now). A direct update, not part of the upserts
+  // above, so it also takes effect on personas that already existed from
+  // an earlier run of this script.
+  const verifiedNames = ['Sarah Chen', 'Pastor Rachel Adams', 'Kevin Nguyen'];
+  await prisma.user.updateMany({
+    where: { id: { in: verifiedNames.map((n) => createdVolunteers[n].id) } },
+    data: { verified: true },
+  });
+  console.log('Marked verified:', verifiedNames.join(', '));
+
   console.log('Seeding complete!');
 }
 

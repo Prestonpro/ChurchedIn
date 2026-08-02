@@ -8,6 +8,7 @@ import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
+import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
 
 /** Read-only member roster — any member of the church can see who else
@@ -50,10 +51,11 @@ export default async function ChurchMembersPage({ params }: { params: Promise<{ 
                 <div className="flex items-center gap-2.5">
                   <Avatar name={m.user.name} size="sm" />
                   <div>
-                    <p className="text-sm font-semibold text-ink">
+                    <p className="flex items-center gap-1 text-sm font-semibold text-ink">
                       {m.user.name}
+                      {m.user.verified && <VerifiedBadge />}
                       {m.userId === user.id && (
-                        <span className="ml-1.5 text-xs font-normal text-ink-faint">(you)</span>
+                        <span className="ml-1 text-xs font-normal text-ink-faint">(you)</span>
                       )}
                     </p>
                     <p className="flex items-center gap-1 text-xs text-ink-faint">
