@@ -30,7 +30,7 @@ export function AuthPageLayout({
 
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
         <Link href="/" className="mb-8 flex items-center lg:hidden">
-          <Image src="/logo-full.png" alt="ChurchedIn" width={1000} height={270} priority className="h-8 w-auto" />
+          <Image src="/logo-full.svg" alt="ChurchedIn" width={161} height={43} priority className="h-8 w-auto" />
         </Link>
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>

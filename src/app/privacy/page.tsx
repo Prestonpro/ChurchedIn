@@ -15,7 +15,7 @@ export default function PrivacyPolicyPage() {
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center">
             <Image src="/icon-192.png" alt="ChurchedIn" width={32} height={32} priority className="size-8 shrink-0 rounded-full sm:hidden" />
-            <Image src="/logo-full.png" alt="ChurchedIn" width={1000} height={270} priority className="hidden h-8 w-auto sm:block" />
+            <Image src="/logo-full.svg" alt="ChurchedIn" width={161} height={43} priority className="hidden h-8 w-auto sm:block" />
           </Link>
           <Link
             href="/"

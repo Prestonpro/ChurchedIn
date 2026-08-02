@@ -91,7 +91,7 @@ export async function AuthShell({
               className="flex items-center text-base font-bold text-brand-700"
             >
               <Image src="/icon-192.png" alt="ChurchedIn" width={32} height={32} priority className="size-8 rounded-full lg:hidden" />
-              <Image src="/logo-full.png" alt="ChurchedIn" width={1000} height={270} priority className="hidden h-8 w-auto lg:block" />
+              <Image src="/logo-full.svg" alt="ChurchedIn" width={161} height={43} priority className="hidden h-8 w-auto lg:block" />
             </Link>
             <div className="hidden lg:block">
               <NavLinks links={links} />
