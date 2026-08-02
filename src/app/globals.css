@@ -102,6 +102,20 @@
     color: inherit;
   }
 
+  /* Browsers don't give <button>/<select> a pointer cursor by default the
+     way they do <a> — every raw (non-Button-component) button and select
+     in the app was silently inheriting the "default" arrow cursor on
+     hover. Button.tsx already sets this itself; this covers everywhere
+     else at once instead of patching each raw element individually. */
+  button:not(:disabled),
+  select {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+  }
+
   ::selection {
     background-color: var(--color-brand-200);
     color: var(--color-brand-800);

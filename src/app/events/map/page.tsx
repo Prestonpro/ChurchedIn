@@ -5,6 +5,7 @@ import { eventPinStatus } from "@/lib/eventMapStatus";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { LinkButton } from "@/components/ui/Button";
+import { EventViewToggle } from "@/components/EventViewToggle";
 import { ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
 import { EventMapClient, type MapEvent } from "./EventMapClient";
 
@@ -62,16 +63,22 @@ export default async function EventsMapPage() {
   return (
     <AuthShell user={user} fullBleed>
       {events.length === 0 ? (
-        <div className="flex h-full items-center justify-center">
-          <EmptyState
-            icon={MapTrifold}
-            title="No events on the map yet"
-            body={
-              user.activeMembership.role === ROLES.STUDENT
-                ? "Nothing has been pinned to the map yet — check back soon."
-                : "Events show up here once they're given a location with the map picker."
-            }
-          />
+        <div className="flex h-full flex-col">
+          <div className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 sm:px-6 lg:px-8">
+            <h1 className="text-lg font-bold text-ink">Events</h1>
+            <EventViewToggle currentView="map" />
+          </div>
+          <div className="flex flex-1 items-center justify-center">
+            <EmptyState
+              icon={MapTrifold}
+              title="No events on the map yet"
+              body={
+                user.activeMembership.role === ROLES.STUDENT
+                  ? "Nothing has been pinned to the map yet — check back soon."
+                  : "Events show up here once they're given a location with the map picker."
+              }
+            />
+          </div>
         </div>
       ) : (
         <EventMapClient events={events} />

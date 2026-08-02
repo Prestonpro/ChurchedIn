@@ -14,7 +14,7 @@ import { Card } from "@/components/ui/Card";
 import { EventViewToggle } from "@/components/EventViewToggle";
 import { DateBadge } from "@/components/ui/DateBadge";
 import { StyledBadge } from "@/components/ui/Badge";
-import { LinkButton } from "@/components/ui/Button";
+import { Button, LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { EVENT_CATEGORY_LABELS, type EventCategory } from "@/lib/constants";
 
@@ -121,10 +121,10 @@ export default async function EventsCalendarPage({
       </div>
 
       <Card className="mb-6">
-        <form method="get" className="flex flex-wrap items-end gap-3">
+        <form method="get" className="flex flex-wrap items-center gap-3">
           <input type="hidden" name="month" value={currentMonthParam} />
-          <label className="block space-y-1.5">
-            <span className="text-sm font-semibold text-ink-soft">Category</span>
+          <label className="flex min-h-11 items-center">
+            <span className="sr-only">Category</span>
             <select
               name="category"
               defaultValue={category ?? ""}
@@ -148,12 +148,9 @@ export default async function EventsCalendarPage({
             />
             My RSVP&apos;d events only
           </label>
-          <button
-            type="submit"
-            className="min-h-11 rounded-lg bg-brand-600 px-4 text-sm font-semibold text-white transition-brand hover:bg-brand-700"
-          >
+          <Button type="submit" size="md">
             Apply
-          </button>
+          </Button>
         </form>
       </Card>
 
@@ -192,7 +189,7 @@ export default async function EventsCalendarPage({
             <Link
               key={key}
               href={hrefFor({ day: isSelected ? undefined : key })}
-              className={`flex min-h-16 flex-col gap-1 rounded-lg border p-1.5 text-left transition-brand sm:min-h-24 ${
+              className={`flex min-h-20 min-w-0 flex-col gap-1 rounded-lg border p-1.5 text-left transition-brand sm:min-h-28 ${
                 isSelected ? "border-brand-400 bg-brand-50" : "border-line hover:bg-paper"
               } ${inMonth ? "" : "opacity-40"}`}
             >
@@ -206,13 +203,20 @@ export default async function EventsCalendarPage({
                 {date.getDate()}
               </span>
               {dayEvents.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1">
-                  {dayEvents.slice(0, 3).map((e) => {
+                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                  {dayEvents.slice(0, 2).map((e) => {
                     const style = categoryStyle(e.category as EventCategory);
-                    return <span key={e.id} className={`size-1.5 rounded-full ${style.dot}`} />;
+                    return (
+                      <span
+                        key={e.id}
+                        className={`truncate rounded px-1 py-0.5 text-[10px] font-medium ${style.chipClass}`}
+                      >
+                        {e.title}
+                      </span>
+                    );
                   })}
-                  {dayEvents.length > 3 && (
-                    <span className="text-[10px] font-medium text-ink-faint">+{dayEvents.length - 3}</span>
+                  {dayEvents.length > 2 && (
+                    <span className="text-[10px] font-medium text-ink-faint">+{dayEvents.length - 2} more</span>
                   )}
                 </div>
               )}
