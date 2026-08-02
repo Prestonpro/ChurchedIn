@@ -1,3 +1,4 @@
+import { pathToFileURL } from 'node:url';
 import { prisma } from '../src/lib/prisma';
 import bcrypt from 'bcryptjs';
 
@@ -353,7 +354,7 @@ export async function seedSafetyData() {
 // not when imported as a module (e.g. by the temporary production-seed
 // route) — importing must not trigger a run, and process.exit() inside a
 // server route would kill the whole serverless function instance.
-const isDirectRun = import.meta.url === `file://${process.argv[1]?.replace(/\\/g, "/")}`;
+const isDirectRun = process.argv[1] ? import.meta.url === pathToFileURL(process.argv[1]).href : false;
 if (isDirectRun) {
   seedSafetyData()
     .catch((e) => {
