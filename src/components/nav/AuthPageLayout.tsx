@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { UsersThree, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
+import { Sparkle } from "@phosphor-icons/react/dist/ssr";
 
 export function AuthPageLayout({
   children,
@@ -14,9 +15,7 @@ export function AuthPageLayout({
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-brand-700 bg-hero-mesh px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="flex items-center gap-2 text-base font-bold">
-          <span className="flex size-8 items-center justify-center rounded-full bg-white/15">
-            <UsersThree weight="fill" className="size-4.5" />
-          </span>
+          <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
           ChurchedIn
         </Link>
         <div className="max-w-md">
@@ -31,9 +30,7 @@ export function AuthPageLayout({
 
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
         <Link href="/" className="mb-8 flex items-center gap-2 text-base font-bold text-brand-700 lg:hidden">
-          <span className="flex size-8 items-center justify-center rounded-full bg-brand-600 text-white">
-            <UsersThree weight="fill" className="size-4.5" />
-          </span>
+          <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
           ChurchedIn
         </Link>
         <div className="mx-auto w-full max-w-sm">{children}</div>

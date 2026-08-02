@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { UsersThree, SignOut } from "@phosphor-icons/react/dist/ssr";
+import Image from "next/image";
+import { SignOut } from "@phosphor-icons/react/dist/ssr";
 import type { CurrentUser } from "@/lib/auth";
 import { ROLES, profilePathForRole, type Role } from "@/lib/constants";
 import { logoutAction } from "@/lib/actions/auth";
@@ -85,13 +86,11 @@ export async function AuthShell({
       <header className="sticky top-0 z-20 border-b border-line bg-surface/90 backdrop-blur-md">
         <div className="flex items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-5">
-            <Link 
-              href={user.activeMembership ? (role === ROLES.CHURCH_ADMIN ? "/admin/dashboard" : `/${role.toLowerCase()}/dashboard`) : "/discover"} 
+            <Link
+              href={user.activeMembership ? (role === ROLES.CHURCH_ADMIN ? "/admin/dashboard" : `/${role.toLowerCase()}/dashboard`) : "/discover"}
               className="flex items-center gap-2 text-base font-bold text-brand-700"
             >
-              <span className="flex size-8 items-center justify-center rounded-full bg-brand-600 text-white">
-                <UsersThree weight="fill" className="size-4.5" />
-              </span>
+              <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
               <span className="hidden lg:inline">ChurchedIn</span>
             </Link>
             <div className="hidden lg:block">

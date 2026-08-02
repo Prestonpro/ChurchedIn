@@ -1,6 +1,6 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
-import { UsersThree } from "@phosphor-icons/react/dist/ssr";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
@@ -14,9 +14,7 @@ export default function PrivacyPolicyPage() {
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 text-base font-bold text-brand-700">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-brand-600 text-white">
-              <UsersThree weight="fill" className="size-4.5" />
-            </span>
+            <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 shrink-0 rounded-full" />
             <span className="hidden sm:inline">ChurchedIn</span>
           </Link>
           <Link
