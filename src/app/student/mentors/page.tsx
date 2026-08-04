@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UsersThree, UserPlus, Translate, Sparkle, Heart, Clock, EnvelopeSimple, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import { UsersThree, UserPlus, Translate, Star, Heart, Clock, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listMentorsForChurch, listConnectionsAsStudent, listBlockedUsers } from "@/lib/queries";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
+import { ContactEmail } from "@/components/ui/ContactEmail";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { BlockButton } from "@/components/BlockButton";
 import { UnblockButton } from "@/components/UnblockButton";
@@ -100,7 +101,7 @@ function MentorCard({
                 key={`int-${t}`}
                 className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-medium text-accent-700"
               >
-                <Sparkle weight="bold" className="size-3" /> {t}
+                <Star weight="bold" className="size-3" /> {t}
               </span>
             ))}
           {m.hobbies &&
@@ -126,10 +127,7 @@ function MentorCard({
         {connection?.status === CONNECTION_STATUS.ACCEPTED && (
           <div className="space-y-2.5">
             <Badge tone="success">Connected</Badge>
-            <p className="flex items-center gap-1.5 text-sm text-ink-soft">
-              <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
-              {connection.mentor.email}
-            </p>
+            {connection.mentor.email && <ContactEmail email={connection.mentor.email} size="sm" />}
             <LinkButton href={`/messages/${connection.id}`} variant="secondary" size="sm">
               <ChatCircleDots weight="bold" className="size-4" /> Message
             </LinkButton>
@@ -220,7 +218,7 @@ export default async function MentorDirectoryPage() {
         <EmptyState
           icon={UsersThree}
           title="No friends listed yet"
-          body="Check back soon — church members haven't signed up to be a friend yet."
+          body="Check back soon. Church members haven't signed up to be a friend yet."
         />
       ) : (
         <>
@@ -230,7 +228,7 @@ export default async function MentorDirectoryPage() {
             </h2>
             {currentFriends.length === 0 ? (
               <p className="rounded-xl border border-dashed border-line p-4 text-sm text-ink-muted">
-                You haven&apos;t connected with anyone yet — send a request below to get started.
+                You haven&apos;t connected with anyone yet. Send a request below to get started.
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">

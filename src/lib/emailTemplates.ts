@@ -90,7 +90,7 @@ export function newEventNotificationEmail(opts: {
     heading: "Something's happening!",
     bodyHtml: [
       paragraph(
-        `<strong>${escapeHtml(opts.eventTitle)}</strong> (${escapeHtml(opts.categoryLabel)}) — ${escapeHtml(when)}.`,
+        `<strong>${escapeHtml(opts.eventTitle)}</strong> (${escapeHtml(opts.categoryLabel)}) on ${escapeHtml(when)}.`,
       ),
       paragraph(escapeHtml(preview)),
     ].join(""),
@@ -107,12 +107,12 @@ export function eventReminderEmail(opts: {
 }): EmailContent {
   const when = opts.startsAt.toLocaleString(undefined, { dateStyle: "full", timeStyle: "short" });
   const subject = `Tomorrow: ${opts.eventTitle}`;
-  const text = `Just a reminder — you're confirmed for ${opts.eventTitle} on ${when} at ${opts.location}.`;
+  const text = `Just a reminder: you're confirmed for ${opts.eventTitle} on ${when} at ${opts.location}.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "See you tomorrow!",
     bodyHtml: paragraph(
-      `Just a reminder — you're confirmed for <strong>${escapeHtml(opts.eventTitle)}</strong> on ${escapeHtml(when)} at ${escapeHtml(opts.location)}.`,
+      `Just a reminder: you're confirmed for <strong>${escapeHtml(opts.eventTitle)}</strong> on ${escapeHtml(when)} at ${escapeHtml(opts.location)}.`,
     ),
     cta: { label: "View event details", url: appUrl(`/events/${opts.eventId}`) },
   });
@@ -212,11 +212,11 @@ export function passwordResetEmail(opts: { resetUrl: string }): EmailContent {
   const subject = "Reset your password";
   const text = `Reset your password using this link (expires in 1 hour, and can only be used once): ${opts.resetUrl}\n\nIf you didn't request this, you can safely ignore this email.`;
   const html = renderEmailLayout({
-    preheader: "Reset your password — this link expires in 1 hour.",
+    preheader: "Reset your password. This link expires in 1 hour.",
     heading: "Reset your password",
     bodyHtml: [
       paragraph("We got a request to reset your password. This link expires in 1 hour and can only be used once."),
-      paragraph("If you didn't request this, you can safely ignore this email — your password won't change."),
+      paragraph("If you didn't request this, you can safely ignore this email. Your password won't change."),
     ].join(""),
     cta: { label: "Reset password", url: opts.resetUrl },
   });
@@ -229,7 +229,7 @@ export function passwordResetEmail(opts: { resetUrl: string }): EmailContent {
 
 export function coAdminInviteEmail(opts: { inviterName: string; churchName: string; acceptUrl: string }): EmailContent {
   const subject = `${opts.inviterName} wants you to help lead ${opts.churchName} on ChurchedIn`;
-  const text = `${opts.inviterName} invited you to co-lead ${opts.churchName}'s space on ChurchedIn — you don't have to be a pastor, just someone who wants to help welcome international students. This link expires in 7 days and can only be used once: ${opts.acceptUrl}`;
+  const text = `${opts.inviterName} invited you to co-lead ${opts.churchName}'s space on ChurchedIn. You don't have to be a pastor, just someone who wants to help welcome international students. This link expires in 7 days and can only be used once: ${opts.acceptUrl}`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "You're invited to help lead",
@@ -237,7 +237,7 @@ export function coAdminInviteEmail(opts: { inviterName: string; churchName: stri
       paragraph(
         `<strong>${escapeHtml(opts.inviterName)}</strong> invited you to co-lead <strong>${escapeHtml(opts.churchName)}</strong>'s space on ChurchedIn.`,
       ),
-      paragraph("You don't have to be a pastor — just someone who wants to help welcome international students."),
+      paragraph("You don't have to be a pastor, just someone who wants to help welcome international students."),
       paragraph("This link expires in 7 days and can only be used once."),
     ].join(""),
     cta: { label: "Accept and join as a co-leader", url: opts.acceptUrl },

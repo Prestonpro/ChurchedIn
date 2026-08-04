@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldCheck, ArrowRight } from "@phosphor-icons/react/dist/ssr";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
 import { MagneticButton } from "@/components/MagneticButton";
 import { useMouseTracking } from "@/hooks/useMouseTracking";
@@ -67,8 +67,7 @@ export function HeroSection() {
             className="inline-flex animate-fade-up items-center gap-1.5 rounded-full border border-brand-200 bg-brand-50 px-3.5 py-1.5 text-xs font-semibold text-brand-700"
             style={{ animationDelay: "0ms" }}
           >
-            <ShieldCheck weight="fill" className="size-3.5" />
-            Built for church-based international student ministry
+            For churches welcoming international students
           </span>
         </div>
         <h1
@@ -83,8 +82,8 @@ export function HeroSection() {
           style={{ animationDelay: "160ms" }}
         >
           Volunteers plan dinners, coffee chats, and friend meetups. Other
-          volunteers join in to help. International students RSVP and find
-          a friend — all in one place, per church.
+          volunteers join in to help. International students RSVP and find a
+          friend. Everything stays scoped to one church.
         </p>
         <div
           className="mt-9 flex animate-fade-up flex-col items-center justify-center gap-3 sm:flex-row"

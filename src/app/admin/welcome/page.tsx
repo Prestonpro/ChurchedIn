@@ -32,7 +32,7 @@ export default async function AdminWelcomePage() {
             <div>
               <h2 className="font-bold text-ink">Invite a co-leader</h2>
               <p className="text-sm text-ink-muted">
-                Running this with a friend makes it easier — and means someone else can jump in when you&apos;re busy.
+                Running this with a friend makes it easier, and means someone else can jump in when you&apos;re busy.
               </p>
             </div>
           </div>
@@ -41,7 +41,7 @@ export default async function AdminWelcomePage() {
 
         <p className="mt-6 text-center text-sm text-ink-muted">
           <Link href="/admin/dashboard" className="font-semibold text-brand-600 hover:underline">
-            Skip for now — go to my dashboard
+            Skip for now
           </Link>
         </p>
       </div>

@@ -12,7 +12,7 @@ export function AttendeeAvatars({
   max?: number;
 }) {
   if (totalCount === 0) {
-    return <p className="text-xs text-ink-faint">No one yet — be the first!</p>;
+    return <p className="text-xs text-ink-faint">No one yet. Be the first!</p>;
   }
 
   const shown = names.slice(0, max);

@@ -45,30 +45,30 @@ export default function PrivacyPolicyPage() {
             <p className="mt-3">We collect information you provide directly, including:</p>
             <ul className="mt-3 list-disc space-y-2 pl-5">
               <li>
-                <span className="font-semibold text-ink">Account details</span> — your name, email
+                <span className="font-semibold text-ink">Account details</span>: your name, email
                 address, profile photo, and password (stored as a secure hash), or your Google account
                 identifier if you sign in with Google.
               </li>
               <li>
-                <span className="font-semibold text-ink">Profile information</span> — for students, this
+                <span className="font-semibold text-ink">Profile information</span>: for students, this
                 may include country of origin, school, major, graduation year, languages, hobbies,
                 interests, and career goals; for volunteers, job, company, industry, languages, hobbies,
                 and interests. All of this is optional beyond what your church requires.
               </li>
               <li>
-                <span className="font-semibold text-ink">Activity within your church</span> — events you
+                <span className="font-semibold text-ink">Activity within your church</span>: events you
                 create or RSVP to, ride requests and offers, friend connection requests, and messages
                 exchanged as part of arranging a connection.
               </li>
               <li>
-                <span className="font-semibold text-ink">Safety reports</span> — if you report or block
+                <span className="font-semibold text-ink">Safety reports</span>: if you report or block
                 another member, we keep a record of that action and any details you provide, to help
                 church admins moderate their community.
               </li>
             </ul>
             <p className="mt-3">
-              We also automatically collect a small amount of technical information — such as a session
-              cookie used to keep you signed in — needed to operate the service securely.
+              We also automatically collect a small amount of technical information (such as a session
+              cookie used to keep you signed in) needed to operate the service securely.
             </p>
           </section>
 
@@ -87,7 +87,7 @@ export default function PrivacyPolicyPage() {
           <section>
             <h2 className="text-lg font-bold text-ink">Who can see your information</h2>
             <p className="mt-3">
-              Your profile and activity are visible only within your own church — ChurchedIn is scoped so
+              Your profile and activity are visible only within your own church. ChurchedIn is scoped so
               that members of one church cannot see another church&apos;s members or events. Contact
               information, such as your email address, is never shown to another member until you both
               agree to connect (for example, by accepting a friend connection request). Church admins can
@@ -127,7 +127,7 @@ export default function PrivacyPolicyPage() {
             <p className="mt-3">
               We keep your information for as long as your account is active. If you&apos;d like your
               account and associated data deleted, contact your church admin or reach out to us directly
-              (see below), and we will remove it except where we&apos;re required to keep it — for example,
+              (see below), and we will remove it except where we&apos;re required to keep it, for example,
               open safety reports involving your account.
             </p>
           </section>
@@ -138,7 +138,7 @@ export default function PrivacyPolicyPage() {
               <li>You can review and edit your profile at any time from your account.</li>
               <li>You can block another member, which prevents further contact between you.</li>
               <li>You can ask us to export or delete your data by contacting us.</li>
-              <li>Most profile fields are optional — you only need to share what your church requires.</li>
+              <li>Most profile fields are optional. You only need to share what your church requires.</li>
             </ul>
           </section>
 

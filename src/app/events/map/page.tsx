@@ -74,7 +74,7 @@ export default async function EventsMapPage() {
               title="No events on the map yet"
               body={
                 user.activeMembership.role === ROLES.STUDENT
-                  ? "Nothing has been pinned to the map yet — check back soon."
+                  ? "Nothing has been pinned to the map yet. Check back soon."
                   : "Events show up here once they're given a location with the map picker."
               }
             />

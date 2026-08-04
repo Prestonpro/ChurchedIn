@@ -173,7 +173,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
           {locationDenied && (
             <p className="flex items-center gap-1.5 rounded-lg bg-paper px-3 py-2 text-xs text-ink-muted">
               <NavigationArrow weight="bold" className="size-3.5 shrink-0" />
-              Showing all churches — enable location to sort by distance.
+              Showing all churches. Enable location to sort by distance.
             </p>
           )}
           <select

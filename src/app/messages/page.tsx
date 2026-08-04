@@ -51,7 +51,7 @@ export default async function MessagesPage() {
                       </span>
                     </div>
                     <p className={`truncate text-sm ${isUnread ? "font-semibold text-ink" : "text-ink-muted"}`}>
-                      {c.lastMessage ? c.lastMessage.body : "No messages yet — say hello!"}
+                      {c.lastMessage ? c.lastMessage.body : "No messages yet. Say hello!"}
                     </p>
                     {c.connectionStatus === CONNECTION_STATUS.ENDED && (
                       <p className="mt-0.5 text-xs text-ink-faint">This connection has ended</p>

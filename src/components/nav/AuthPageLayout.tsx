@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { HandHeart } from "@phosphor-icons/react/dist/ssr";
 
 export function AuthPageLayout({
   children,
   panelTitle = "A church-by-church home base for hospitality.",
-  panelBody = "Events, RSVPs, and friend connections — organized per church, so students always know where to find their people.",
+  panelBody = "Events, RSVPs, and friend connections, organized per church so students always know where to find their people.",
 }: {
   children: React.ReactNode;
   panelTitle?: string;
@@ -19,7 +19,7 @@ export function AuthPageLayout({
           ChurchedIn
         </Link>
         <div className="max-w-md">
-          <Sparkle weight="fill" className="size-8 text-brand-300" />
+          <HandHeart weight="fill" className="size-8 text-brand-300" />
           <h2 className="mt-4 text-3xl font-extrabold leading-tight">{panelTitle}</h2>
           <p className="mt-4 text-brand-100">{panelBody}</p>
         </div>

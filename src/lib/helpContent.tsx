@@ -3,7 +3,7 @@ import {
   SquaresFour,
   Buildings,
   UsersFour,
-  Sparkle,
+  UsersThree,
   CalendarBlank,
   HandsClapping,
   Car,
@@ -43,7 +43,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: Crown,
         title: "If your church is already listed",
-        body: "Some churches — like the ones from our initial Bryan/College Station map listings — already show up on the discover map before anyone from them has an account here. If that's yours, join it like normal from its church page, then look for a “Claim as church leader” button — the first member to claim an unclaimed listing becomes its leader. If your church isn't listed at all yet, just create it during sign-up and you're automatically its leader, no claiming needed.",
+        body: "Some churches (like the ones from our initial Bryan/College Station map listings) already show up on the discover map before anyone from them has an account here. If that's yours, join it like normal from its church page, then look for a “Claim as church leader” button. The first member to claim an unclaimed listing becomes its leader. If your church isn't listed at all yet, just create it during sign-up and you're automatically its leader, no claiming needed.",
         linkHref: "/discover",
         linkLabel: "Find your church",
       },
@@ -62,7 +62,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
         linkLabel: "Edit church profile",
       },
       {
-        icon: Sparkle,
+        icon: UsersThree,
         title: "Manage your team",
         body: "Promote a trusted member to co-admin, or step someone back down, right from the member list in church settings.",
         linkHref: `/churches/${churchId}/settings`,
@@ -92,14 +92,14 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: Car,
         title: "Keep an eye on rides",
-        body: "See every ride request at your church — open, claimed, or completed. Volunteers do the actual claiming from their own rides board.",
+        body: "See every ride request at your church: open, claimed, or completed. Volunteers do the actual claiming from their own rides board.",
         linkHref: "/admin/rides",
         linkLabel: "See rides",
       },
       {
         icon: Compass,
         title: "Browse the discover map",
-        body: "See every church on the platform on a map, filterable by denomination, size, and language spoken — useful for finding partner churches or just seeing who else is out there.",
+        body: "See every church on the platform on a map, filterable by denomination, size, and language spoken, which is useful for finding partner churches or just seeing who else is out there.",
         linkHref: "/discover",
         linkLabel: "Open discover",
       },
@@ -131,7 +131,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: CalendarCheck,
         title: "Set up a recurring meeting",
-        body: "Once you're connected with a student, set a standing cadence — weekly, every other week, or monthly — right on the connection card.",
+        body: "Once you're connected with a student, set a standing cadence (weekly, every other week, or monthly) right on the connection card.",
         linkHref: "/volunteer/dashboard",
       },
       {
@@ -144,7 +144,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: MapTrifold,
         title: "See gatherings your way",
-        body: "Switch between a map view and a calendar view from the top of the events page — including any events from partner churches your church has connected with.",
+        body: "Switch between a map view and a calendar view from the top of the events page, including any events from partner churches your church has connected with.",
         linkHref: "/events/map",
         linkLabel: "Open map view",
       },
@@ -183,13 +183,13 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
     {
       icon: HandHeart,
       title: "Once you're connected",
-      body: "You'll be able to see their contact info, and either of you can set up a recurring meeting time — weekly, every other week, or monthly.",
+      body: "You'll be able to see their contact info, and either of you can set up a recurring meeting time: weekly, every other week, or monthly.",
       linkHref: "/student/mentors",
     },
     {
       icon: CalendarBlank,
       title: "Join gatherings",
-      body: "RSVP to dinners, coffee chats, study groups, and more happening at your church — including anything from a partner church, if yours has connected with one.",
+      body: "RSVP to dinners, coffee chats, study groups, and more happening at your church, including anything from a partner church, if yours has connected with one.",
       linkHref: "/events",
       linkLabel: "See events",
     },
@@ -210,7 +210,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
     {
       icon: Compass,
       title: "Explore other churches",
-      body: "Browse every church on the platform on a map, filterable by denomination, size, and language spoken. Hover a pin to preview a church, click for directions or to visit its page — and if a church hasn't been claimed by a leader yet, you can claim it once you join.",
+      body: "Browse every church on the platform on a map, filterable by denomination, size, and language spoken. Hover a pin to preview a church, click for directions or to visit its page. If a church hasn't been claimed by a leader yet, you can claim it once you join.",
       linkHref: "/discover",
       linkLabel: "Open discover",
     },

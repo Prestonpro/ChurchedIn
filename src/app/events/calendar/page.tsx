@@ -1,18 +1,11 @@
 import Link from "next/link";
-import {
-  CalendarBlank,
-  Rows,
-  ArrowLeft,
-  ArrowRight,
-  MapTrifold,
-} from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, ArrowLeft, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { listEventsForChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { EventViewToggle } from "@/components/EventViewToggle";
-import { DateBadge } from "@/components/ui/DateBadge";
 import { StyledBadge } from "@/components/ui/Badge";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -121,14 +114,14 @@ export default async function EventsCalendarPage({
       </div>
 
       <Card className="mb-6">
-        <form method="get" className="flex flex-wrap items-center gap-3">
+        <form method="get" className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <input type="hidden" name="month" value={currentMonthParam} />
-          <label className="flex min-h-11 items-center">
+          <label className="flex min-h-11 w-full items-center sm:w-auto">
             <span className="sr-only">Category</span>
             <select
               name="category"
               defaultValue={category ?? ""}
-              className="min-h-11 rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
+              className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100 sm:w-auto"
             >
               <option value="">All categories</option>
               {Object.entries(EVENT_CATEGORY_LABELS).map(([value, label]) => (
@@ -189,7 +182,7 @@ export default async function EventsCalendarPage({
             <Link
               key={key}
               href={hrefFor({ day: isSelected ? undefined : key })}
-              className={`flex min-h-20 min-w-0 flex-col gap-1 rounded-lg border p-1.5 text-left transition-brand sm:min-h-28 ${
+              className={`flex min-h-16 min-w-0 flex-col gap-1 rounded-lg border p-1.5 text-left transition-brand sm:min-h-28 ${
                 isSelected ? "border-brand-400 bg-brand-50" : "border-line hover:bg-paper"
               } ${inMonth ? "" : "opacity-40"}`}
             >
@@ -203,22 +196,37 @@ export default async function EventsCalendarPage({
                 {date.getDate()}
               </span>
               {dayEvents.length > 0 && (
-                <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  {dayEvents.slice(0, 2).map((e) => {
-                    const style = categoryStyle(e.category as EventCategory);
-                    return (
-                      <span
-                        key={e.id}
-                        className={`truncate rounded px-1 py-0.5 text-[10px] font-medium ${style.chipClass}`}
-                      >
-                        {e.title}
-                      </span>
-                    );
-                  })}
-                  {dayEvents.length > 2 && (
-                    <span className="text-[10px] font-medium text-ink-faint">+{dayEvents.length - 2} more</span>
-                  )}
-                </div>
+                <>
+                  {/* A 7-column month grid gives each day ~45px on a phone,
+                      which truncates any real title to "We…". So: dots on
+                      small screens (the day is still clickable for the
+                      detail list below), titles once there's room for them. */}
+                  <div className="flex flex-wrap items-center gap-1 sm:hidden">
+                    {dayEvents.slice(0, 3).map((e) => {
+                      const style = categoryStyle(e.category as EventCategory);
+                      return <span key={e.id} className={`size-1.5 rounded-full ${style.dot}`} />;
+                    })}
+                    {dayEvents.length > 3 && (
+                      <span className="text-[10px] font-medium text-ink-faint">+{dayEvents.length - 3}</span>
+                    )}
+                  </div>
+                  <div className="hidden min-w-0 flex-1 flex-col gap-0.5 sm:flex">
+                    {dayEvents.slice(0, 2).map((e) => {
+                      const style = categoryStyle(e.category as EventCategory);
+                      return (
+                        <span
+                          key={e.id}
+                          className={`truncate rounded px-1 py-0.5 text-[10px] font-medium ${style.chipClass}`}
+                        >
+                          {e.title}
+                        </span>
+                      );
+                    })}
+                    {dayEvents.length > 2 && (
+                      <span className="text-[10px] font-medium text-ink-faint">+{dayEvents.length - 2} more</span>
+                    )}
+                  </div>
+                </>
               )}
             </Link>
           );

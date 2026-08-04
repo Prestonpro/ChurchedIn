@@ -1,4 +1,4 @@
-import { Car, MapPin, Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { Car, MapPin, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listAllRideRequestsForChurch } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -38,7 +38,7 @@ export default async function AdminRidesPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-ink">Rides</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Every ride request at your church — volunteers claim these from their own rides board.
+          Every ride request at your church. Volunteers claim these from their own rides board.
         </p>
       </div>
 
@@ -48,7 +48,7 @@ export default async function AdminRidesPage() {
         <div className="space-y-8">
           {open.length > 0 && (
             <div>
-              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Open — needs a volunteer</h2>
+              <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Needs a volunteer</h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {open.map((ride) => (
                   <RideCard key={ride.id} ride={ride} />
@@ -96,7 +96,7 @@ function RideCard({
               isFirstVisit ? "bg-accent-100 text-accent-700" : "bg-warning-soft text-warning"
             }`}
           >
-            {isFirstVisit ? <Sparkle weight="fill" className="size-4.5" /> : <MapPin weight="fill" className="size-4.5" />}
+            {isFirstVisit ? <HandHeart weight="fill" className="size-4.5" /> : <MapPin weight="fill" className="size-4.5" />}
           </span>
           <div>
             <p className="font-semibold text-ink">{ride.destination}</p>

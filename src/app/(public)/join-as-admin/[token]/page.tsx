@@ -36,7 +36,7 @@ export default async function JoinAsAdminPage({
   return (
     <AuthPageLayout
       panelTitle={`Help lead ${check.churchName}.`}
-      panelBody="You don't have to be a pastor — just someone who wants to help welcome international students."
+      panelBody="You don't have to be a pastor, just someone who wants to help welcome international students."
     >
       <span className="flex size-11 items-center justify-center rounded-xl bg-accent-100 text-accent-700">
         <HandHeart weight="fill" className="size-5.5" />

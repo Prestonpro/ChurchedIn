@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, Sparkle, Buildings, HandsClapping, CalendarDots, MapTrifold } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, Buildings, HandsClapping } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
@@ -100,7 +100,7 @@ export default async function EventsPage() {
         <EmptyState
           icon={CalendarBlank}
           title="No upcoming events yet"
-          body={canHost ? "Be the first to plan one." : "Check back soon — your church hasn't posted anything yet."}
+          body={canHost ? "Be the first to plan one." : "Check back soon. Your church hasn't posted anything yet."}
           action={
             canHost ? (
               <LinkButton href="/volunteer/events/new" size="sm">
@@ -114,7 +114,7 @@ export default async function EventsPage() {
           {spotlight.length > 0 && (
             <div className="mb-10">
               <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-accent-700">
-                <Sparkle weight="fill" className="size-4" /> Happening soon
+                Happening soon
               </h2>
               <div className="grid gap-4 sm:grid-cols-2">
                 {spotlight.map((event, i) => {

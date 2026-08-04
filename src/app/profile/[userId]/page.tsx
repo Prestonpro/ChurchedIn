@@ -4,7 +4,7 @@ import {
   Briefcase,
   Globe,
   Translate,
-  Sparkle,
+  Star,
   GraduationCap,
   EnvelopeSimple,
   CalendarBlank,
@@ -169,7 +169,7 @@ export default async function PublicProfilePage({
               ))}
               {tags(profile?.interests).map((t) => (
                 <span key={t} className="inline-flex items-center gap-1 rounded-full bg-accent-100 px-2.5 py-1 text-xs font-medium text-accent-700">
-                  <Sparkle weight="bold" className="size-3" /> {t}
+                  <Star weight="bold" className="size-3" /> {t}
                 </span>
               ))}
               {tags(profile?.hobbies).map((t) => (

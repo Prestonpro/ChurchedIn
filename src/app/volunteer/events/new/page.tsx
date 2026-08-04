@@ -47,7 +47,7 @@ export default async function NewEventPage({
         <h1 className="text-2xl font-extrabold text-ink">Plan a gathering</h1>
         <p className="mt-1 mb-6 text-sm text-ink-muted">
           {prefill
-            ? `Running it back — pick a new date and time for "${prefill.title}".`
+            ? `Running it back. Pick a new date and time for "${prefill.title}".`
             : "Share it and your church family will see it right away."}
         </p>
         <Card>

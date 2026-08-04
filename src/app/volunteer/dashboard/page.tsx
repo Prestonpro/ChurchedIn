@@ -1,9 +1,10 @@
 import Link from "next/link";
-import { CalendarBlank, Plus, EnvelopeSimple, HandHeart, UsersThree, Car, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
+import { CalendarBlank, Plus, HandHeart, UsersThree, Car, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { listConnectionsAsMentor, listOpenRideRequestsForChurch } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
+import { ContactEmail } from "@/components/ui/ContactEmail";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
@@ -130,14 +131,12 @@ export default async function VolunteerDashboardPage() {
           <div className="space-y-3">
             {active.map((c) => (
               <div key={c.id} className="space-y-2.5 rounded-xl border border-line p-3">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <Avatar name={c.student.name} size="sm" />
-                    <div>
+                    <div className="min-w-0">
                       <p className="text-sm font-semibold text-ink">{c.student.name}</p>
-                      <p className="flex items-center gap-1.5 text-xs text-ink-muted">
-                        <EnvelopeSimple weight="bold" className="size-3.5" /> {c.student.email}
-                      </p>
+                      {c.student.email && <ContactEmail email={c.student.email} />}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">

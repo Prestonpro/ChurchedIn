@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Car, EnvelopeSimple, MapPin, Sparkle, UsersThree, Clock } from "@phosphor-icons/react/dist/ssr";
+import { Car, MapPin, UsersThree, Clock, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import {
   listOpenRideRequestsForChurch,
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Avatar } from "@/components/ui/Avatar";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { RideActionButton } from "@/components/RideActionButton";
+import { ContactEmail } from "@/components/ui/ContactEmail";
 import { RideOfferForm } from "./RideOfferForm";
 import { ROLES, RIDE_STATUS, RIDE_REQUEST_TYPE } from "@/lib/constants";
 
@@ -38,7 +39,7 @@ export default async function VolunteerRidesPage() {
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-ink">Rides board</h1>
         <p className="mt-1 text-sm text-ink-muted">
-          Students at your church asking for a ride — claim one to help out, or offer your own trip to church.
+          Students at your church asking for a ride. Claim one to help out, or offer your own trip to church.
         </p>
       </div>
 
@@ -82,18 +83,14 @@ export default async function VolunteerRidesPage() {
                         {confirmed.map((c) => (
                           <div key={c.id} className="flex items-center gap-2.5 rounded-xl border border-line bg-paper p-2.5">
                             <Avatar name={c.student.name} size="sm" />
-                            <div className="flex-1">
+                            <div className="min-w-0 flex-1">
                               <Link
                                 href={`/profile/${c.student.id}`}
                                 className="text-sm font-semibold text-ink hover:text-brand-700 hover:underline"
                               >
                                 {c.student.name}
                               </Link>
-                              {c.student.email && (
-                                <p className="flex items-center gap-1.5 text-xs text-ink-muted">
-                                  <EnvelopeSimple weight="bold" className="size-3.5" /> {c.student.email}
-                                </p>
-                              )}
+                              {c.student.email && <ContactEmail email={c.student.email} />}
                             </div>
                           </div>
                         ))}
@@ -144,7 +141,7 @@ export default async function VolunteerRidesPage() {
 
       <div className="mb-4 border-t border-line pt-6">
         <h2 className="text-lg font-bold text-ink">Ride requests</h2>
-        <p className="mt-1 text-sm text-ink-muted">Students asking for a ride — claim one to help out.</p>
+        <p className="mt-1 text-sm text-ink-muted">Students asking for a ride. Claim one to help out.</p>
       </div>
 
       {activeClaimed.length > 0 && (
@@ -175,11 +172,7 @@ export default async function VolunteerRidesPage() {
                       >
                         {ride.student.name}
                       </Link>
-                      {ride.student.email && (
-                        <p className="flex items-center gap-1.5 text-xs text-ink-muted">
-                          <EnvelopeSimple weight="bold" className="size-3.5" /> {ride.student.email}
-                        </p>
-                      )}
+                      {ride.student.email && <ContactEmail email={ride.student.email} />}
                     </div>
                   </div>
                 )}
@@ -199,7 +192,7 @@ export default async function VolunteerRidesPage() {
 
       <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-ink-muted">Open requests</h2>
       {openRides.length === 0 ? (
-        <EmptyState icon={Car} title="No open ride requests" body="Check back later — nothing needs a lift right now." />
+        <EmptyState icon={Car} title="No open ride requests" body="Check back later. Nothing needs a lift right now." />
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
           {openRides.map((ride, i) => {
@@ -218,7 +211,7 @@ export default async function VolunteerRidesPage() {
                       }`}
                     >
                       {isFirstVisit ? (
-                        <Sparkle weight="fill" className="size-4.5" />
+                        <HandHeart weight="fill" className="size-4.5" />
                       ) : (
                         <MapPin weight="fill" className="size-4.5" />
                       )}
@@ -231,7 +224,7 @@ export default async function VolunteerRidesPage() {
                     </div>
                   </div>
                   {isFirstVisit ? (
-                    <Badge tone="accent" icon={Sparkle}>
+                    <Badge tone="accent" icon={HandHeart}>
                       First visit
                     </Badge>
                   ) : (
@@ -247,7 +240,7 @@ export default async function VolunteerRidesPage() {
                   <RideActionButton
                     rideId={ride.id}
                     action={claimRideRequestAction}
-                    label={isFirstVisit ? "Welcome them — claim this ride" : "Claim this ride"}
+                    label={isFirstVisit ? "Welcome them" : "Claim this ride"}
                     pendingLabel="Claiming…"
                     variant="primary"
                   />

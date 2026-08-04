@@ -32,7 +32,7 @@ export function EventViewToggle({ currentView, dark = false }: { currentView: Ev
           <Link
             key={view.id}
             href={view.href}
-            className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`flex min-h-9 items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
               isActive ? activeClasses : inactiveClasses
             }`}
           >

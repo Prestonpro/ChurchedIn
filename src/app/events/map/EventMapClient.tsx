@@ -1,10 +1,9 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CaretLeft, CaretRight, MapPin, Rows, CalendarDots } from "@phosphor-icons/react/dist/ssr";
+import { CaretLeft, CaretRight, MapPin } from "@phosphor-icons/react/dist/ssr";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { PIN_STATUS_COLOR, PIN_STATUS_LABEL, type PinStatus } from "@/lib/eventMapStatus";
 import { rsvpToEventAction } from "@/lib/actions/rsvps";

@@ -119,7 +119,7 @@ export async function acceptNewCoAdminAction(
 
   const existing = await prisma.user.findUnique({ where: { email: check.email } });
   if (existing) {
-    return { error: "An account with that email already exists — log in instead." };
+    return { error: "An account with that email already exists. Log in instead." };
   }
 
   const tokenHash = hashToken(token);

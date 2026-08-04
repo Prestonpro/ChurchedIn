@@ -16,7 +16,11 @@ const VARIANT_CLASSES: Record<Variant, string> = {
 };
 
 const SIZE_CLASSES: Record<Size, string> = {
-  sm: "px-3 py-1.5 text-xs gap-1.5",
+  // min-h-9 so a small button still clears a comfortable tap target on a
+  // phone; it rendered 28px tall before, which is well under any mobile
+  // touch-target guidance and these are real actions (claim a ride, cancel
+  // a request), not decorations.
+  sm: "min-h-9 px-3 py-1.5 text-xs gap-1.5",
   md: "px-4 py-2.5 text-sm gap-2",
   lg: "px-6 py-3 text-base gap-2.5",
 };

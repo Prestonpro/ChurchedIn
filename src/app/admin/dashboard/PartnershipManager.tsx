@@ -150,7 +150,7 @@ export function PartnershipManager({ partnerships }: { partnerships: Partnership
             name="joinCode"
             icon={Ticket}
             placeholder="Their join code"
-            hint="Ask their church leader for it — same code volunteers and students use to join."
+            hint="Ask their church leader for it. Same code volunteers and students use to join."
             className="uppercase tracking-widest"
             maxLength={12}
           />

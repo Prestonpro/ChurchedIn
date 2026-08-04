@@ -60,7 +60,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
           {conversation.messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-ink-faint">
-              No messages yet — say hello to {conversation.otherParty.name.split(" ")[0]}!
+              No messages yet. Say hello to {conversation.otherParty.name.split(" ")[0]}!
             </p>
           ) : (
             conversation.messages.map((m) => {
@@ -92,7 +92,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
           <MessageForm connectionId={connectionId} />
         ) : (
           <p className="border-t border-line bg-paper px-4 py-3 text-center text-sm text-ink-muted">
-            This connection has ended — you can still read the history above, but you can&apos;t send new
+            This connection has ended. You can still read the history above, but you can&apos;t send new
             messages.
           </p>
         )}

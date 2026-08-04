@@ -59,7 +59,7 @@ export function LocationPicker({
         <p className="mb-1.5 text-sm font-semibold text-ink-soft">Drop a pin</p>
         <PinDropMap lat={coords?.lat} lng={coords?.lng} onPick={(lat, lng) => setCoords({ lat, lng })} />
         <p className="mt-1.5 text-xs text-ink-faint">
-          {coords ? `Pin set at ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)} — click elsewhere to move it.` : "Click the map to drop a pin."}
+          {coords ? `Pin set at ${coords.lat.toFixed(5)}, ${coords.lng.toFixed(5)}. Click elsewhere to move it.` : "Click the map to drop a pin."}
         </p>
       </div>
       <input type="hidden" name="locationLat" value={coords?.lat ?? ""} />

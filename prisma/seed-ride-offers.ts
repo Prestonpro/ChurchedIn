@@ -64,7 +64,16 @@ export async function seedRideOffers() {
     const existing = await prisma.rideOffer.findFirst({
       where: { volunteerId: opts.volunteerId, date: opts.date, time: opts.time },
     });
-    if (existing) return existing;
+    if (existing) {
+      // Refresh the descriptive fields rather than bailing out, so editing
+      // the copy in this file and re-running actually updates a database
+      // that was already seeded. Identity fields (volunteer/date/time) are
+      // what we matched on, so they're unchanged by definition.
+      return prisma.rideOffer.update({
+        where: { id: existing.id },
+        data: { capacity: opts.capacity, notes: opts.notes },
+      });
+    }
     return prisma.rideOffer.create({ data: { churchId, ...opts } });
   }
 
@@ -106,7 +115,7 @@ export async function seedRideOffers() {
     date: daysFromNow(4),
     time: "10:30 AM",
     capacity: 1,
-    notes: "Sunday service carpool — meet at the north parking lot.",
+    notes: "Sunday service carpool. Meet at the north parking lot.",
   });
   const extra2 = rider(1);
   if (extra2) {
@@ -125,7 +134,7 @@ export async function seedRideOffers() {
     date: daysFromNow(5),
     time: "8:45 AM",
     capacity: 1,
-    notes: "Quick trip, leaving right at 8:45 — please be on time.",
+    notes: "Quick trip, leaving right at 8:45. Please be on time.",
   });
   const extra4 = rider(3);
   if (extra4) await upsertClaim(kevinOffer.id, extra4.id, "CONFIRMED");

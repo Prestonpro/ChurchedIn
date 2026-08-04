@@ -11,7 +11,7 @@ export default function ForgotPasswordPage() {
   return (
     <AuthPageLayout
       panelTitle="Forgot your password?"
-      panelBody="No problem — we'll send you a link to set a new one."
+      panelBody="No problem. We'll send you a link to set a new one."
     >
       <h1 className="text-2xl font-extrabold text-ink">Reset your password</h1>
       <p className="mt-1.5 text-sm text-ink-muted">

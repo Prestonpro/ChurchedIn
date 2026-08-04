@@ -42,8 +42,8 @@ export function MentorProfileForm({
         label="Bio / about me"
         name="bio"
         defaultValue={initial.bio}
-        placeholder="A sentence or two about yourself — this shows up as-is on your profile and your Friends card."
-        hint="This is shown as a plain description, not split into tags — write it like you'd introduce yourself."
+        placeholder="A sentence or two about yourself. This shows up as-is on your profile and your Friends card."
+        hint="Shown as a plain description, not split into tags. Write it like you'd introduce yourself."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -114,7 +114,7 @@ export function MentorProfileForm({
         name="interests"
         defaultValue={initial.interests}
         placeholder="Career advice, homework help, just being a friend…"
-        hint="Separate each one with a comma — these show up as individual tags on your profile, not as a paragraph."
+        hint="Separate each one with a comma. These show up as individual tags, not as a paragraph."
       />
       <SubmitButton pendingText="Saving…">Save my profile</SubmitButton>
     </form>

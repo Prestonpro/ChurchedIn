@@ -293,7 +293,7 @@ export async function demoteFromAdminAction(churchId: string, memberUserId: stri
     return { error: "That person isn't a member of this church." };
   }
   if (membership.role === ROLES.CHURCH_ADMIN && adminCount <= 1) {
-    return { error: "A church needs at least one leader — promote someone else first." };
+    return { error: "A church needs at least one leader. Promote someone else first." };
   }
 
   await prisma.membership.update({

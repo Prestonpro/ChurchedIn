@@ -69,7 +69,7 @@ export default async function AdminDashboardPage() {
             <MemberCountBadge memberCount={memberCount} />
           </div>
           <p className="mt-1 text-sm text-ink-muted">
-            {memberCount} {memberCount === 1 ? "member" : "members"} — church leader overview
+            {memberCount} {memberCount === 1 ? "member" : "members"} · church leader overview
           </p>
         </div>
         <LinkButton href="/volunteer/events/new">
@@ -104,7 +104,7 @@ export default async function AdminDashboardPage() {
           <div>
             <h2 className="font-bold text-ink">Invite people</h2>
             <p className="text-sm text-ink-muted">
-              Share this code — anyone can join as a volunteer or student.
+              Share this code. Anyone can join as a volunteer or student.
             </p>
           </div>
         </div>

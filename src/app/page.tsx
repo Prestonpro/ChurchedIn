@@ -5,8 +5,7 @@ import { dashboardPathForRole } from "@/lib/constants";
 import {
   ArrowRight,
   ChatCircleDots,
-  ForkKnife,
-  Sparkle,
+  HandHeart,
 } from "@phosphor-icons/react/dist/ssr";
 import { LinkButton } from "@/components/ui/Button";
 import { Reveal } from "@/components/Reveal";
@@ -24,7 +23,7 @@ const FEATURES = [
   {
     iconKey: "calendar" as const,
     title: "Plan a gathering",
-    body: "Dinners, coffee chats, study groups, airport pickups — share it, set a headcount, and see who's coming.",
+    body: "Dinners, coffee chats, study groups, airport pickups. Share it, set a headcount, and see who's coming.",
     details: "Pick a preset like a dinner or coffee chat, or start from scratch. Set headcounts for helpers and attendees separately, and everyone can see who else is coming before they commit.",
   },
   {
@@ -36,7 +35,7 @@ const FEATURES = [
   {
     iconKey: "users" as const,
     title: "Find a friend",
-    body: "Students browse a friend directory and reach out — contact info is shared only once a friend accepts.",
+    body: "Students browse a friend directory and reach out. Contact info is shared only once a friend accepts.",
     details: "Browse by language and interests, send a reach-out with a short note, and email addresses stay private on both sides until the other person accepts.",
   },
 ];
@@ -114,7 +113,7 @@ export default async function LandingPage() {
               <h2 className="text-3xl font-extrabold text-ink">People, doing this together</h2>
             </Reveal>
             <Reveal delay={100}>
-              <p className="mt-2 text-ink-muted">Not a program to manage — just your church family, showing up for each other.</p>
+              <p className="mt-2 text-ink-muted">Your church family showing up for each other, not another program to run.</p>
             </Reveal>
           </div>
           <div className="grid items-stretch gap-8 sm:grid-cols-3">
@@ -140,9 +139,9 @@ export default async function LandingPage() {
         </Reveal>
         <Reveal delay={200}>
           <p className="mx-auto mt-3 max-w-xl text-ink-soft">
-            Every reach-out goes through an accept step first — no student or
-            volunteer&apos;s email is ever shown before both sides have agreed
-            to connect.
+            Every reach-out goes through an accept step first, so no student
+            or volunteer&apos;s email is shown before both sides agree to
+            connect.
           </p>
         </Reveal>
       </section>
@@ -152,7 +151,7 @@ export default async function LandingPage() {
         <div className="relative mx-auto max-w-4xl px-6 py-20 text-center">
           <Reveal variant="icon">
             <span className="mx-auto flex size-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
-              <Sparkle weight="fill" className="size-6" />
+              <HandHeart weight="fill" className="size-6" />
             </span>
           </Reveal>
           <Reveal variant="left" delay={100}>
@@ -163,18 +162,14 @@ export default async function LandingPage() {
           <Reveal delay={200}>
             <p className="mx-auto mt-3 max-w-xl text-ink-soft">
               If you and a friend want to start welcoming international
-              students, you can set it up together — no official title needed,
-              just a willingness to open your door.
+              students, you can set it up together. No official title needed.
             </p>
           </Reveal>
         </div>
       </section>
 
       <footer className="border-t border-line px-6 py-10 text-center text-sm text-ink-muted">
-        <span className="inline-flex items-center gap-1.5">
-          <ForkKnife weight="fill" className="size-4" /> Made with love for church communities welcoming students far from home.
-        </span>
-        <p className="mt-3">
+        <p>
           <Link href="/privacy" className="font-medium text-brand-600 hover:text-brand-700 hover:underline">
             Privacy Policy
           </Link>

@@ -125,7 +125,7 @@ export default async function EventDetailPage({
 
             {isPartnerView ? (
               <p className="mt-6 rounded-xl bg-paper px-4 py-3 text-sm text-ink-muted">
-                This gathering is hosted by a partner church — visit their church to RSVP.
+                This gathering is hosted by a partner church. Visit their church page to RSVP.
               </p>
             ) : (
               <>
