@@ -2,8 +2,8 @@
 
 > The product is ChurchedIn everywhere users can see it, and the deployed
 > domain is `churchedin.vercel.app`. "Church LinkedIn" was the working name
-> and survives only in the GitHub repo name, the local folder name, and the
-> internal OAuth-state JWT issuer/audience strings in `src/lib/oauthState.ts`
+> and survives only in the local folder name and the internal OAuth-state
+> JWT issuer/audience strings in `src/lib/oauthState.ts`
 > (those are opaque claim values, not URLs, so renaming them buys nothing and
 > would break any OAuth handshake in flight across the deploy).
 
