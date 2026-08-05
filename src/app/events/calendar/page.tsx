@@ -121,7 +121,7 @@ export default async function EventsCalendarPage({
             <select
               name="category"
               defaultValue={category ?? ""}
-              className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100 sm:w-auto"
+              className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-base text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100 sm:w-auto sm:text-sm"
             >
               <option value="">All categories</option>
               {Object.entries(EVENT_CATEGORY_LABELS).map(([value, label]) => (

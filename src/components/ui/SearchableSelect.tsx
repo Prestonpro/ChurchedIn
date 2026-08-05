@@ -131,9 +131,9 @@ export function SearchableSelect({
                   ? "border-brand-400 outline-none ring-4 ring-brand-100"
                   : "border-line-strong hover:border-ink-faint"
               } ${IconComponent ? "pl-8" : "pl-1"}`,
-            valueContainer: () => "py-1.5 text-sm text-ink",
+            valueContainer: () => "py-1.5 text-base text-ink sm:text-sm",
             placeholder: () => "text-ink-faint",
-            input: () => "text-ink",
+            input: () => "text-base text-ink sm:text-sm",
             singleValue: () => "text-ink",
             multiValue: () => "bg-brand-50 rounded-md border border-brand-200 m-1 text-brand-700",
             multiValueLabel: () => "px-2 py-0.5 text-sm font-medium",

@@ -180,7 +180,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             aria-label="Filter by denomination"
             value={denomination}
             onChange={(e) => setDenomination(e.target.value)}
-            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-base text-ink sm:text-sm transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value="">All denominations</option>
             {denominationOptions.map((d) => (
@@ -193,7 +193,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             aria-label="Filter by church size"
             value={minMembers}
             onChange={(e) => setMinMembers(Number(e.target.value))}
-            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-base text-ink sm:text-sm transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
           >
             <option value={0}>Any size</option>
             <option value={3}>3+ members</option>
@@ -206,7 +206,7 @@ export function DiscoverClient({ churches }: { churches: DiscoverableChurch[] })
             value={language}
             onChange={(e) => setLanguage(e.target.value)}
             placeholder="Language spoken (e.g. Mandarin)"
-            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-sm text-ink placeholder:text-ink-faint transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
+            className="w-full rounded-lg border border-line-strong bg-white px-3 py-2 text-base text-ink sm:text-sm placeholder:text-ink-faint transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100"
           />
           <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-soft">
             <input
