@@ -205,10 +205,18 @@ reject the send entirely.
 
 ## Deployment
 
-Live at **https://church-linkedin.vercel.app** (the Vercel project/domain
-name predates the ChurchedIn rebrand and hasn't been changed — a domain
-rename is a separate infra decision, not a code change), deployed on Vercel
-via its GitHub integration (auto-deploys on every push to `master`). See
+Live at **https://churchedin.vercel.app**, deployed on Vercel
+via its GitHub integration (auto-deploys on every push to `master`).
+
+No code hardcodes the host. Every absolute URL the app emits (email links,
+the Google OAuth `redirect_uri`, and `metadataBase` for OG tags) is derived
+from the `APP_URL` environment variable, so changing the domain is an env +
+Google Cloud Console change, not a code change. If you rename the Vercel
+project again, add the new `/api/auth/callback/google` URI in Google Cloud
+Console *before* renaming, or Google sign-in fails with
+`redirect_uri_mismatch` until you do.
+
+See
 [DEPLOYMENT.md](./DEPLOYMENT.md) for the full step-by-step: provisioning
 Neon Postgres, Resend, Google OAuth, importing the project into Vercel,
 required environment variables, a post-deploy verification checklist, custom
