@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { List, X, SignOut, Question } from "@phosphor-icons/react/dist/ssr";
@@ -40,6 +41,28 @@ export function MobileMenu({
   const pathname = usePathname();
   const openButtonRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLDivElement>(null);
+
+  // The drawer has to be portaled to document.body, for the same reason
+  // ui/Modal.tsx does it. This component renders inside AuthShell's
+  // <header>, and that header carries `backdrop-blur-md`. A non-none
+  // `backdrop-filter` makes an element a containing block for its
+  // `position: fixed` descendants, exactly like `transform` or
+  // `perspective` do. So `inset-y-0` on the drawer resolved against the
+  // 65px-tall header instead of the viewport: the drawer opened, but
+  // collapsed to a header-height strip that showed the avatar row and
+  // clipped every nav link below it. On a phone that left no way to
+  // navigate the site at all, since below `lg` this menu *is* the nav.
+  //
+  // `mounted` guards the document.body reference, which doesn't exist
+  // during server rendering. It's set from a timeout rather than straight
+  // from the effect body because `react-hooks/set-state-in-effect` is an
+  // ESLint *error* here and ESLint errors fail the Vercel build — same
+  // reasoning and same shape as SearchableSelect's flag.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const timeout = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timeout);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -100,8 +123,12 @@ export function MobileMenu({
         <List weight="bold" className="size-6" />
       </button>
 
-      {open && (
-        <>
+      {mounted && open && createPortal(
+        // `lg:hidden` is repeated here because portaling to document.body
+        // escapes the wrapper's own `lg:hidden`. Without it, opening the
+        // menu on a narrow window and then widening it past `lg` would
+        // leave the drawer stranded on screen next to the desktop nav.
+        <div className="lg:hidden">
           {/* A plain div, not a second button — the real close button below
             already has the "Close menu" label; a focusable, identically-
             labeled backdrop just duplicated it for screen-reader users. */}
@@ -209,7 +236,8 @@ export function MobileMenu({
               </button>
             </form>
           </div>
-        </>
+        </div>,
+        document.body,
       )}
       <HelpGuideModal role={role} churchId={activeChurchId ?? ""} open={helpOpen} onClose={() => setHelpOpen(false)} />
     </div>
