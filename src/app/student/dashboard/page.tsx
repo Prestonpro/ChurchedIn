@@ -58,7 +58,7 @@ export default async function StudentDashboardPage() {
           sublabel={nextRsvp ? `Next: ${nextRsvp.event.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
-          href="#your-gatherings"
+          href="/events"
         />
         <StatCard
           icon={HandHeart}
@@ -86,8 +86,8 @@ export default async function StudentDashboardPage() {
         />
       </div>
 
-      <Card id="your-gatherings">
-        <h2 className="mb-3 font-bold text-ink">Your upcoming gatherings</h2>
+      <Card>
+        <h2 className="mb-3 font-bold text-ink">Your RSVP&apos;d events</h2>
         {upcoming.length === 0 ? (
           <EmptyState
             icon={CalendarBlank}

@@ -79,7 +79,7 @@ export default async function VolunteerDashboardPage() {
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
-          href="#your-gatherings"
+          href="/events"
         />
         <StatCard
           icon={HandHeart}
@@ -158,7 +158,7 @@ export default async function VolunteerDashboardPage() {
         </Card>
       )}
 
-      <Card id="your-gatherings">
+      <Card>
         <h2 className="mb-3 font-bold text-ink">Gatherings you&apos;re planning or helping with</h2>
         {myEvents.length === 0 ? (
           <EmptyState
