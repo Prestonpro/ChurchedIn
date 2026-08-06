@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { MapPin } from "@phosphor-icons/react/dist/ssr";
-import { Field } from "@/components/ui/Field";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 
 const PinDropMap = dynamic(() => import("./PinDropMap").then((mod) => mod.PinDropMap), {
   ssr: false,
@@ -16,12 +16,13 @@ const PinDropMap = dynamic(() => import("./PinDropMap").then((mod) => mod.PinDro
 
 /**
  * Optional add-on to a required plain-text location field elsewhere in the
- * form — feeds a map view + a detail page's mini-map. Deliberately a
- * separate address string rather than geocoding existing text: geocoding
- * an arbitrary free-text address into coordinates would need an external
- * API (out of scope for a "no API key" feature). Shared between event
- * creation (/volunteer/events/new) and church creation (/churches/new) —
- * both need identically-shaped "address text + drop a pin" inputs.
+ * form — feeds a map view + a detail page's mini-map. The address field
+ * searches Nominatim as you type (see LocationAutocomplete); picking a
+ * suggestion fills the text and drops the pin at its real coordinates, but
+ * typing a plain address that never matches anything and clicking the map
+ * by hand still works exactly as before. Shared between event creation
+ * (/volunteer/events/new) and church creation (/churches/new) — both need
+ * identically-shaped "address text + drop a pin" inputs.
  */
 export function LocationPicker({
   title = "Add to the map (optional)",
@@ -47,13 +48,14 @@ export function LocationPicker({
         <p className="text-sm font-semibold text-ink-soft">{title}</p>
         <p className="text-xs text-ink-muted">{helpText}</p>
       </div>
-      <Field
+      <LocationAutocomplete
         label="Map address"
         name="address"
         icon={MapPin}
         placeholder="123 Main St, Springfield"
         value={address}
-        onChange={(e) => setAddress(e.target.value)}
+        onChange={setAddress}
+        onSelect={(result) => setCoords({ lat: result.lat, lng: result.lng })}
       />
       <div>
         <p className="mb-1.5 text-sm font-semibold text-ink-soft">Drop a pin</p>

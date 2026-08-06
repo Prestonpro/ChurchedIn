@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { MapPin, Clock } from "@phosphor-icons/react/dist/ssr";
 import { createRideRequestAction } from "@/lib/actions/rides";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
+import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 /** Remounted (via `key`) after a successful submit to clear all inputs —
@@ -16,6 +17,7 @@ export function RideRequestForm() {
   const [state, formAction] = useActionState(createRideRequestAction, undefined);
   const [formKey, setFormKey] = useState(0);
   const [lastState, setLastState] = useState(state);
+  const [destination, setDestination] = useState("");
 
   if (state !== lastState) {
     setLastState(state);
@@ -27,12 +29,14 @@ export function RideRequestForm() {
   return (
     <form key={formKey} action={formAction} className="space-y-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
-      <Field
+      <LocationAutocomplete
         label="Where do you need to go?"
         name="destination"
         icon={MapPin}
         required
         placeholder="Airport, grocery store, church, ..."
+        value={destination}
+        onChange={setDestination}
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Date" name="date" type="date" required />
