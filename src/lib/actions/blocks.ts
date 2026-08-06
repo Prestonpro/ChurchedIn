@@ -13,12 +13,13 @@ export type ActionResult = { error: string } | void;
  * those out meant a just-blocked person's request stayed on screen and still
  * actionable until the cache happened to expire.
  */
-function revalidateBlockSurfaces(): void {
+function revalidateBlockSurfaces(blockedId: string): void {
   revalidatePath("/student/mentors");
   revalidatePath("/events");
   revalidatePath("/volunteer/dashboard");
   revalidatePath("/volunteer/rides");
   revalidatePath("/admin/rides");
+  revalidatePath(`/profile/${blockedId}`);
 }
 
 export async function blockUserAction(blockedId: string): Promise<ActionResult> {
@@ -33,11 +34,11 @@ export async function blockUserAction(blockedId: string): Promise<ActionResult> 
     update: {},
   });
 
-  revalidateBlockSurfaces();
+  revalidateBlockSurfaces(blockedId);
 }
 
 export async function unblockUserAction(blockedId: string): Promise<ActionResult> {
   const user = await requireUser();
   await prisma.block.deleteMany({ where: { blockerId: user.id, blockedId } });
-  revalidateBlockSurfaces();
+  revalidateBlockSurfaces(blockedId);
 }

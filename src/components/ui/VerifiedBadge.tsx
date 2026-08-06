@@ -1,14 +1,15 @@
 import { SealCheck } from "@phosphor-icons/react/dist/ssr";
+import { Badge } from "@/components/ui/Badge";
 
 /** Identity-verification badge shown next to a name — see User.verified's
- * doc comment in schema.prisma for what this does and doesn't mean yet. */
+ * doc comment in schema.prisma for what this does and doesn't mean yet.
+ * A bare icon wasn't noticeable enough — a labeled pill (the same Badge
+ * used for role tags elsewhere) reads clearly at a glance instead of
+ * blending into the name it sits next to. */
 export function VerifiedBadge({ className = "" }: { className?: string }) {
   return (
-    <span
-      title="Verified"
-      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-brand-100 p-0.5 ${className}`}
-    >
-      <SealCheck weight="fill" aria-label="Verified" className="size-3.5 text-brand-700" />
-    </span>
+    <Badge tone="brand" icon={SealCheck} iconWeight="fill" title="Verified" className={className}>
+      Verified
+    </Badge>
   );
 }

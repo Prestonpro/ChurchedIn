@@ -21,6 +21,7 @@ import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { ProfileConnectionButton } from "@/components/ProfileConnectionButton";
 import { ReportButton } from "@/components/ReportButton";
+import { BlockButton } from "@/components/BlockButton";
 import { BackLink } from "@/components/ui/BackLink";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
@@ -206,10 +207,14 @@ export default async function PublicProfilePage({
           )}
         </Card>
 
-        {/* Report button — never shown to self */}
+        {/* Block/report — never shown to self, and only here now (not on
+            every friend-directory card) — most social apps only expose
+            these from the full profile, not from every list card. */}
         {!isSelf && (
-          <div className="pt-2 text-center">
+          <div className="flex items-center justify-center gap-3 pt-2">
             <ReportButton reportedUserId={target.id} name={target.name} />
+            <span className="text-ink-faint">·</span>
+            <BlockButton userId={target.id} name={target.name} />
           </div>
         )}
 

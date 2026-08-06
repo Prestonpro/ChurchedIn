@@ -15,7 +15,6 @@ import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { ContactEmail } from "@/components/ui/ContactEmail";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { BlockButton } from "@/components/BlockButton";
 import { UnblockButton } from "@/components/UnblockButton";
 import { EndConnectionButton, CancelRequestButton } from "@/components/ConnectionActions";
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
@@ -60,30 +59,27 @@ function MentorCard({
       }`}
       style={{ animationDelay: `${delayMs}ms` }}
     >
-      <div className="flex items-start justify-between gap-2">
-        <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
-          <Avatar name={m.user.name} src={m.user.photoUrl} />
-          <div>
-            <h2 className="flex items-center gap-1 font-bold text-ink hover:text-brand-700 hover:underline">
-              {m.user.name}
-              {m.user.verified && <VerifiedBadge />}
-            </h2>
-            <Badge tone={m.role === ROLES.CHURCH_ADMIN ? "brand" : "neutral"} className="mt-0.5">
-              {roleLabel(m.role as Role)}
-            </Badge>
-            {shared.size > 0 && (
-              <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
-                <Translate weight="bold" className="size-3" /> Speaks{" "}
-                {Array.from(shared).join(", ")}, like you
-              </p>
-            )}
-            <p className="flex items-center gap-1 text-xs text-ink-faint">
-              <Clock weight="bold" className="size-3" /> {formatTenure(m.memberSince)}
+      <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
+        <Avatar name={m.user.name} src={m.user.photoUrl} />
+        <div>
+          <h2 className="flex items-center gap-1 font-bold text-ink hover:text-brand-700 hover:underline">
+            {m.user.name}
+            {m.user.verified && <VerifiedBadge />}
+          </h2>
+          <Badge tone={m.role === ROLES.CHURCH_ADMIN ? "brand" : "neutral"} className="mt-0.5">
+            {roleLabel(m.role as Role)}
+          </Badge>
+          {shared.size > 0 && (
+            <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
+              <Translate weight="bold" className="size-3" /> Speaks{" "}
+              {Array.from(shared).join(", ")}, like you
             </p>
-          </div>
-        </Link>
-        <BlockButton userId={m.userId} name={m.user.name} />
-      </div>
+          )}
+          <p className="flex items-center gap-1 text-xs text-ink-faint">
+            <Clock weight="bold" className="size-3" /> {formatTenure(m.memberSince)}
+          </p>
+        </div>
+      </Link>
       {m.user.bio && <p className="mt-3 text-sm text-ink-soft">{m.user.bio}</p>}
 
       {(m.jobTitle || m.company || m.industry) && (
@@ -176,7 +172,13 @@ function MentorCard({
 
 export const metadata: Metadata = { title: "Friends" };
 
-export default async function MentorDirectoryPage() {
+export default async function MentorDirectoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ tab?: string }>;
+}) {
+  const { tab: rawTab } = await searchParams;
+  const activeTab = rawTab === "add" ? "add" : "friends";
   const user = await requireRole(ROLES.STUDENT);
   if (!user.activeMembership) {
     return (
@@ -242,13 +244,38 @@ export default async function MentorDirectoryPage() {
         />
       ) : (
         <>
-          <div className="mb-8">
-            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-muted">
+          {/* Real tabs, not two stacked sections — a tester couldn't tell
+              "Your friends" and "Add friends" apart when both rendered on
+              screen at once. Plain links + a query param (not client-side
+              state) so switching tabs works without JavaScript too, same
+              as the rest of this app's server-rendered navigation. */}
+          <div role="tablist" aria-label="Friends" className="mb-6 inline-flex gap-1 rounded-full border border-line bg-paper p-1">
+            <Link
+              href="?tab=friends"
+              role="tab"
+              aria-selected={activeTab === "friends"}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand ${
+                activeTab === "friends" ? "bg-white text-brand-700 shadow-card" : "text-ink-muted hover:text-ink"
+              }`}
+            >
               <UsersThree weight="bold" className="size-4" /> Your friends ({currentFriends.length})
-            </h2>
-            {currentFriends.length === 0 ? (
+            </Link>
+            <Link
+              href="?tab=add"
+              role="tab"
+              aria-selected={activeTab === "add"}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand ${
+                activeTab === "add" ? "bg-white text-brand-700 shadow-card" : "text-ink-muted hover:text-ink"
+              }`}
+            >
+              <UserPlus weight="bold" className="size-4" /> Add friends ({addFriends.length})
+            </Link>
+          </div>
+
+          {activeTab === "friends" ? (
+            currentFriends.length === 0 ? (
               <p className="rounded-xl border border-dashed border-line p-4 text-sm text-ink-muted">
-                You haven&apos;t connected with anyone yet. Send a request below to get started.
+                You haven&apos;t connected with anyone yet. Switch to the Add friends tab to send a request.
               </p>
             ) : (
               <div className="grid gap-4 sm:grid-cols-2">
@@ -263,32 +290,25 @@ export default async function MentorDirectoryPage() {
                   />
                 ))}
               </div>
-            )}
-          </div>
-
-          <div>
-            <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-muted">
-              <UserPlus weight="bold" className="size-4" /> Add friends ({addFriends.length})
-            </h2>
-            {addFriends.length === 0 ? (
-              <p className="rounded-xl border border-dashed border-line p-4 text-sm text-ink-muted">
-                You&apos;re already friends with everyone here!
-              </p>
-            ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
-                {addFriends.map(({ mentor: m, shared }, i) => (
-                  <MentorCard
-                    key={m.id}
-                    mentor={m}
-                    shared={shared}
-                    connection={connectionByMentor.get(m.userId)}
-                    delayMs={Math.min(i * 50, 300)}
-                    isFriend={false}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+            )
+          ) : addFriends.length === 0 ? (
+            <p className="rounded-xl border border-dashed border-line p-4 text-sm text-ink-muted">
+              You&apos;re already friends with everyone here!
+            </p>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
+              {addFriends.map(({ mentor: m, shared }, i) => (
+                <MentorCard
+                  key={m.id}
+                  mentor={m}
+                  shared={shared}
+                  connection={connectionByMentor.get(m.userId)}
+                  delayMs={Math.min(i * 50, 300)}
+                  isFriend={false}
+                />
+              ))}
+            </div>
+          )}
         </>
       )}
 
