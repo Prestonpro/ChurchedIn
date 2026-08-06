@@ -20,7 +20,7 @@ export default async function AdminProfilePage() {
     <AuthShell user={user}>
       <div className="mx-auto max-w-xl space-y-6">
         <Card className="flex items-center gap-4">
-          <Avatar name={user.name} size="lg" />
+          <Avatar name={user.name} src={user.photoUrl} size="lg" />
           <div>
             <h1 className="text-xl font-extrabold text-ink">{user.name}</h1>
             <p className="flex items-center gap-1.5 text-sm text-ink-muted">

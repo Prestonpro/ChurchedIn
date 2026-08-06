@@ -109,6 +109,9 @@ export const mentorProfileSchema = z.object({
   // people wrote a natural sentence into `interests` instead, which then
   // rendered as one oversized single tag with nothing to split on.
   bio: z.string().trim().max(500).optional().or(z.literal("")),
+  // A link to an externally-hosted photo, not a file upload — see
+  // Avatar.tsx's doc comment on why that's the deliberate scope here.
+  photoUrl: z.string().trim().url("Enter a valid image URL").optional().or(z.literal("")),
   jobTitle: z.string().trim().max(100).optional().or(z.literal("")),
   company: z.string().trim().max(100).optional().or(z.literal("")),
   industry: z.string().trim().max(100).optional().or(z.literal("")),
@@ -123,6 +126,7 @@ export const mentorProfileSchema = z.object({
 
 export const studentProfileSchema = z.object({
   bio: z.string().trim().max(500).optional().or(z.literal("")),
+  photoUrl: z.string().trim().url("Enter a valid image URL").optional().or(z.literal("")),
   countryOfOrigin: z.string().trim().max(100).optional().or(z.literal("")),
   school: z.string().trim().max(150).optional().or(z.literal("")),
   major: z.string().trim().max(100).optional().or(z.literal("")),

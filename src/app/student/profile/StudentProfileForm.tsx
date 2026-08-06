@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
-import { Globe, GraduationCap, LinkedinLogo, FacebookLogo, InstagramLogo, CalendarBlank, BookOpenText } from "@phosphor-icons/react/dist/ssr";
+import { useActionState, useState } from "react";
+import { Globe, GraduationCap, LinkedinLogo, FacebookLogo, InstagramLogo, CalendarBlank, BookOpenText, Image as ImageIcon } from "@phosphor-icons/react/dist/ssr";
 import { updateStudentProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { SuccessToast } from "@/components/ui/SuccessToast";
 import { COUNTRIES, LANGUAGES, SCHOOLS, MAJORS } from "@/lib/constants";
 
 export function StudentProfileForm({
@@ -13,6 +14,7 @@ export function StudentProfileForm({
 }: {
   initial: {
     bio: string;
+    photoUrl: string;
     countryOfOrigin: string;
     school: string;
     major: string;
@@ -28,8 +30,24 @@ export function StudentProfileForm({
 }) {
   const [state, formAction] = useActionState(updateStudentProfileAction, undefined);
 
+  // `state` is a new object reference every submit, even on a second
+  // successful save with an identical `{ ok: true }` shape — comparing by
+  // reference (not by re-deriving a boolean from its contents) is what lets
+  // saveCount bump, and therefore SuccessToast re-fire, on every save, not
+  // just the first. Same "detect via reference change" idea as the
+  // formKey-bump pattern in RideRequestForm/RideOfferForm.
+  const [lastState, setLastState] = useState(state);
+  const [saveCount, setSaveCount] = useState(0);
+  if (state !== lastState) {
+    setLastState(state);
+    if (state && "ok" in state && state.ok) {
+      setSaveCount((n) => n + 1);
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-4">
+      <SuccessToast trigger={saveCount} message="Profile saved" />
       <FormError message={state && "error" in state ? state.error : undefined} />
 
       <TextAreaField
@@ -38,6 +56,15 @@ export function StudentProfileForm({
         defaultValue={initial.bio}
         placeholder="A sentence or two about yourself. This shows up as-is on your profile and your Friends card."
         hint="Shown as a plain description, not split into tags. Write it like you'd introduce yourself."
+      />
+
+      <Field
+        label="Profile photo URL (optional)"
+        name="photoUrl"
+        icon={ImageIcon}
+        defaultValue={initial.photoUrl}
+        placeholder="https://..."
+        hint="A link to a photo of you. Leave blank to show your initials instead."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

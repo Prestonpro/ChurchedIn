@@ -49,7 +49,7 @@ export default async function ChurchMembersPage({ params }: { params: Promise<{ 
                 className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-line p-3 transition-brand hover:border-brand-200 hover:bg-brand-50/40"
               >
                 <div className="flex items-center gap-2.5">
-                  <Avatar name={m.user.name} size="sm" />
+                  <Avatar name={m.user.name} src={m.user.photoUrl} size="sm" />
                   <div>
                     <p className="flex items-center gap-1 text-sm font-semibold text-ink">
                       {m.user.name}

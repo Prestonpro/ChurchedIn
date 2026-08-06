@@ -19,7 +19,7 @@ import { UnblockButton } from "@/components/UnblockButton";
 import { EndConnectionButton, CancelRequestButton } from "@/components/ConnectionActions";
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
 import { ConnectionRequestForm } from "./ConnectionRequestForm";
-import { CONNECTION_STATUS, ROLES } from "@/lib/constants";
+import { CONNECTION_STATUS, ROLES, roleLabel, type Role } from "@/lib/constants";
 
 function sharedTags(a: string[], b: string[]): Set<string> {
   const bLower = new Set(b.map((t) => t.toLowerCase()));
@@ -37,22 +37,39 @@ function MentorCard({
   shared,
   connection,
   delayMs,
+  isFriend,
 }: {
   mentor: RankedMentor["mentor"];
   shared: Set<string>;
   connection: Connection | undefined;
   delayMs: number;
+  /** A tester couldn't tell the "Your friends" and "Add friends" sections
+   * apart by their section headers alone — the cards themselves looked
+   * identical. A soft brand-tinted left border + background on confirmed
+   * friends only is the fix, not a heavier treatment: this still has to
+   * read as "the same kind of card, just yours" rather than two visually
+   * unrelated components. */
+  isFriend: boolean;
 }) {
   return (
-    <Card interactive className="flex h-full animate-fade-up flex-col" style={{ animationDelay: `${delayMs}ms` }}>
+    <Card
+      interactive
+      className={`flex h-full animate-fade-up flex-col ${
+        isFriend ? "border-l-4 border-l-success bg-success-soft/30" : ""
+      }`}
+      style={{ animationDelay: `${delayMs}ms` }}
+    >
       <div className="flex items-start justify-between gap-2">
         <Link href={`/profile/${m.userId}`} className="flex items-center gap-3 hover:opacity-80">
-          <Avatar name={m.user.name} />
+          <Avatar name={m.user.name} src={m.user.photoUrl} />
           <div>
             <h2 className="flex items-center gap-1 font-bold text-ink hover:text-brand-700 hover:underline">
               {m.user.name}
               {m.user.verified && <VerifiedBadge />}
             </h2>
+            <Badge tone={m.role === ROLES.CHURCH_ADMIN ? "brand" : "neutral"} className="mt-0.5">
+              {roleLabel(m.role as Role)}
+            </Badge>
             {shared.size > 0 && (
               <p className="flex items-center gap-1 text-xs font-medium text-brand-600">
                 <Translate weight="bold" className="size-3" /> Speaks{" "}
@@ -239,6 +256,7 @@ export default async function MentorDirectoryPage() {
                     shared={shared}
                     connection={connectionByMentor.get(m.userId)}
                     delayMs={Math.min(i * 50, 300)}
+                    isFriend
                   />
                 ))}
               </div>
@@ -262,6 +280,7 @@ export default async function MentorDirectoryPage() {
                     shared={shared}
                     connection={connectionByMentor.get(m.userId)}
                     delayMs={Math.min(i * 50, 300)}
+                    isFriend={false}
                   />
                 ))}
               </div>

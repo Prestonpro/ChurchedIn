@@ -42,7 +42,7 @@ export default async function MessagesPage() {
             return (
               <Link key={c.id} href={`/messages/${c.connectionId}`}>
                 <Card interactive className="flex items-center gap-3">
-                  <Avatar name={c.otherParty.name} />
+                  <Avatar name={c.otherParty.name} src={c.otherParty.photoUrl} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="font-bold text-ink">{c.otherParty.name}</p>

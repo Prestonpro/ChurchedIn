@@ -1,11 +1,12 @@
 "use client";
 
-import { useActionState } from "react";
-import { Briefcase, Building, LinkedinLogo, FacebookLogo, InstagramLogo } from "@phosphor-icons/react/dist/ssr";
+import { useActionState, useState } from "react";
+import { Briefcase, Building, LinkedinLogo, FacebookLogo, InstagramLogo, Image as ImageIcon } from "@phosphor-icons/react/dist/ssr";
 import { updateMentorProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SubmitButton } from "@/components/ui/SubmitButton";
+import { SuccessToast } from "@/components/ui/SuccessToast";
 import { LANGUAGES, INDUSTRIES } from "@/lib/constants";
 
 export function MentorProfileForm({
@@ -13,6 +14,7 @@ export function MentorProfileForm({
 }: {
   initial: {
     bio: string;
+    photoUrl: string;
     languages: string;
     interests: string;
     openToMentor: boolean;
@@ -27,8 +29,18 @@ export function MentorProfileForm({
 }) {
   const [state, formAction] = useActionState(updateMentorProfileAction, undefined);
 
+  const [lastState, setLastState] = useState(state);
+  const [saveCount, setSaveCount] = useState(0);
+  if (state !== lastState) {
+    setLastState(state);
+    if (state && "ok" in state && state.ok) {
+      setSaveCount((n) => n + 1);
+    }
+  }
+
   return (
     <form action={formAction} className="space-y-4">
+      <SuccessToast trigger={saveCount} message="Profile saved" />
       <FormError message={state && "error" in state ? state.error : undefined} />
       <div className="rounded-xl border border-line bg-paper/60 p-3.5">
         <CheckboxField
@@ -44,6 +56,15 @@ export function MentorProfileForm({
         defaultValue={initial.bio}
         placeholder="A sentence or two about yourself. This shows up as-is on your profile and your Friends card."
         hint="Shown as a plain description, not split into tags. Write it like you'd introduce yourself."
+      />
+
+      <Field
+        label="Profile photo URL (optional)"
+        name="photoUrl"
+        icon={ImageIcon}
+        defaultValue={initial.photoUrl}
+        placeholder="https://..."
+        hint="A link to a photo of you. Leave blank to show your initials instead."
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

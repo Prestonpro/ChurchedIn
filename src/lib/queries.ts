@@ -177,6 +177,7 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
         linkedinUrl: profile?.linkedinUrl ?? null,
         facebookUrl: profile?.facebookUrl ?? null,
         instagramUrl: profile?.instagramUrl ?? null,
+        role: m.role,
         user: {
           id: m.user.id,
           name: m.user.name,
@@ -573,7 +574,7 @@ export async function getChurchProfile(churchId: string) {
 export function listMembersForChurch(churchId: string) {
   return prisma.membership.findMany({
     where: { churchId },
-    include: { user: { select: { id: true, name: true, email: true, verified: true } } },
+    include: { user: { select: { id: true, name: true, email: true, photoUrl: true, verified: true } } },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
   });
 }
@@ -646,8 +647,8 @@ export async function listConversationsForUser(userId: string) {
       connection: {
         select: {
           status: true,
-          student: { select: { id: true, name: true } },
-          mentor: { select: { id: true, name: true } },
+          student: { select: { id: true, name: true, photoUrl: true } },
+          mentor: { select: { id: true, name: true, photoUrl: true } },
         },
       },
       messages: {
@@ -701,8 +702,8 @@ export async function getConversationForConnection(connectionId: string, viewerI
       connection: {
         select: {
           status: true,
-          student: { select: { id: true, name: true } },
-          mentor: { select: { id: true, name: true } },
+          student: { select: { id: true, name: true, photoUrl: true } },
+          mentor: { select: { id: true, name: true, photoUrl: true } },
         },
       },
       messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
@@ -713,8 +714,8 @@ export async function getConversationForConnection(connectionId: string, viewerI
     const connection = await prisma.mentorConnection.findUnique({
       where: { id: connectionId },
       include: {
-        student: { select: { id: true, name: true } },
-        mentor: { select: { id: true, name: true } }
+        student: { select: { id: true, name: true, photoUrl: true } },
+        mentor: { select: { id: true, name: true, photoUrl: true } }
       }
     });
 

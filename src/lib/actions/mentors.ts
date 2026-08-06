@@ -10,7 +10,7 @@ import {
   firstIssueMessage,
 } from "@/lib/validation";
 
-export type ActionResult = { error: string } | void;
+export type ActionResult = { error: string } | { ok: true } | void;
 
 export async function updateMentorProfileAction(
   _prev: ActionResult,
@@ -26,6 +26,7 @@ export async function updateMentorProfileAction(
 
   const parsed = mentorProfileSchema.safeParse({
     bio: formData.get("bio"),
+    photoUrl: formData.get("photoUrl"),
     jobTitle: formData.get("jobTitle"),
     company: formData.get("company"),
     industry: formData.get("industry"),
@@ -45,7 +46,7 @@ export async function updateMentorProfileAction(
   // bio lives on User (shown identically on the Friends card and the public
   // profile page), not on MentorProfile — two separate writes, same request.
   await prisma.$transaction([
-    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null } }),
+    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null, photoUrl: data.photoUrl || null } }),
     prisma.mentorProfile.upsert({
       where: { userId: user.id },
       create: {
@@ -78,6 +79,7 @@ export async function updateMentorProfileAction(
 
   revalidatePath("/volunteer/profile");
   revalidatePath("/student/mentors");
+  return { ok: true };
 }
 
 export async function updateStudentProfileAction(
@@ -91,6 +93,7 @@ export async function updateStudentProfileAction(
 
   const parsed = studentProfileSchema.safeParse({
     bio: formData.get("bio"),
+    photoUrl: formData.get("photoUrl"),
     countryOfOrigin: formData.get("countryOfOrigin"),
     school: formData.get("school"),
     major: formData.get("major"),
@@ -109,7 +112,7 @@ export async function updateStudentProfileAction(
   const data = parsed.data;
 
   await prisma.$transaction([
-    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null } }),
+    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null, photoUrl: data.photoUrl || null } }),
     prisma.studentProfile.upsert({
       where: { userId: user.id },
       create: {
@@ -143,4 +146,5 @@ export async function updateStudentProfileAction(
   ]);
 
   revalidatePath("/student/profile");
+  return { ok: true };
 }

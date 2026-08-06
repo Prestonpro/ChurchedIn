@@ -43,7 +43,7 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
               <ArrowLeft weight="bold" className="size-4.5" />
             </Link>
             <Link href={`/profile/${conversation.otherParty.id}`} className="hover:opacity-80">
-              <Avatar name={conversation.otherParty.name} size="sm" />
+              <Avatar name={conversation.otherParty.name} src={conversation.otherParty.photoUrl} size="sm" />
             </Link>
             <div>
               <Link href={`/profile/${conversation.otherParty.id}`} className="font-bold text-ink hover:text-brand-700 hover:underline">

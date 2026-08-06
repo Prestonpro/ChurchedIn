@@ -22,6 +22,7 @@ import type { Role } from "@/lib/constants";
 export function MobileMenu({
   links,
   userName,
+  userPhotoUrl,
   churchName,
   memberships,
   activeChurchId,
@@ -30,6 +31,7 @@ export function MobileMenu({
 }: {
   links: NavLink[];
   userName: string;
+  userPhotoUrl?: string | null;
   churchName?: string;
   memberships: { churchId: string; church: { name: string } }[];
   activeChurchId?: string;
@@ -144,7 +146,7 @@ export function MobileMenu({
             <div className="flex items-center justify-between border-b border-line px-5 py-4">
               <div className="flex items-center gap-3">
                 <Link href={profilePath} onClick={() => setOpen(false)}>
-                  <Avatar name={userName} size="sm" />
+                  <Avatar name={userName} src={userPhotoUrl} size="sm" />
                 </Link>
                 <div>
                   <Link
