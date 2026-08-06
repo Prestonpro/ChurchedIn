@@ -254,7 +254,7 @@ export default async function MentorDirectoryPage({
               href="?tab=friends"
               role="tab"
               aria-selected={activeTab === "friends"}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand ${
+              className={`flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand active:scale-[0.97] ${
                 activeTab === "friends" ? "bg-white text-brand-700 shadow-card" : "text-ink-muted hover:text-ink"
               }`}
             >
@@ -264,7 +264,7 @@ export default async function MentorDirectoryPage({
               href="?tab=add"
               role="tab"
               aria-selected={activeTab === "add"}
-              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand ${
+              className={`flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand active:scale-[0.97] ${
                 activeTab === "add" ? "bg-white text-brand-700 shadow-card" : "text-ink-muted hover:text-ink"
               }`}
             >
