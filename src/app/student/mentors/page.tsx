@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { UsersThree, UserPlus, Translate, Star, Heart, Clock, Prohibit, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -155,6 +156,8 @@ function MentorCard({
     </Card>
   );
 }
+
+export const metadata: Metadata = { title: "Friends" };
 
 export default async function MentorDirectoryPage() {
   const user = await requireRole(ROLES.STUDENT);

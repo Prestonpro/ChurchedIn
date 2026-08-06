@@ -5,6 +5,7 @@ import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
 export const metadata: Metadata = {
   title: "Reset your password",
+  description: "Request a password reset link for your ChurchedIn account.",
 };
 
 export default function ForgotPasswordPage() {

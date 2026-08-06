@@ -1,10 +1,13 @@
 import { redirect } from "next/navigation";
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { getEventById } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { ROLES, type EventCategory } from "@/lib/constants";
 import { EventForm } from "./EventForm";
+
+export const metadata: Metadata = { title: "Plan a Gathering" };
 
 export default async function NewEventPage({
   searchParams,

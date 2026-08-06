@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CalendarBlank, Plus, HandHeart, UsersThree, Car, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -15,6 +16,8 @@ import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { RespondToConnectionButtons, EndConnectionButton } from "@/components/ConnectionActions";
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
 import { CONNECTION_STATUS, EVENT_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function VolunteerDashboardPage() {
   const user = await requireRole(ROLES.VOLUNTEER);

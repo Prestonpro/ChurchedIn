@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { MapTrifold } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { listMappedEventsForChurch } from "@/lib/queries";
@@ -8,6 +9,8 @@ import { LinkButton } from "@/components/ui/Button";
 import { EventViewToggle } from "@/components/EventViewToggle";
 import { ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
 import { EventMapClient, type MapEvent } from "./EventMapClient";
+
+export const metadata: Metadata = { title: "Event Map" };
 
 export default async function EventsMapPage() {
   const user = await requireUser();

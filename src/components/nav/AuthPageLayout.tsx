@@ -15,7 +15,7 @@ export function AuthPageLayout({
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="relative hidden overflow-hidden bg-brand-700 bg-hero-mesh px-12 py-10 text-white lg:flex lg:flex-col lg:justify-between">
         <Link href="/" className="flex items-center gap-2 text-base font-bold">
-          <Image src="/icon-192.png" alt="" width={32} height={32} priority className="size-8 rounded-full" />
+          <Image src="/icon-192.png" alt="ChurchedIn" width={32} height={32} priority className="size-8 rounded-full" />
           ChurchedIn
         </Link>
         <div className="max-w-md">

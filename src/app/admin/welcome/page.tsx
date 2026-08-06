@@ -1,10 +1,13 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { UsersThree, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { ROLES } from "@/lib/constants";
 import { InviteCoAdminForm } from "./InviteCoAdminForm";
+
+export const metadata: Metadata = { title: "Welcome" };
 
 export default async function AdminWelcomePage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);

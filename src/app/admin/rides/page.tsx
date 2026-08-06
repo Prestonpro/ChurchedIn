@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Car, MapPin, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listAllRideRequestsForChurch } from "@/lib/queries";
@@ -26,6 +27,8 @@ const STATUS_LABEL = {
  * those stay volunteer-only. This exists purely so "keep an eye on rides"
  * (promised in the Help guide) has somewhere to actually go; previously
  * admins had no rides page at all. */
+export const metadata: Metadata = { title: "Rides" };
+
 export default async function AdminRidesPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
   const churchId = user.activeMembership!.churchId;

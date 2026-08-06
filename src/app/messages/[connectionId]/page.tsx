@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -9,6 +10,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { CONNECTION_STATUS } from "@/lib/constants";
 import { MessageForm } from "./MessageForm";
 import { ReportConversationButton } from "./ReportConversationButton";
+
+export const metadata: Metadata = { title: "Conversation" };
 
 export default async function ConversationPage({ params }: { params: Promise<{ connectionId: string }> }) {
   const { connectionId } = await params;

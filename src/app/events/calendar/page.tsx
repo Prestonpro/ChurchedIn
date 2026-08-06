@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CalendarBlank, ArrowLeft, ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { listEventsForChurch } from "@/lib/queries";
@@ -31,6 +32,8 @@ function monthParam(year: number, monthIndex: number): string {
 function dayKey(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+export const metadata: Metadata = { title: "Calendar" };
 
 export default async function EventsCalendarPage({
   searchParams,

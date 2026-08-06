@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth";
 import { dashboardPathForRole } from "@/lib/constants";
 import {
@@ -61,12 +62,36 @@ const STEPS = [
   },
 ];
 
+export const metadata: Metadata = {
+  title: { absolute: "ChurchedIn — A church-by-church home base for hospitality" },
+  description:
+    "ChurchedIn helps churches plan gatherings, coordinate rides, and pair international students with a friend at their church. Start a church or join one with a code.",
+};
+
+const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "ChurchedIn",
+  url: appUrl,
+  description:
+    "Plan gatherings, coordinate rides, and connect international students with a friend at their church.",
+  applicationCategory: "SocialNetworkingApplication",
+  operatingSystem: "Web",
+};
+
 export default async function LandingPage() {
   const user = await getCurrentUser();
   const dashboardHref = user?.activeMembership ? dashboardPathForRole(user.activeMembership.role) : null;
 
   return (
     <div className="min-h-screen bg-paper">
+      <script
+        type="application/ld+json"
+        // Static, hard-coded object above — no user input reaches this, so
+        // dangerouslySetInnerHTML here carries no injection risk.
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+      />
       <header className="sticky top-0 z-20 border-b border-line/70 bg-surface/80 backdrop-blur-md">
         <div className="flex items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
           <span className="flex items-center">

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import {
   Buildings,
   Globe,
@@ -25,6 +26,12 @@ import { ROLES, type EventCategory } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
 import { ClaimAdminButton } from "./ClaimAdminButton";
 import { FirstVisitRideForm } from "./FirstVisitRideForm";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const church = await getChurchProfile(id);
+  return { title: church?.name ?? "Church" };
+}
 
 export default async function ChurchProfilePage({
   params,

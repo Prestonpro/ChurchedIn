@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CalendarBlank, Compass, Plus, UsersThree, Car, GearSix } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { listEventsForChurch } from "@/lib/queries";
@@ -17,6 +18,8 @@ import { ROLES } from "@/lib/constants";
  * scroll/mount reveals), not another data-dense management screen. The
  * dashboards keep their own distinct, role-specific management content.
  */
+export const metadata: Metadata = { title: "Home" };
+
 export default async function HomePage() {
   const user = await requireUser();
   const membership = user.activeMembership;

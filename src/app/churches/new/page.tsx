@@ -1,8 +1,11 @@
+import type { Metadata } from "next";
 import { HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { ChurchProfileForm } from "./ChurchProfileForm";
+
+export const metadata: Metadata = { title: "Create a Church" };
 
 export default async function NewChurchPage() {
   const user = await requireUser();

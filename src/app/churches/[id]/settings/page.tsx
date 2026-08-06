@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Buildings, Ticket, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getChurchProfile, listMembersForChurch } from "@/lib/queries";
@@ -8,6 +9,8 @@ import { ROLES } from "@/lib/constants";
 import { EditChurchProfileForm } from "./EditChurchProfileForm";
 import { InviteCodeCard } from "./InviteCodeCard";
 import { MembersList } from "./MembersList";
+
+export const metadata: Metadata = { title: "Church Settings" };
 
 export default async function ChurchSettingsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

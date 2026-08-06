@@ -1,7 +1,10 @@
+import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { listDiscoverableChurches } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { DiscoverClient, type DiscoverableChurch } from "./DiscoverClient";
+
+export const metadata: Metadata = { title: "Discover Churches" };
 
 export default async function DiscoverPage() {
   const user = await requireUser();

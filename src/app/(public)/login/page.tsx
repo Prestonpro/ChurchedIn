@@ -8,6 +8,7 @@ import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
   title: "Log in",
+  description: "Log in to ChurchedIn to see your church's gatherings, rides, and friend connections.",
 };
 
 export default async function LoginPage({

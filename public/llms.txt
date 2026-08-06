@@ -1,0 +1,12 @@
+# ChurchedIn
+
+> A church-scoped platform connecting international students with local church volunteers through events, rides, and friend matching.
+
+## About
+
+ChurchedIn helps churches organize gatherings, coordinate rides, and connect international students with local friends. Students can browse events, RSVP, request rides, and find a friend at their church. Volunteers can host events, offer rides, and mentor students.
+
+## Contact
+
+- Website: https://churchedin.vercel.app
+- Privacy Policy: https://churchedin.vercel.app/privacy
