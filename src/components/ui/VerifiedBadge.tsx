@@ -4,8 +4,11 @@ import { SealCheck } from "@phosphor-icons/react/dist/ssr";
  * doc comment in schema.prisma for what this does and doesn't mean yet. */
 export function VerifiedBadge({ className = "" }: { className?: string }) {
   return (
-    <span title="Verified" className="inline-flex">
-      <SealCheck weight="fill" aria-label="Verified" className={`size-4 shrink-0 text-brand-600 ${className}`} />
+    <span
+      title="Verified"
+      className={`inline-flex shrink-0 items-center justify-center rounded-full bg-brand-100 p-0.5 ${className}`}
+    >
+      <SealCheck weight="fill" aria-label="Verified" className="size-3.5 text-brand-700" />
     </span>
   );
 }

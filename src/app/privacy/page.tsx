@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
+  description: "How ChurchedIn collects, uses, and protects your information.",
 };
 
 const LAST_UPDATED = "July 31, 2026";

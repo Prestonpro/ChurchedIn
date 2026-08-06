@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Clock } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getChurchProfile, listMembersForChurch } from "@/lib/queries";
@@ -16,6 +17,8 @@ import { ROLES, roleLabel, type Role } from "@/lib/constants";
  * promote/demote controls and is admin-only). Gated on membership rather
  * than public, since names shouldn't be exposed to strangers browsing
  * /discover. */
+export const metadata: Metadata = { title: "Church Members" };
+
 export default async function ChurchMembersPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const user = await requireUser();

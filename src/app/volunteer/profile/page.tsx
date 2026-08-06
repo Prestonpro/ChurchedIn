@@ -1,5 +1,6 @@
 import { UsersThree } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -8,6 +9,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { MembershipsCard } from "@/components/MembershipsCard";
 import { MentorProfileForm } from "./MentorProfileForm";
 import { ROLES } from "@/lib/constants";
+
+export const metadata: Metadata = { title: "Edit Profile" };
 
 export default async function VolunteerProfilePage() {
   const user = await requireRole(ROLES.VOLUNTEER);

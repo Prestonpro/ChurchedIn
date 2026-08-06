@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Star, Buildings, EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -12,6 +13,8 @@ import { ROLES } from "@/lib/constants";
  * (mentor profile) and students (student profile) do — this is just the
  * account info card, giving the header's avatar/name link somewhere to go
  * for every role. */
+export const metadata: Metadata = { title: "Edit Profile" };
+
 export default async function AdminProfilePage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);
   const churchId = user.activeMembership!.churchId;

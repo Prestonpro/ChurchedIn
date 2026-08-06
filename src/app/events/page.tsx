@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CalendarBlank, Plus, Buildings, HandsClapping } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -10,14 +11,14 @@ import {
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
-import { StyledBadge } from "@/components/ui/Badge";
-import { LinkButton } from "@/components/ui/Button";
+import { Badge, StyledBadge } from "@/components/ui/Badge";
+import { Button, LinkButton } from "@/components/ui/Button";
 import { CapacityBar } from "@/components/ui/CapacityBar";
 import { EventViewToggle } from "@/components/EventViewToggle";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { DateBadge } from "@/components/ui/DateBadge";
 import { AttendeeAvatars } from "@/components/ui/AttendeeAvatars";
-import { ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
+import { EVENT_CATEGORY_LABELS, ROLES, RSVP_ROLE, RSVP_STATUS, type EventCategory } from "@/lib/constants";
 
 function attendeeInfo(event: {
   rsvps: { role: string; status: string; user: { id: string; name: string } }[];
@@ -37,7 +38,30 @@ function attendeeInfo(event: {
   return { helpers, attendees, attendeeNames: [...confirmed.map((r) => r.user.name), ...cohostOnlyNames] };
 }
 
-export default async function EventsPage() {
+/** A Facebook-Events-style "You're going" pill for the current viewer's own
+ * RSVP — read straight off the already-loaded rsvps, no extra query. */
+function myRsvpBadge(
+  event: { rsvps: { userId: string; role: string; status: string }[] },
+  userId: string,
+): { label: string; tone: "brand" | "accent" | "warning" } | null {
+  const mine = event.rsvps.find((r) => r.userId === userId);
+  if (!mine) return null;
+  if (mine.status === RSVP_STATUS.WAITLISTED) return { label: "Waitlisted", tone: "warning" };
+  if (mine.status === RSVP_STATUS.CONFIRMED) {
+    return mine.role === RSVP_ROLE.HELPER
+      ? { label: "You're helping", tone: "accent" }
+      : { label: "You're going", tone: "brand" };
+  }
+  return null;
+}
+
+export const metadata: Metadata = { title: "Events" };
+
+export default async function EventsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string; mine?: string }>;
+}) {
   const user = await requireUser();
   if (!user.activeMembership) {
     return (
@@ -56,6 +80,7 @@ export default async function EventsPage() {
     );
   }
 
+  const { category, mine } = await searchParams;
   const churchId = user.activeMembership.churchId;
   // Stamping "seen" alongside the real reads (not blocking on it
   // separately) — AuthShell's nav badge check on THIS render already read
@@ -70,12 +95,18 @@ export default async function EventsPage() {
     }),
   ]);
   const partnerEvents = await listEventsForChurches(partnerChurchIds);
+  const filtered = events.filter((e) => {
+    if (category && e.category !== category) return false;
+    if (mine === "1" && !e.rsvps.some((r) => r.userId === user.id)) return false;
+    return true;
+  });
   const now = new Date();
-  const upcoming = events.filter((e) => e.startsAt >= now);
-  const past = events.filter((e) => e.startsAt < now);
+  const upcoming = filtered.filter((e) => e.startsAt >= now);
+  const past = filtered.filter((e) => e.startsAt < now);
   const canHost = user.activeMembership.role !== ROLES.STUDENT;
   const spotlight = upcoming.slice(0, 2);
   const rest = upcoming.slice(2);
+  const isFiltered = Boolean(category || mine === "1");
 
   return (
     <AuthShell user={user}>
@@ -96,13 +127,61 @@ export default async function EventsPage() {
         </div>
       </div>
 
+      <Card className="mb-6">
+        <form method="get" className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <label className="flex min-h-11 w-full items-center sm:w-auto">
+            <span className="sr-only">Category</span>
+            <select
+              name="category"
+              defaultValue={category ?? ""}
+              className="min-h-11 w-full rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-base text-ink transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100 sm:w-auto sm:text-sm"
+            >
+              <option value="">All categories</option>
+              {Object.entries(EVENT_CATEGORY_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex min-h-11 cursor-pointer items-center gap-2 text-sm font-medium text-ink-soft">
+            <input
+              type="checkbox"
+              name="mine"
+              value="1"
+              defaultChecked={mine === "1"}
+              className="size-4.5 rounded border-line-strong text-brand-600 focus:ring-2 focus:ring-brand-200"
+            />
+            My RSVP&apos;d events only
+          </label>
+          <Button type="submit" size="md">
+            Apply
+          </Button>
+          {isFiltered && (
+            <Link href="/events" className="text-sm font-semibold text-ink-faint hover:text-ink-soft hover:underline">
+              Clear filters
+            </Link>
+          )}
+        </form>
+      </Card>
+
       {upcoming.length === 0 ? (
         <EmptyState
           icon={CalendarBlank}
-          title="No upcoming events yet"
-          body={canHost ? "Be the first to plan one." : "Check back soon. Your church hasn't posted anything yet."}
+          title={isFiltered ? "No events match your filters" : "No upcoming events yet"}
+          body={
+            isFiltered
+              ? "Try a different category or clear filters."
+              : canHost
+                ? "Be the first to plan one."
+                : "Check back soon. Your church hasn't posted anything yet."
+          }
           action={
-            canHost ? (
+            isFiltered ? (
+              <LinkButton href="/events" variant="secondary" size="sm">
+                Clear filters
+              </LinkButton>
+            ) : canHost ? (
               <LinkButton href="/volunteer/events/new" size="sm">
                 <Plus weight="bold" className="size-4" /> Plan a gathering
               </LinkButton>
@@ -121,6 +200,7 @@ export default async function EventsPage() {
                   const style = categoryStyle(event.category as EventCategory);
                   const Icon = style.icon;
                   const { helpers, attendees, attendeeNames } = attendeeInfo(event);
+                  const rsvpBadge = myRsvpBadge(event, user.id);
                   return (
                     <Link
                       key={event.id}
@@ -131,9 +211,12 @@ export default async function EventsPage() {
                       <Card interactive className="flex h-full gap-4 border-l-4 border-l-accent-500">
                         <DateBadge date={event.startsAt} />
                         <div className="flex min-w-0 flex-1 flex-col">
-                          <StyledBadge icon={Icon} className={style.chipClass}>
-                            {style.label}
-                          </StyledBadge>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <StyledBadge icon={Icon} className={style.chipClass}>
+                              {style.label}
+                            </StyledBadge>
+                            {rsvpBadge && <Badge tone={rsvpBadge.tone}>{rsvpBadge.label}</Badge>}
+                          </div>
                           <h3 className="mt-2 text-lg font-bold text-ink">
                             {event.title}
                             {event.atChurch && (
@@ -170,6 +253,7 @@ export default async function EventsPage() {
                 const style = categoryStyle(event.category as EventCategory);
                 const Icon = style.icon;
                 const { helpers, attendees, attendeeNames } = attendeeInfo(event);
+                const rsvpBadge = myRsvpBadge(event, user.id);
                 return (
                   <Link
                     key={event.id}
@@ -180,9 +264,12 @@ export default async function EventsPage() {
                     <Card interactive className={`flex h-full gap-3 border-l-4 ${style.border}`}>
                       <DateBadge date={event.startsAt} />
                       <div className="flex min-w-0 flex-1 flex-col">
-                        <StyledBadge icon={Icon} className={style.chipClass}>
-                          {style.label}
-                        </StyledBadge>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <StyledBadge icon={Icon} className={style.chipClass}>
+                            {style.label}
+                          </StyledBadge>
+                          {rsvpBadge && <Badge tone={rsvpBadge.tone}>{rsvpBadge.label}</Badge>}
+                        </div>
                         <h3 className="mt-2 text-lg font-bold text-ink">
                           {event.title}
                           {event.atChurch && (

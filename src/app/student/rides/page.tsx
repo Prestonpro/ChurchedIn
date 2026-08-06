@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Car, MapPin, ChatCircleDots, UsersThree, Clock } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listRideRequestsForStudent, listActiveRideOffersForChurch } from "@/lib/queries";
@@ -29,6 +30,8 @@ const STATUS_LABEL = {
   COMPLETED: "Completed",
   CANCELLED: "Cancelled",
 } as const;
+
+export const metadata: Metadata = { title: "Rides" };
 
 export default async function StudentRidesPage() {
   const user = await requireRole(ROLES.STUDENT);

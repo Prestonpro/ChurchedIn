@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition, useActionState } from "react";
-import { UserPlus, Check, ChatCircleDots, ArrowCounterClockwise, PaperPlaneRight } from "@phosphor-icons/react/dist/ssr";
+import { Check, ChatCircleDots, ArrowCounterClockwise, PaperPlaneRight } from "@phosphor-icons/react/dist/ssr";
 import { requestConnectionAction } from "@/lib/actions/connections";
 import { cancelConnectionRequestAction, endConnectionAction } from "@/lib/actions/connections";
 import { Button, LinkButton } from "@/components/ui/Button";
@@ -16,13 +16,11 @@ type Connection = {
 
 export function ProfileConnectionButton({
   mentorId,
-  mentorName,
   isOpenToMentor,
   connection,
   email,
 }: {
   mentorId: string;
-  mentorName: string;
   isOpenToMentor: boolean;
   connection: Connection | null;
   email: string | null;

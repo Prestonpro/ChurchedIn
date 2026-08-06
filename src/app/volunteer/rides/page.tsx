@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Car, MapPin, UsersThree, Clock, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import {
@@ -19,6 +20,8 @@ import { RideActionButton } from "@/components/RideActionButton";
 import { ContactEmail } from "@/components/ui/ContactEmail";
 import { RideOfferForm } from "./RideOfferForm";
 import { ROLES, RIDE_STATUS, RIDE_REQUEST_TYPE } from "@/lib/constants";
+
+export const metadata: Metadata = { title: "Rides" };
 
 export default async function VolunteerRidesPage() {
   const user = await requireRole(ROLES.VOLUNTEER);

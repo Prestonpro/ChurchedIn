@@ -8,12 +8,22 @@ import { appUrl } from "@/lib/email";
  * not real content) and from ever surfacing one in results.
  */
 export default function robots(): MetadataRoute.Robots {
+  const disallow = ["/admin", "/volunteer", "/student", "/events", "/api"];
   return {
-    rules: {
-      userAgent: "*",
-      allow: "/",
-      disallow: ["/admin", "/volunteer", "/student", "/events", "/api"],
-    },
+    rules: [
+      {
+        userAgent: "*",
+        allow: "/",
+        disallow,
+      },
+      // Explicitly welcome AI crawlers onto the public pages, same rules as
+      // everyone else — some hosts default these to blocked otherwise.
+      {
+        userAgent: ["GPTBot", "ClaudeBot", "PerplexityBot", "Google-Extended"],
+        allow: "/",
+        disallow,
+      },
+    ],
     sitemap: appUrl("/sitemap.xml"),
   };
 }

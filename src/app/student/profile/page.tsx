@@ -1,5 +1,6 @@
 import { requireUser } from "@/lib/auth";
 import Link from "next/link";
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
@@ -8,6 +9,8 @@ import { Avatar } from "@/components/ui/Avatar";
 import { MembershipsCard } from "@/components/MembershipsCard";
 import { StudentProfileForm } from "./StudentProfileForm";
 import { ROLES, profilePathForRole } from "@/lib/constants";
+
+export const metadata: Metadata = { title: "Edit Profile" };
 
 export default async function StudentProfilePage() {
   const user = await requireUser();

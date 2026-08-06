@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { CalendarBlank, UsersThree, HandHeart, Car } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,6 +12,8 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { CONNECTION_STATUS, RSVP_STATUS, RIDE_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+
+export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function StudentDashboardPage() {
   const user = await requireRole(ROLES.STUDENT);

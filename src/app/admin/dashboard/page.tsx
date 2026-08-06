@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { UsersThree, CalendarBlank, Plus, Buildings, HandsClapping, HandHeart, GraduationCap, Star } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -21,6 +22,8 @@ const ROLE_META: Record<Role, { label: string; icon: typeof Star }> = {
   VOLUNTEER: { label: "Volunteer", icon: HandHeart },
   STUDENT: { label: "Student", icon: GraduationCap },
 };
+
+export const metadata: Metadata = { title: "Admin Dashboard" };
 
 export default async function AdminDashboardPage() {
   const user = await requireRole(ROLES.CHURCH_ADMIN);

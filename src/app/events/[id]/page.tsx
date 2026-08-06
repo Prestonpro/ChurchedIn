@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { Clock, MapPin, VideoCamera, UsersThree, HandHeart, UsersFour, Buildings, ArrowClockwise, HandsClapping, NavigationArrow } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getEventById, listCohostCandidates, isAcceptedPartnerChurch } from "@/lib/queries";
@@ -11,6 +12,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { RsvpControls } from "./RsvpControls";
 import { CancelEventButton } from "./CancelEventButton";
 import { CohostManager } from "./CohostManager";
+import { ShareEventButton } from "./ShareEventButton";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
 import {
   EVENT_STATUS,
@@ -19,6 +21,12 @@ import {
   RSVP_STATUS,
   type EventCategory,
 } from "@/lib/constants";
+
+export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
+  const { id } = await params;
+  const event = await getEventById(id);
+  return { title: event?.title ?? "Event" };
+}
 
 export default async function EventDetailPage({
   params,
@@ -89,7 +97,10 @@ export default async function EventDetailPage({
                   </span>
                 )}
               </div>
-              {isCancelled && <Badge tone="danger">Cancelled</Badge>}
+              <div className="flex items-center gap-2">
+                {isCancelled && <Badge tone="danger">Cancelled</Badge>}
+                <ShareEventButton eventId={event.id} />
+              </div>
             </div>
             <h1 className="mt-3 text-2xl font-extrabold text-ink sm:text-3xl">{event.title}</h1>
             <p className="mt-1 text-sm text-ink-muted">

@@ -19,8 +19,13 @@ export const metadata: Metadata = {
   },
   description,
   manifest: "/manifest.json",
+  alternates: {
+    canonical: "./",
+  },
   icons: {
     icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
       { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
@@ -36,13 +41,14 @@ export const metadata: Metadata = {
     siteName: "ChurchedIn",
     title: "ChurchedIn",
     description,
-    images: [{ url: "/icon-512.png", width: 512, height: 512 }],
+    // No `images` here — src/app/opengraph-image.tsx generates a proper
+    // 1200x630 social preview and Next.js wires it (and the twitter:image
+    // fallback) into metadata automatically via the file convention.
   },
   twitter: {
-    card: "summary",
+    card: "summary_large_image",
     title: "ChurchedIn",
     description,
-    images: ["/icon-512.png"],
   },
 };
 

@@ -5,6 +5,7 @@ import { SignupForm } from "./SignupForm";
 
 export const metadata: Metadata = {
   title: "Start your church's space",
+  description: "Create a free ChurchedIn space for your church to plan gatherings, coordinate rides, and connect students with volunteers.",
 };
 
 export default function SignupPage() {

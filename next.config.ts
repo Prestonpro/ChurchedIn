@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  productionBrowserSourceMaps: false,
   images: {
     // Only serves our own static logo SVG (public/logo-full.svg) — never
     // user-uploaded content — so the usual SVG/XSS concern doesn't apply.

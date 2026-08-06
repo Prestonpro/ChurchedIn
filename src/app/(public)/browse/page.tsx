@@ -7,6 +7,7 @@ import { BrowseSignupForm } from "./BrowseSignupForm";
 
 export const metadata: Metadata = {
   title: "Browse churches",
+  description: "Look around ChurchedIn without committing to a church yet — browse before you join.",
 };
 
 export default async function BrowsePage() {

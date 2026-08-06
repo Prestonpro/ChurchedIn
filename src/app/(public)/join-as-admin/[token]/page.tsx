@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { XCircle, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { checkCoAdminInvite } from "@/lib/actions/churchInvites";
 import { getCurrentUser } from "@/lib/auth";
@@ -6,6 +7,8 @@ import { prisma } from "@/lib/prisma";
 import { AuthPageLayout } from "@/components/nav/AuthPageLayout";
 import { AcceptInviteForm } from "./AcceptInviteForm";
 import { AcceptExistingButton } from "./AcceptExistingButton";
+
+export const metadata: Metadata = { title: "Accept Admin Invite" };
 
 export default async function JoinAsAdminPage({
   params,

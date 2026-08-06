@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import {
   Briefcase,
   Globe,
@@ -23,6 +24,12 @@ import { ReportButton } from "@/components/ReportButton";
 import { BackLink } from "@/components/ui/BackLink";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
+
+export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
+  const { userId } = await params;
+  const target = await getUserProfile(userId);
+  return { title: target?.name ?? "Profile" };
+}
 
 export default async function PublicProfilePage({
   params,
@@ -191,7 +198,6 @@ export default async function PublicProfilePage({
               )}
               <ProfileConnectionButton
                 mentorId={target.id}
-                mentorName={target.name}
                 isOpenToMentor={target.mentorProfile?.openToMentor ?? false}
                 connection={connection}
                 email={connectionEmail}

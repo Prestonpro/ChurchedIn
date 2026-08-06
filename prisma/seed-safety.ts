@@ -1,6 +1,9 @@
 import { pathToFileURL } from 'node:url';
 import { prisma } from '../src/lib/prisma';
+import type { EventCategory } from '../src/lib/constants';
 import bcrypt from 'bcryptjs';
+
+type SeedRole = 'VOLUNTEER' | 'CHURCH_ADMIN';
 
 export async function seedSafetyData() {
   console.log('Seeding safety test data...');
@@ -227,7 +230,7 @@ export async function seedSafetyData() {
     }
   ];
 
-  const createdVolunteers: Record<string, any> = {};
+  const createdVolunteers: Record<string, Awaited<ReturnType<typeof prisma.user.upsert>>> = {};
 
   for (const vol of volunteers) {
     const { bio, ...mentorProfileData } = vol.profile;
@@ -244,7 +247,7 @@ export async function seedSafetyData() {
         memberships: {
           create: {
             churchId: church.id,
-            role: (vol as any).role || 'VOLUNTEER' as any,
+            role: (vol as { role?: SeedRole }).role ?? 'VOLUNTEER',
             createdAt: vol.createdAt
           }
         },
@@ -290,7 +293,7 @@ export async function seedSafetyData() {
         createdById: creator.id,
         title: ev.name,
         description: ev.name,
-        category: ev.type as any,
+        category: ev.type as EventCategory,
         startsAt: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000), // Future dates
         endsAt: new Date(Date.now() + (i + 1) * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000), // 2 hours later
         location: ev.loc

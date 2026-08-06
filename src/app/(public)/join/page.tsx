@@ -5,6 +5,7 @@ import { JoinCodeForm } from "./JoinCodeForm";
 
 export const metadata: Metadata = {
   title: "Join a church",
+  description: "Enter your church's join code to see its gatherings, rides, and friend directory on ChurchedIn.",
 };
 
 export default function JoinEntryPage() {
