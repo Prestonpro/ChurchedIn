@@ -96,6 +96,7 @@ export default async function AdminDashboardPage() {
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
+          href="#gatherings"
         />
       </div>
 
@@ -168,7 +169,7 @@ export default async function AdminDashboardPage() {
         <PartnershipManager partnerships={partnerships} />
       </Card>
 
-      <Card>
+      <Card id="gatherings">
         <h2 className="mb-4 font-bold text-ink">Gatherings</h2>
         {events.length === 0 ? (
           <EmptyState

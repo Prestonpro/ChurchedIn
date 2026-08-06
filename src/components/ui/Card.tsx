@@ -3,15 +3,19 @@ export function Card({
   className = "",
   interactive = false,
   style,
+  id,
 }: {
   children: React.ReactNode;
   className?: string;
   /** Adds hover-lift + border tint for cards that sit inside a clickable Link. */
   interactive?: boolean;
   style?: React.CSSProperties;
+  /** For anchor-linking to a specific card, e.g. from a dashboard stat card. */
+  id?: string;
 }) {
   return (
     <div
+      id={id}
       // min-w-0 matters more than it looks: as a grid/flex item, a Card
       // defaults to min-width:auto, so it can't shrink below its content's
       // min-content width. One long unbreakable string inside (an email

@@ -79,6 +79,7 @@ export default async function VolunteerDashboardPage() {
           sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
+          href="#your-gatherings"
         />
         <StatCard
           icon={HandHeart}
@@ -86,6 +87,7 @@ export default async function VolunteerDashboardPage() {
           value={pending.length}
           tone="bg-accent-100 text-accent-700"
           accent="border-l-accent-500"
+          href="#pending-requests"
         />
         <StatCard
           icon={Car}
@@ -106,7 +108,7 @@ export default async function VolunteerDashboardPage() {
       </div>
 
       {pending.length > 0 && (
-        <Card className="mb-6">
+        <Card id="pending-requests" className="mb-6">
           <h2 className="mb-3 font-bold text-ink">Friend requests waiting on you</h2>
           <div className="space-y-3">
             {pending.map((c) => (
@@ -156,7 +158,7 @@ export default async function VolunteerDashboardPage() {
         </Card>
       )}
 
-      <Card>
+      <Card id="your-gatherings">
         <h2 className="mb-3 font-bold text-ink">Gatherings you&apos;re planning or helping with</h2>
         {myEvents.length === 0 ? (
           <EmptyState
