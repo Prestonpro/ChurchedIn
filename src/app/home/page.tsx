@@ -82,11 +82,14 @@ export default async function HomePage() {
                   <MemberCountBadge memberCount={memberCount} />
                 </div>
                 {nextEvent ? (
-                  <p className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted">
+                  <Link
+                    href={`/events/${nextEvent.id}`}
+                    className="mt-1 flex items-center gap-1.5 text-sm text-ink-muted transition-brand hover:text-brand-600 hover:underline"
+                  >
                     <CalendarBlank weight="bold" className="size-4 text-brand-600" />
                     Next up: <span className="font-medium text-ink-soft">{nextEvent.title}</span> ·{" "}
                     {nextEvent.startsAt.toLocaleDateString()}
-                  </p>
+                  </Link>
                 ) : (
                   <p className="mt-1 text-sm text-ink-muted">Nothing on the calendar yet.</p>
                 )}

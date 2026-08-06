@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Link from "next/link";
 import {
   Briefcase,
   Globe,
@@ -21,6 +20,7 @@ import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
 import { ProfileConnectionButton } from "@/components/ProfileConnectionButton";
 import { ReportButton } from "@/components/ReportButton";
+import { BackLink } from "@/components/ui/BackLink";
 import { ROLES, roleLabel, type Role } from "@/lib/constants";
 import { contactInfoVisible } from "@/lib/connectionState";
 
@@ -88,7 +88,7 @@ export default async function PublicProfilePage({
         {/* Header card */}
         <Card className="flex flex-col gap-6">
           <div className="flex items-start gap-4">
-            <Avatar name={target.name} size="lg" />
+            <Avatar name={target.name} src={target.photoUrl} size="lg" />
             <div className="min-w-0 flex-1">
               <h1 className="flex items-center gap-1.5 text-xl font-extrabold text-ink">
                 {target.name}
@@ -209,9 +209,7 @@ export default async function PublicProfilePage({
 
         {/* Back link */}
         <div className="text-center">
-          <Link href="/" className="text-sm text-ink-faint hover:text-ink hover:underline">
-            ← Back
-          </Link>
+          <BackLink />
         </div>
       </div>
     </AuthShell>
