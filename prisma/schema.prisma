@@ -203,6 +203,13 @@ model User {
   // flag; how a user actually gets verified is a future decision. Never
   // self-service: nothing in src/lib/actions sets this today.
   verified     Boolean  @default(false)
+  // Whether this user has ever seen the role-aware Help Guide walkthrough
+  // (see HelpGuideModal). Auto-shown once, on the first authenticated page
+  // render after this is false, then flipped true — never re-shown after
+  // that regardless of how many churches they later join. Deliberately on
+  // User, not Membership: this is "have you seen the app's own tour", not
+  // a per-church thing.
+  hasSeenOnboarding Boolean @default(false)
   createdAt    DateTime @default(now())
 
   memberships          Membership[]

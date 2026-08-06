@@ -235,3 +235,14 @@ export async function switchChurchAction(churchId: string) {
   await setSessionCookie(token);
   redirect(dashboardPathForRole(membership.role as Role));
 }
+
+/** Flips User.hasSeenOnboarding so the auto-shown Help Guide walkthrough
+ * (see OnboardingAutoTrigger) never re-triggers for this user. Called the
+ * moment the walkthrough is decided to auto-open, not on dismiss — that
+ * way it's genuinely "shown once, ever" even if the user navigates away
+ * without formally closing it, rather than nagging them again next visit. */
+export async function markOnboardingSeenAction(): Promise<void> {
+  const user = await requireUser();
+  if (user.hasSeenOnboarding) return;
+  await prisma.user.update({ where: { id: user.id }, data: { hasSeenOnboarding: true } });
+}

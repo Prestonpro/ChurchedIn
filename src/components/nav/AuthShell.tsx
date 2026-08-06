@@ -11,6 +11,7 @@ import { NavLinks, type NavLink } from "./NavLinks";
 import { ChurchSwitcher } from "./ChurchSwitcher";
 import { MobileMenu } from "./MobileMenu";
 import { PageTransition } from "./PageTransition";
+import { OnboardingAutoTrigger } from "./OnboardingAutoTrigger";
 
 /** For a logged-in user with no church yet (see createBrowsingAccountAction)
  * — every other nav destination requires a membership and would just
@@ -88,7 +89,14 @@ export async function AuthShell({
           <div className="flex items-center gap-5">
             <Link
               href={user.activeMembership ? (role === ROLES.CHURCH_ADMIN ? "/admin/dashboard" : `/${role.toLowerCase()}/dashboard`) : "/discover"}
-              className="flex items-center text-base font-bold text-brand-700"
+              // The 32px icon alone falls short of the ~44x44 CSS-pixel
+              // Apple HIG minimum touch target on mobile (where it's the
+              // only logo shown). Padding expands the tappable box; the
+              // matching negative margin keeps the icon's visual position
+              // unchanged, so nothing else in the header shifts. Reset to
+              // nothing at lg, where the wider full-logo image (not this
+              // small square icon) is what's shown and clicked instead.
+              className="-m-1.5 flex items-center p-1.5 text-base font-bold text-brand-700 lg:m-0 lg:p-0"
             >
               <Image src="/icon-192.png" alt="ChurchedIn" width={32} height={32} priority className="size-8 rounded-full lg:hidden" />
               <Image src="/logo-full.svg" alt="ChurchedIn" width={161} height={43} priority className="hidden h-8 w-auto lg:block" />
@@ -108,7 +116,7 @@ export async function AuthShell({
               href={profilePathForRole(role)}
               className="flex items-center gap-2 rounded-lg transition-brand hover:text-brand-600"
             >
-              <Avatar name={user.name} size="sm" />
+              <Avatar name={user.name} src={user.photoUrl} size="sm" />
               <span className="hidden text-sm font-medium text-ink-soft transition-brand hover:text-brand-600 lg:inline">
                 {user.name}
               </span>
@@ -127,6 +135,7 @@ export async function AuthShell({
           <MobileMenu
             links={links}
             userName={user.name}
+            userPhotoUrl={user.photoUrl}
             churchName={user.activeMembership?.church.name}
             memberships={user.memberships}
             activeChurchId={user.activeMembership?.churchId}
@@ -135,6 +144,17 @@ export async function AuthShell({
           />
         </div>
       </header>
+      {/* Gated on activeMembership: the walkthrough's content is role- and
+          church-specific, so there's nothing coherent to show a church-less
+          "just browsing" account yet — better to wait until they actually
+          join one than mark this seen against content they can't use. */}
+      {user.activeMembership && (
+        <OnboardingAutoTrigger
+          role={role}
+          churchId={user.activeMembership.churchId}
+          hasSeenOnboarding={user.hasSeenOnboarding}
+        />
+      )}
       {fullBleed ? (
         <main className="h-[calc(100dvh-65px)] overflow-hidden">
           <PageTransition className="h-full">{children}</PageTransition>
