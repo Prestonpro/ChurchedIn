@@ -40,6 +40,13 @@ function attendeeInfo(event: {
 
 /** A Facebook-Events-style "You're going" pill for the current viewer's own
  * RSVP — read straight off the already-loaded rsvps, no extra query. */
+function tabHref(tab: "upcoming" | "past", category?: string, mine?: string): string {
+  const params = new URLSearchParams({ tab });
+  if (category) params.set("category", category);
+  if (mine === "1") params.set("mine", "1");
+  return `?${params.toString()}`;
+}
+
 function myRsvpBadge(
   event: { rsvps: { userId: string; role: string; status: string }[] },
   userId: string,
@@ -60,7 +67,7 @@ export const metadata: Metadata = { title: "Events" };
 export default async function EventsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; mine?: string }>;
+  searchParams: Promise<{ category?: string; mine?: string; tab?: string }>;
 }) {
   const user = await requireUser();
   if (!user.activeMembership) {
@@ -80,7 +87,8 @@ export default async function EventsPage({
     );
   }
 
-  const { category, mine } = await searchParams;
+  const { category, mine, tab: rawTab } = await searchParams;
+  const activeTab = rawTab === "past" ? "past" : "upcoming";
   const churchId = user.activeMembership.churchId;
   // Stamping "seen" alongside the real reads (not blocking on it
   // separately) — AuthShell's nav badge check on THIS render already read
@@ -114,7 +122,9 @@ export default async function EventsPage({
         <div>
           <h1 className="text-2xl font-extrabold text-ink">Events</h1>
           <p className="mt-1 text-sm text-ink-muted">
-            {upcoming.length} upcoming at {user.activeMembership.church.name}
+            {activeTab === "upcoming"
+              ? `${upcoming.length} upcoming at ${user.activeMembership.church.name}`
+              : `${past.length} past at ${user.activeMembership.church.name}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -127,8 +137,32 @@ export default async function EventsPage({
         </div>
       </div>
 
+      <div role="tablist" aria-label="Events" className="mb-6 inline-flex gap-1 rounded-full border border-line bg-paper p-1">
+        <Link
+          href={tabHref("upcoming", category, mine)}
+          role="tab"
+          aria-selected={activeTab === "upcoming"}
+          className={`flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand active:scale-[0.97] ${
+            activeTab === "upcoming" ? "bg-white text-brand-700 shadow-card" : "text-ink-muted hover:text-ink"
+          }`}
+        >
+          Upcoming ({upcoming.length})
+        </Link>
+        <Link
+          href={tabHref("past", category, mine)}
+          role="tab"
+          aria-selected={activeTab === "past"}
+          className={`flex cursor-pointer items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold transition-brand active:scale-[0.97] ${
+            activeTab === "past" ? "bg-white text-brand-700 shadow-card" : "text-ink-muted hover:text-ink"
+          }`}
+        >
+          Past ({past.length})
+        </Link>
+      </div>
+
       <Card className="mb-6">
         <form method="get" className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+          <input type="hidden" name="tab" value={activeTab} />
           <label className="flex min-h-11 w-full items-center sm:w-auto">
             <span className="sr-only">Category</span>
             <select
@@ -158,14 +192,44 @@ export default async function EventsPage({
             Apply
           </Button>
           {isFiltered && (
-            <Link href="/events" className="text-sm font-semibold text-ink-faint hover:text-ink-soft hover:underline">
+            <Link
+              href={activeTab === "past" ? "/events?tab=past" : "/events"}
+              className="text-sm font-semibold text-ink-faint hover:text-ink-soft hover:underline"
+            >
               Clear filters
             </Link>
           )}
         </form>
       </Card>
 
-      {upcoming.length === 0 ? (
+      {activeTab === "past" ? (
+        past.length === 0 ? (
+          <EmptyState
+            icon={CalendarBlank}
+            title={isFiltered ? "No past events match your filters" : "No past events yet"}
+            body={isFiltered ? "Try a different category or clear filters." : "Events move here once they're over."}
+          />
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {past.map((event) => {
+              const style = categoryStyle(event.category as EventCategory);
+              return (
+                <Link key={event.id} href={`/events/${event.id}`}>
+                  <Card interactive>
+                    <StyledBadge icon={style.icon} className={style.chipClass}>
+                      {style.label}
+                    </StyledBadge>
+                    <h3 className="mt-3 font-bold text-ink">{event.title}</h3>
+                    <p className="mt-1 text-sm text-ink-muted">
+                      {event.startsAt.toLocaleDateString()}
+                    </p>
+                  </Card>
+                </Link>
+              );
+            })}
+          </div>
+        )
+      ) : upcoming.length === 0 ? (
         <EmptyState
           icon={CalendarBlank}
           title={isFiltered ? "No events match your filters" : "No upcoming events yet"}
@@ -298,7 +362,7 @@ export default async function EventsPage({
         </>
       )}
 
-      {partnerEvents.length > 0 && (
+      {activeTab === "upcoming" && partnerEvents.length > 0 && (
         <div className="mb-10">
           <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-ink-muted">
             <HandsClapping weight="fill" className="size-4" /> From partner churches
@@ -332,32 +396,6 @@ export default async function EventsPage({
             })}
           </div>
         </div>
-      )}
-
-      {past.length > 0 && (
-        <>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-ink-faint">
-            Past events
-          </h2>
-          <div className="grid gap-4 sm:grid-cols-2">
-            {past.map((event) => {
-              const style = categoryStyle(event.category as EventCategory);
-              return (
-                <Link key={event.id} href={`/events/${event.id}`}>
-                  <Card interactive>
-                    <StyledBadge icon={style.icon} className={style.chipClass}>
-                      {style.label}
-                    </StyledBadge>
-                    <h3 className="mt-3 font-bold text-ink">{event.title}</h3>
-                    <p className="mt-1 text-sm text-ink-muted">
-                      {event.startsAt.toLocaleDateString()}
-                    </p>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </>
       )}
     </AuthShell>
   );
