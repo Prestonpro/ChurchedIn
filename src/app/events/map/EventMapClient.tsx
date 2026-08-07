@@ -89,6 +89,21 @@ export function EventMapClient({ events }: { events: MapEvent[] }) {
         <EventViewToggle currentView="map" dark />
       </div>
 
+      {/* Pin color legend — the only other clue to what these mean was a
+          hover-only tooltip on a tiny dot in the sidebar list, which is
+          both easy to miss and doesn't work on touch at all. */}
+      <div className="absolute bottom-3 right-3 z-[1000] flex flex-wrap gap-x-3 gap-y-1.5 rounded-xl border border-white/10 bg-ink/85 px-3 py-2 text-xs text-white backdrop-blur-md">
+        {(Object.keys(PIN_STATUS_COLOR) as PinStatus[]).map((status) => (
+          <span key={status} className="flex items-center gap-1.5">
+            <span
+              className="size-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: PIN_STATUS_COLOR[status] }}
+            />
+            {PIN_STATUS_LABEL[status]}
+          </span>
+        ))}
+      </div>
+
       <div
         className={`absolute inset-y-0 left-0 z-[999] flex w-[300px] max-w-[85vw] flex-col border-r border-white/10 bg-ink/85 text-white backdrop-blur-md transition-transform duration-300 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
