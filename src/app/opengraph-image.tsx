@@ -11,7 +11,25 @@ export const contentType = "image/png";
 // src it can resolve synchronously, not a relative /public path.
 const iconBase64 = readFileSync(join(process.cwd(), "public", "icon-192.png")).toString("base64");
 
+/** Satori (next/og's renderer) doesn't know about next/font — the rest of
+ * the app gets Plus Jakarta Sans self-hosted at build time via that, but
+ * here the actual font file bytes have to be fetched and handed to
+ * ImageResponse directly, or this renders in a generic system sans-serif
+ * that looks nothing like the real site. This is the standard next/og +
+ * Google Fonts pattern (see Vercel's own og-image examples). */
+async function loadGoogleFont(weight: number): Promise<ArrayBuffer> {
+  const css = await (
+    await fetch(`https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@${weight}`)
+  ).text();
+  const match = css.match(/src: url\(([^)]+)\) format\('(?:opentype|truetype)'\)/);
+  if (!match) throw new Error("Could not find a font source in the Google Fonts response");
+  const response = await fetch(match[1]);
+  return response.arrayBuffer();
+}
+
 export default async function OpengraphImage() {
+  const [bold, medium] = await Promise.all([loadGoogleFont(800), loadGoogleFont(500)]);
+
   return new ImageResponse(
     (
       <div
@@ -24,7 +42,7 @@ export default async function OpengraphImage() {
           justifyContent: "center",
           backgroundColor: "#173f39",
           backgroundImage: "linear-gradient(135deg, #173f39 0%, #256056 55%, #327b6f 100%)",
-          fontFamily: "sans-serif",
+          fontFamily: "Plus Jakarta Sans",
         }}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -58,10 +76,16 @@ export default async function OpengraphImage() {
             color: "#c0e2dd",
           }}
         >
-          Church community, organized.
+          Connecting international students with churches
         </div>
       </div>
     ),
-    { ...size },
+    {
+      ...size,
+      fonts: [
+        { name: "Plus Jakarta Sans", data: bold, weight: 800, style: "normal" },
+        { name: "Plus Jakarta Sans", data: medium, weight: 500, style: "normal" },
+      ],
+    },
   );
 }
