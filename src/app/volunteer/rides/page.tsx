@@ -153,17 +153,17 @@ export default async function VolunteerRidesPage() {
           <div className="grid gap-4 sm:grid-cols-2">
             {activeClaimed.map((ride) => (
               <Card key={ride.id} className="border-l-4 border-l-brand-500">
-                <div className="flex items-center gap-2.5">
+                <Link href={`/rides/${ride.id}`} className="flex items-center gap-2.5 hover:opacity-80">
                   <span className="flex size-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                     <MapPin weight="fill" className="size-4.5" />
                   </span>
                   <div>
-                    <p className="font-semibold text-ink">{ride.destination}</p>
+                    <p className="font-semibold text-ink hover:text-brand-700 hover:underline">{ride.destination}</p>
                     <p className="text-xs text-ink-muted">
                       {ride.date.toLocaleDateString()} · {ride.time}
                     </p>
                   </div>
-                </div>
+                </Link>
                 {ride.notes && <p className="mt-3 text-sm text-ink-soft">{ride.notes}</p>}
                 {rideContactVisible(ride.status) && (
                   <div className="mt-3 flex items-center gap-2.5 rounded-xl border border-line bg-paper p-3">
@@ -207,7 +207,7 @@ export default async function VolunteerRidesPage() {
                 style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
+                  <Link href={`/rides/${ride.id}`} className="flex items-center gap-2.5 hover:opacity-80">
                     <span
                       className={`flex size-9 items-center justify-center rounded-lg ${
                         isFirstVisit ? "bg-accent-100 text-accent-700" : "bg-warning-soft text-warning"
@@ -220,12 +220,12 @@ export default async function VolunteerRidesPage() {
                       )}
                     </span>
                     <div>
-                      <p className="font-semibold text-ink">{ride.destination}</p>
+                      <p className="font-semibold text-ink hover:text-brand-700 hover:underline">{ride.destination}</p>
                       <p className="text-xs text-ink-muted">
                         {ride.date.toLocaleDateString()} · {ride.time}
                       </p>
                     </div>
-                  </div>
+                  </Link>
                   {isFirstVisit ? (
                     <Badge tone="accent" icon={HandHeart}>
                       First visit

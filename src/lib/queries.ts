@@ -492,6 +492,42 @@ export async function listRideRequestsForStudent(studentId: string) {
   }));
 }
 
+/** Full detail for a single ride request, for /rides/[id]. Contact info is
+ * gated by the caller (the page checks `viewerIsParty` before rendering
+ * email — see rideContactVisible), same defense-in-depth spirit as every
+ * other ride/request query in this file, since a page render is a much
+ * easier place to leak it by accident than a query already scoped to one
+ * viewer. Also resolves a matching CLAIMED Mentorship HelpRequest between
+ * the two parties, if any, so the page can offer the same "message via
+ * your existing mentor thread" shortcut listRideRequestsForStudent does. */
+export async function getRideById(rideId: string) {
+  const ride = await prisma.rideRequest.findUnique({
+    where: { id: rideId },
+    include: {
+      student: { select: { id: true, name: true, email: true, photoUrl: true } },
+      volunteer: { select: { id: true, name: true, email: true, photoUrl: true } },
+      church: { select: { id: true, name: true } },
+    },
+  });
+  if (!ride) return null;
+
+  let requestId: string | null = null;
+  if (ride.volunteerId) {
+    const matchingRequest = await prisma.helpRequest.findFirst({
+      where: {
+        requesterId: ride.studentId,
+        claimerId: ride.volunteerId,
+        category: REQUEST_CATEGORY.MENTORSHIP,
+        status: REQUEST_STATUS.CLAIMED,
+      },
+      select: { id: true },
+    });
+    requestId = matchingRequest?.id ?? null;
+  }
+
+  return { ...ride, requestId };
+}
+
 /** Upcoming, non-cancelled ride offers at a church, for the student-facing
  * "available rides" board. Same blocked-pair exclusion as
  * listOpenRideRequestsForChurch — a blocked volunteer's offer must never

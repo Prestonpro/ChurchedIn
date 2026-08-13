@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Metadata } from "next";
 import { Car, MapPin, HandHeart } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
@@ -104,7 +105,7 @@ function RideCard({
   return (
     <Card className={isFirstVisit ? "border-l-4 border-l-accent-500" : ""}>
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2.5">
+        <Link href={`/rides/${ride.id}`} className="flex items-center gap-2.5 hover:opacity-80">
           <span
             className={`flex size-9 items-center justify-center rounded-lg ${
               isFirstVisit ? "bg-accent-100 text-accent-700" : "bg-warning-soft text-warning"
@@ -113,12 +114,12 @@ function RideCard({
             {isFirstVisit ? <HandHeart weight="fill" className="size-4.5" /> : <MapPin weight="fill" className="size-4.5" />}
           </span>
           <div>
-            <p className="font-semibold text-ink">{ride.destination}</p>
+            <p className="font-semibold text-ink hover:text-brand-700 hover:underline">{ride.destination}</p>
             <p className="text-xs text-ink-muted">
               {ride.date.toLocaleDateString()} · {ride.time}
             </p>
           </div>
-        </div>
+        </Link>
         <Badge tone={STATUS_TONE[ride.status]}>{STATUS_LABEL[ride.status]}</Badge>
       </div>
       <p className="mt-2 flex items-center gap-2 text-xs text-ink-muted">

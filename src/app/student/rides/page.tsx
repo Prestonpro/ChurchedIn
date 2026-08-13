@@ -150,17 +150,17 @@ export default async function StudentRidesPage() {
               {rides.map((ride, i) => (
                 <Card key={ride.id} className="animate-fade-up" style={{ animationDelay: `${Math.min(i * 40, 320)}ms` }}>
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-center gap-2.5">
+                    <Link href={`/rides/${ride.id}`} className="flex items-center gap-2.5 hover:opacity-80">
                       <span className="flex size-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
                         <MapPin weight="fill" className="size-4.5" />
                       </span>
                       <div>
-                        <p className="font-semibold text-ink">{ride.destination}</p>
+                        <p className="font-semibold text-ink hover:text-brand-700 hover:underline">{ride.destination}</p>
                         <p className="text-xs text-ink-muted">
                           {ride.date.toLocaleDateString()} · {ride.time}
                         </p>
                       </div>
-                    </div>
+                    </Link>
                     <Badge tone={STATUS_TONE[ride.status]}>{STATUS_LABEL[ride.status]}</Badge>
                   </div>
                   {ride.notes && <p className="mt-3 text-sm text-ink-soft">{ride.notes}</p>}

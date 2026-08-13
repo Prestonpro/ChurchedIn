@@ -210,8 +210,12 @@ const STATUS_TONE: Record<string, "neutral" | "warning" | "success" | "danger"> 
   CANCELLED: "neutral",
 };
 
-/** A non-Mentorship (or untargeted-Mentorship) request row — anything
- * created via NewRequestForm rather than the directory. */
+/** Every one of the student's own requests, any category or status —
+ * including targeted Mentorship picks (which also show as state on their
+ * MentorCard under the Browse mentors tab). Showing them here too, not
+ * just there, is what keeps this tab's count matching what it actually
+ * lists — a pending pick used to be invisible from the one tab literally
+ * called "My requests." */
 function MyRequestRow({ request: r }: { request: MyRequest }) {
   return (
     <div className="space-y-2.5 rounded-xl border border-line p-3">
@@ -237,7 +241,19 @@ function MyRequestRow({ request: r }: { request: MyRequest }) {
         </div>
       )}
 
-      {(r.status === REQUEST_STATUS.OPEN || r.status === REQUEST_STATUS.CLAIMED) && (
+      {/* A targeted pick awaiting the claimer's response — no contact info
+          yet (see the safety rule in requestState.ts), just who it's
+          waiting on. */}
+      {r.status === REQUEST_STATUS.PENDING && r.claimer && (
+        <div className="flex items-center gap-2.5 rounded-lg bg-paper p-2.5">
+          <Avatar name={r.claimer.name} size="sm" />
+          <p className="text-sm text-ink-muted">Waiting for {r.claimer.name} to respond</p>
+        </div>
+      )}
+
+      {(r.status === REQUEST_STATUS.OPEN ||
+        r.status === REQUEST_STATUS.CLAIMED ||
+        r.status === REQUEST_STATUS.PENDING) && (
         <div className="flex gap-2">
           {r.status === REQUEST_STATUS.CLAIMED && (
             <RequestActionButton
@@ -307,8 +323,6 @@ export default async function RequestsPage({
       requestByClaimer.set(r.claimerId!, r);
     }
   }
-  const otherRequests = myRequests.filter((r) => r.category !== REQUEST_CATEGORY.MENTORSHIP || !r.claimerId);
-
   // Shared-language mentors surface first.
   const myLanguages = studentProfile?.languages ? tags(studentProfile.languages) : [];
   const rankedMentors = volunteers
@@ -411,7 +425,7 @@ export default async function RequestsPage({
             </div>
           </>
         )
-      ) : otherRequests.length === 0 ? (
+      ) : myRequests.length === 0 ? (
         <EmptyState
           icon={ListChecks}
           title="No requests yet"
@@ -419,7 +433,7 @@ export default async function RequestsPage({
         />
       ) : (
         <div className="space-y-3">
-          {otherRequests.map((r) => (
+          {myRequests.map((r) => (
             <MyRequestRow key={r.id} request={r} />
           ))}
         </div>
