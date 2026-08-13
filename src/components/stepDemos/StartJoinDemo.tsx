@@ -89,7 +89,7 @@ export function StartJoinDemo({ playKey }: { playKey: number }) {
         style={{ opacity: scene === "create" ? 1 : 0 }}
       >
         <div className="rounded-2xl border border-line bg-surface p-5">
-          <p className="text-xs font-semibold text-ink-muted">Start your church&apos;s space</p>
+          <p className="text-xs font-semibold text-ink-muted">Register your church</p>
           <div className="mt-3 flex items-center gap-2.5">
             <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
               <Buildings weight="duotone" className="size-5" />

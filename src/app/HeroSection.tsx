@@ -91,7 +91,7 @@ export function HeroSection() {
         >
           <MagneticButton>
             <LinkButton href="/signup" size="lg">
-              Start your church&apos;s space <ArrowRight weight="bold" className="size-4" />
+              Register your church <ArrowRight weight="bold" className="size-4" />
             </LinkButton>
           </MagneticButton>
           <MagneticButton>

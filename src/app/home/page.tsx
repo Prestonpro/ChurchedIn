@@ -65,7 +65,7 @@ export default async function HomePage() {
           <p className="mt-2 max-w-xl text-ink-soft">
             {membership
               ? "Here's what's happening in your church community."
-              : "Join or start a church to see your community here."}
+              : "Join or register a church to see your community here."}
           </p>
         </Reveal>
       </div>

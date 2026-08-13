@@ -46,7 +46,7 @@ export default async function LoginPage({
         </Link>
         ,{" "}
         <Link href="/signup" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">
-          start your church&apos;s space
+          register your church
         </Link>
         , or{" "}
         <Link href="/browse" className="font-semibold text-brand-600 hover:text-brand-700 hover:underline">

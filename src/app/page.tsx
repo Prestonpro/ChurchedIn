@@ -65,7 +65,7 @@ const STEPS = [
 export const metadata: Metadata = {
   title: { absolute: "ChurchedIn — A church-by-church home base for hospitality" },
   description:
-    "ChurchedIn helps churches plan gatherings, coordinate rides, and pair international students with a friend at their church. Start a church or join one with a code.",
+    "ChurchedIn helps churches plan gatherings, coordinate rides, and pair international students with a friend at their church. Register a church or join one with a code.",
 };
 
 const appUrl = process.env.APP_URL ?? "http://localhost:3000";
@@ -112,7 +112,7 @@ export default async function LandingPage() {
                   Log in
                 </Link>
                 <LinkButton href="/signup" size="sm" className="whitespace-nowrap">
-                  Start a church <ArrowRight weight="bold" className="size-3.5" />
+                  Register a church <ArrowRight weight="bold" className="size-3.5" />
                 </LinkButton>
               </>
             )}
