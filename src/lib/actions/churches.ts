@@ -6,11 +6,17 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
 import { generateJoinCode } from "@/lib/codes";
+import { findSimilarChurches } from "@/lib/queries";
 import { ROLES, dashboardPathForRole, type Role } from "@/lib/constants";
 import { churchProfileSchema, firstIssueMessage } from "@/lib/validation";
 import { z } from "zod";
 
 export type ActionResult = { error: string } | { ok: true } | void;
+
+export type CreateChurchProfileActionResult =
+  | { error: string }
+  | { duplicates: { id: string; name: string; city: string | null; claimed: boolean }[] }
+  | void;
 
 /**
  * Lets an already-logged-in user add a NEW church profile — distinct from
@@ -19,11 +25,16 @@ export type ActionResult = { error: string } | { ok: true } | void;
  * already a member elsewhere — multi-membership is already supported via
  * ChurchSwitcher) starting a second church's space. The new church starts
  * UNVERIFIED; the creator becomes its CHURCH_ADMIN, same as at signup.
+ *
+ * Checks for a likely-duplicate church by name first — see
+ * createChurchAction's doc comment for the full reasoning. This form has
+ * no dedicated city field (just a free-text map address), so the check is
+ * name-only here; confirmDuplicate skips it, same escape hatch as signup.
  */
 export async function createChurchProfileAction(
-  _prev: ActionResult,
+  _prev: CreateChurchProfileActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<CreateChurchProfileActionResult> {
   const user = await requireUser();
 
   const parsed = churchProfileSchema.safeParse({
@@ -41,6 +52,20 @@ export async function createChurchProfileAction(
     return { error: firstIssueMessage(parsed.error) };
   }
   const data = parsed.data;
+
+  if (formData.get("confirmDuplicate") !== "1") {
+    const similar = await findSimilarChurches(data.name);
+    if (similar.length > 0) {
+      return {
+        duplicates: similar.map((c) => ({
+          id: c.id,
+          name: c.name,
+          city: c.city,
+          claimed: c.claimedAt !== null,
+        })),
+      };
+    }
+  }
 
   const church = await prisma.$transaction(async (tx) => {
     const church = await tx.church.create({

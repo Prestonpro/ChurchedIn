@@ -6,6 +6,7 @@ import { hashPassword, verifyPassword } from "@/lib/password";
 import { createSessionToken, setSessionCookie, clearSessionCookie } from "@/lib/session";
 import { generateJoinCode } from "@/lib/codes";
 import { requireUser } from "@/lib/auth";
+import { findSimilarChurches } from "@/lib/queries";
 import { ROLES, dashboardPathForRole, type Role } from "@/lib/constants";
 import {
   createChurchSchema,
@@ -17,11 +18,23 @@ import {
 
 export type ActionResult = { error: string } | void;
 
-/** Creates a new church org. The signer-upper becomes its first CHURCH_ADMIN. */
+export type CreateChurchActionResult =
+  | { error: string }
+  | { duplicates: { id: string; name: string; city: string | null; claimed: boolean }[] }
+  | void;
+
+/** Creates a new church org. The signer-upper becomes its first CHURCH_ADMIN.
+ *
+ * Checks for a likely-duplicate church first — someone who doesn't realize
+ * their church is already on ChurchedIn would otherwise silently create a
+ * second, disconnected copy that fragments the very community this app is
+ * for. Not a hard block: the confirmDuplicate flag (set by the second
+ * submit button rendered once a match is shown) skips the check entirely,
+ * since two churches can legitimately share a name. */
 export async function createChurchAction(
-  _prev: ActionResult,
+  _prev: CreateChurchActionResult,
   formData: FormData,
-): Promise<ActionResult> {
+): Promise<CreateChurchActionResult> {
   const parsed = createChurchSchema.safeParse({
     name: formData.get("name"),
     email: formData.get("email"),
@@ -37,6 +50,20 @@ export async function createChurchAction(
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
     return { error: "An account with that email already exists." };
+  }
+
+  if (formData.get("confirmDuplicate") !== "1") {
+    const similar = await findSimilarChurches(churchName, churchCity);
+    if (similar.length > 0) {
+      return {
+        duplicates: similar.map((c) => ({
+          id: c.id,
+          name: c.name,
+          city: c.city,
+          claimed: c.claimedAt !== null,
+        })),
+      };
+    }
   }
 
   const passwordHash = await hashPassword(password);

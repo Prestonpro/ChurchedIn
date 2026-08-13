@@ -554,6 +554,31 @@ export async function listDiscoverableChurches() {
   }));
 }
 
+/** Finds churches that might already be the one someone's about to create —
+ * an exact (case-insensitive) name match, narrowed by city when the new
+ * church gave one. A church with no city on file still surfaces on a
+ * name-only match rather than being silently excluded, since "no city yet"
+ * shouldn't read as "definitely not a match." Deliberately exact-name, not
+ * a substring/fuzzy match — "First Baptist Church" fuzzy-matching every
+ * other "Baptist" church in the country would be pure noise, not a useful
+ * warning. Returns `claimedAt` so the caller can tell "join and claim this"
+ * (unclaimed) from "ask its leader for an invite code" (claimed) apart. */
+export async function findSimilarChurches(name: string, city?: string | null) {
+  const trimmedName = name.trim();
+  if (!trimmedName) return [];
+  const trimmedCity = city?.trim();
+  return prisma.church.findMany({
+    where: {
+      name: { equals: trimmedName, mode: "insensitive" },
+      ...(trimmedCity
+        ? { OR: [{ city: { equals: trimmedCity, mode: "insensitive" } }, { city: null }] }
+        : {}),
+    },
+    select: { id: true, name: true, city: true, claimedAt: true },
+    take: 5,
+  });
+}
+
 /** Full profile details for a church, plus member count computed on demand
  * (not cached — same "just count it" convention used everywhere else in
  * this app, e.g. the admin dashboard's memberCount). Member count is the
