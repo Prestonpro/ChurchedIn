@@ -6,11 +6,12 @@ import {
   listOpenRideRequestsForChurch,
   listClaimedRideRequestsForVolunteer,
   listRideOffersForVolunteer,
+  listActiveRideOffersForChurch,
 } from "@/lib/queries";
 import { rideContactVisible } from "@/lib/rideState";
 import { RSVP_STATUS } from "@/lib/constants";
 import { claimRideRequestAction, completeRideRequestAction } from "@/lib/actions/rides";
-import { cancelRideOfferAction } from "@/lib/actions/rideOffers";
+import { cancelRideOfferAction, joinRideOfferAction, cancelRideOfferClaimAction } from "@/lib/actions/rideOffers";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -27,10 +28,11 @@ export default async function VolunteerRidesPage() {
   const user = await requireRole(ROLES.VOLUNTEER);
   const churchId = user.activeMembership!.churchId;
 
-  const [openRides, myClaimedRides, myOffers] = await Promise.all([
+  const [openRides, myClaimedRides, myOffers, joinableOffers] = await Promise.all([
     listOpenRideRequestsForChurch(churchId, user.id),
     listClaimedRideRequestsForVolunteer(user.id),
     listRideOffersForVolunteer(user.id),
+    listActiveRideOffersForChurch(churchId, user.id),
   ]);
   const activeClaimed = myClaimedRides.filter((r) => r.status === RIDE_STATUS.CLAIMED);
   const pastClaimed = myClaimedRides.filter((r) => r.status !== RIDE_STATUS.CLAIMED);
@@ -141,6 +143,102 @@ export default async function VolunteerRidesPage() {
           )}
         </div>
       </div>
+
+      <div className="mb-4 border-t border-line pt-6">
+        <h2 className="text-lg font-bold text-ink">Rides other volunteers are offering</h2>
+        <p className="mt-1 text-sm text-ink-muted">
+          Ride along too — students often feel safer with a familiar face in the car.
+        </p>
+      </div>
+      {joinableOffers.length === 0 ? (
+        <EmptyState icon={Car} title="No rides offered yet" body="Check back later, or offer your own above." />
+      ) : (
+        <div className="mb-8 grid gap-4 sm:grid-cols-2">
+          {joinableOffers.map((offer) => {
+            const full = offer.seatsLeft === 0;
+            return (
+              <Card key={offer.id}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <Avatar name={offer.volunteer.name} size="sm" />
+                    <div>
+                      <Link
+                        href={`/profile/${offer.volunteer.id}`}
+                        className="text-sm font-semibold text-ink hover:text-brand-700 hover:underline"
+                      >
+                        {offer.volunteer.name}
+                      </Link>
+                      <p className="flex items-center gap-1 text-xs text-ink-muted">
+                        <Clock weight="bold" className="size-3.5" /> {offer.date.toLocaleDateString()} · {offer.time}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge tone={full ? "neutral" : "success"} icon={UsersThree}>
+                    {offer.seatsLeft} of {offer.capacity} left
+                  </Badge>
+                </div>
+                {offer.notes && <p className="mt-3 text-sm text-ink-soft">{offer.notes}</p>}
+
+                {offer.riders.length > 0 && (
+                  <div className="mt-3 rounded-lg bg-paper p-2.5">
+                    <p className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-ink-faint">
+                      <UsersThree weight="bold" className="size-3.5" /> Who else is going
+                    </p>
+                    <div className="flex flex-wrap items-center gap-2">
+                      {offer.riders.map((rider) => (
+                        <span
+                          key={rider.id}
+                          className="flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-xs font-medium text-ink-soft"
+                        >
+                          <Avatar name={rider.name} src={rider.photoUrl} size="xs" />
+                          {rider.id === user.id ? "You" : rider.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="mt-3">
+                  {offer.myClaimStatus === RSVP_STATUS.CONFIRMED && (
+                    <div className="space-y-2">
+                      <Badge tone="success">You&apos;re in</Badge>
+                      <RideActionButton
+                        rideId={offer.id}
+                        action={cancelRideOfferClaimAction}
+                        label="Leave this ride"
+                        pendingLabel="Leaving…"
+                        variant="ghost"
+                        confirmMessage="Leave this ride?"
+                      />
+                    </div>
+                  )}
+                  {offer.myClaimStatus === RSVP_STATUS.WAITLISTED && (
+                    <div className="space-y-2">
+                      <Badge tone="warning">You&apos;re on the waitlist</Badge>
+                      <RideActionButton
+                        rideId={offer.id}
+                        action={cancelRideOfferClaimAction}
+                        label="Leave waitlist"
+                        pendingLabel="Leaving…"
+                        variant="ghost"
+                      />
+                    </div>
+                  )}
+                  {!offer.myClaimStatus && (
+                    <RideActionButton
+                      rideId={offer.id}
+                      action={joinRideOfferAction}
+                      label={full ? "Join waitlist" : "Join this ride"}
+                      pendingLabel="Joining…"
+                      variant="primary"
+                    />
+                  )}
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       <div className="mb-4 border-t border-line pt-6">
         <h2 className="text-lg font-bold text-ink">Ride requests</h2>

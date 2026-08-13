@@ -184,7 +184,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       icon: HandHeart,
       title: "Once you're connected",
       body: "You'll be able to see their contact info, and either of you can set up a recurring meeting time: weekly, every other week, or monthly.",
-      linkHref: "/student/requests",
+      linkHref: "/student/requests?tab=mine",
     },
     {
       icon: CalendarBlank,

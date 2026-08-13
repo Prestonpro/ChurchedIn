@@ -528,36 +528,57 @@ export async function getRideById(rideId: string) {
   return { ...ride, requestId };
 }
 
-/** Upcoming, non-cancelled ride offers at a church, for the student-facing
- * "available rides" board. Same blocked-pair exclusion as
- * listOpenRideRequestsForChurch — a blocked volunteer's offer must never
- * appear to the student they blocked (or vice versa), same reasoning as
- * every other directory/board in this app. Includes each offer's confirmed
- * seat count (for "X of Y seats taken") and the viewer's own claim, if any,
- * so the page can show "you're in" / "you're waitlisted" without a second
- * query per card. */
+/** Upcoming, non-cancelled ride offers at a church, for the "available
+ * rides" board any church member (student or volunteer/mentor) can browse
+ * and join. Same blocked-pair exclusion as listOpenRideRequestsForChurch —
+ * a blocked volunteer's offer must never appear to the student they
+ * blocked (or vice versa), same reasoning as every other directory/board
+ * in this app. Also excludes the viewer's own offer, so a volunteer
+ * browsing this board doesn't see themselves as a joinable option.
+ *
+ * Includes each offer's confirmed seat count, the viewer's own claim if
+ * any, and — the actual point of showing group rides — the other confirmed
+ * riders' names/photos, so students (and mentors riding along) can see who
+ * else is in the car before or after joining, same as the doc comment on
+ * `riders` explains. A blocked rider is filtered out of that list
+ * individually rather than hiding the whole offer, since only one of
+ * possibly several riders being blocked shouldn't take the ride away from
+ * everyone else. */
 export async function listActiveRideOffersForChurch(churchId: string, viewerId: string) {
   const [offers, excluded] = await Promise.all([
     prisma.rideOffer.findMany({
       where: { churchId, cancelledAt: null, date: { gte: new Date(new Date().toDateString()) } },
       include: {
         volunteer: { select: { id: true, name: true, photoUrl: true } },
-        claims: { where: { status: { not: RSVP_STATUS.CANCELLED } }, select: { studentId: true, status: true } },
+        claims: {
+          where: { status: { not: RSVP_STATUS.CANCELLED } },
+          select: {
+            studentId: true,
+            status: true,
+            student: { select: { id: true, name: true, photoUrl: true } },
+          },
+        },
       },
       orderBy: { date: "asc" },
     }),
     blockedPairUserIds(viewerId),
   ]);
   return offers
-    .filter((o) => !excluded.has(o.volunteerId))
+    .filter((o) => !excluded.has(o.volunteerId) && o.volunteerId !== viewerId)
     .map((o) => {
-      const confirmedCount = o.claims.filter((c) => c.status === RSVP_STATUS.CONFIRMED).length;
+      const confirmedClaims = o.claims.filter((c) => c.status === RSVP_STATUS.CONFIRMED);
       const myClaim = o.claims.find((c) => c.studentId === viewerId) ?? null;
       return {
         ...o,
-        confirmedCount,
-        seatsLeft: Math.max(0, o.capacity - confirmedCount),
+        confirmedCount: confirmedClaims.length,
+        seatsLeft: Math.max(0, o.capacity - confirmedClaims.length),
         myClaimStatus: myClaim?.status ?? null,
+        // "Riders" reads better than "students" now that a mentor can join
+        // too — who else is confirmed for this ride, minus anyone blocked
+        // by the viewer.
+        riders: confirmedClaims
+          .map((c) => c.student)
+          .filter((rider) => !excluded.has(rider.id)),
       };
     });
 }

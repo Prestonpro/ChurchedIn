@@ -85,6 +85,25 @@ export default async function StudentRidesPage() {
                   </div>
                   {offer.notes && <p className="mt-3 text-sm text-ink-soft">{offer.notes}</p>}
 
+                  {offer.riders.length > 0 && (
+                    <div className="mt-3 rounded-lg bg-paper p-2.5">
+                      <p className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-ink-faint">
+                        <UsersThree weight="bold" className="size-3.5" /> Who else is going
+                      </p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        {offer.riders.map((rider) => (
+                          <span
+                            key={rider.id}
+                            className="flex items-center gap-1.5 rounded-full bg-white py-1 pl-1 pr-2.5 text-xs font-medium text-ink-soft"
+                          >
+                            <Avatar name={rider.name} src={rider.photoUrl} size="xs" />
+                            {rider.id === user.id ? "You" : rider.name}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-3">
                     {offer.myClaimStatus === RSVP_STATUS.CONFIRMED && (
                       <div className="space-y-2">

@@ -162,7 +162,7 @@ export function requestAcceptedForRequesterEmail(opts: {
     bodyHtml: paragraph(
       `<strong>${escapeHtml(opts.claimerName)}</strong> accepted your request to connect. You can reach them at <a href="mailto:${escapeHtml(opts.claimerEmail)}" style="color:#409688;">${escapeHtml(opts.claimerEmail)}</a>.`,
     ),
-    cta: { label: "View your requests", url: appUrl("/student/requests") },
+    cta: { label: "View your requests", url: appUrl("/student/requests?tab=mine") },
   });
   return { subject, text, html };
 }
@@ -227,7 +227,7 @@ export function requestClaimedForRequesterEmail(opts: {
     bodyHtml: paragraph(
       `<strong>${escapeHtml(opts.claimerName)}</strong> claimed your request "${escapeHtml(opts.title)}". You can reach them at <a href="mailto:${escapeHtml(opts.claimerEmail)}" style="color:#409688;">${escapeHtml(opts.claimerEmail)}</a>.`,
     ),
-    cta: { label: "View your requests", url: appUrl("/student/requests") },
+    cta: { label: "View your requests", url: appUrl("/student/requests?tab=mine") },
   });
   return { subject, text, html };
 }

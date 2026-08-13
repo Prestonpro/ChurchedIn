@@ -128,16 +128,23 @@ export async function cancelRideOfferAction(rideOfferId: string): Promise<Action
 }
 
 /** Claims a seat (or a waitlist spot, if full) — same capacity/waitlist
- * decision as event RSVPs, reusing decideRsvpStatus as-is. */
+ * decision as event RSVPs, reusing decideRsvpStatus as-is. Open to any
+ * church member, not just students — a mentor riding along is exactly the
+ * point of showing who else is in the car (see listActiveRideOffersForChurch's
+ * `riders`), so a volunteer can join as a passenger the same way a student
+ * does, not just offer their own rides. */
 export async function joinRideOfferAction(rideOfferId: string): Promise<ActionResult> {
   const user = await requireUser();
-  if (!user.activeMembership || user.activeMembership.role !== ROLES.STUDENT) {
-    return { error: "Only students can join a ride." };
+  if (!user.activeMembership) {
+    return { error: "Join a church before joining a ride." };
   }
 
   const offer = await prisma.rideOffer.findUnique({ where: { id: rideOfferId } });
   if (!offer || offer.cancelledAt) {
     return { error: "This ride offer isn't available." };
+  }
+  if (offer.volunteerId === user.id) {
+    return { error: "You can't join your own ride offer." };
   }
   if (offer.churchId !== user.activeMembership.churchId) {
     return { error: "This ride offer isn't at your church." };

@@ -66,7 +66,7 @@ export default async function StudentDashboardPage() {
           value={activeRequestCount}
           tone="bg-accent-100 text-accent-700"
           accent="border-l-accent-500"
-          href="/student/requests"
+          href="/student/requests?tab=mine"
         />
         <StatCard
           icon={Car}
