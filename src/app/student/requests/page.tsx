@@ -341,14 +341,11 @@ export default async function RequestsPage({
 
   return (
     <AuthShell user={user}>
-      <div className="mb-8 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-extrabold text-ink">Requests</h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Ask your church for help, or find a mentor at {user.activeMembership.church.name}.
-          </p>
-        </div>
-        {activeTab === "mine" && <NewRequestForm />}
+      <div className="mb-8">
+        <h1 className="text-2xl font-extrabold text-ink">Requests</h1>
+        <p className="mt-1 text-sm text-ink-muted">
+          Ask your church for help, or find a mentor at {user.activeMembership.church.name}.
+        </p>
       </div>
 
       <div role="tablist" aria-label="Requests" className="mb-6 inline-flex gap-1 rounded-full border border-line bg-paper p-1">
@@ -373,6 +370,12 @@ export default async function RequestsPage({
           <ListChecks weight="bold" className="size-4" /> My requests ({myRequests.length})
         </Link>
       </div>
+
+      {activeTab === "mine" && (
+        <div className="mb-6">
+          <NewRequestForm />
+        </div>
+      )}
 
       {activeTab === "browse" ? (
         volunteers.length === 0 ? (

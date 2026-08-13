@@ -33,7 +33,7 @@ export function NewRequestForm() {
   }
 
   return (
-    <form action={formAction} className="space-y-3 rounded-xl border border-line-strong bg-white p-4">
+    <form action={formAction} className="max-w-md space-y-3 rounded-xl border border-line-strong bg-white p-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
       <SelectField label="Category" name="category" defaultValue="OTHER">
         {Object.entries(REQUEST_CATEGORY_LABELS).map(([value, label]) => (
