@@ -202,9 +202,6 @@ Prefer extracting pure logic into a testable module over testing through Prisma.
 
 ## 🐛 Known gaps (audited, not yet fixed)
 Findings from the full-app audit that are real but deliberately deferred:
-- **`Report` is a dead model.** No action, no UI, no admin review queue;
-  `REPORT_STATUS` is unreferenced. Nothing can create a row. Either build the
-  reporting flow (messaging needs it) or delete the model and enum.
 - **Over-fetching.** `listEventsForChurch` has no date bound and no `take`, and
   eagerly loads every RSVP and attendee for four callers — `/home` uses it to
   print one title. `listDiscoverableChurches` reads the whole church table and
@@ -212,7 +209,11 @@ Findings from the full-app audit that are real but deliberately deferred:
 - **Semantic dead ends.** A first-visit ride request created by anyone who isn't
   a STUDENT is invisible to its creator (only `/student/rides` lists them).
   `/home`'s Rides card and the Help guide both hand a church-less account links
-  that bounce to `/join`. `/churches/new` works but nothing links to it. Only
-  students can block anyone — volunteers and admins have no block control.
-- **`page.tsx:59` overpromises**: "message only after a friend accepts" describes
-  messaging, which doesn't exist yet; today acceptance reveals an email address.
+  that bounce to `/join`. `/churches/new` works but nothing links to it.
+- **No `/admin/requests` oversight page.** `listAllRequestsForChurch` in
+  `src/lib/queries.ts` already exists for this (built alongside the Requests
+  system, modeled on `listAllRideRequestsForChurch`) but nothing renders it —
+  `/admin/rides` has no Requests equivalent yet.
+- **No ride-offer detail page.** `/rides/[id]` (`src/app/rides/[id]/page.tsx`)
+  only covers `RideRequest`; a `RideOffer` (the group-ride/carpool model) has
+  no equivalent single-item page to link to.
