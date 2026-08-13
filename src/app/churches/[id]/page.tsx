@@ -11,6 +11,7 @@ import {
   NavigationArrow,
   CalendarBlank,
   Ticket,
+  IdentificationCard,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getChurchProfile, listEventsForChurch } from "@/lib/queries";
@@ -22,10 +23,11 @@ import { MemberCountBadge } from "@/components/MemberCountBadge";
 import { Badge } from "@/components/ui/Badge";
 import { MiniMapLoader } from "@/components/MiniMapLoader";
 import { CopyButton } from "@/components/ui/CopyButton";
-import { ROLES, type EventCategory } from "@/lib/constants";
+import { ROLES, type EventCategory, type Role } from "@/lib/constants";
 import { JoinChurchForm } from "./JoinChurchForm";
 import { ClaimAdminButton } from "./ClaimAdminButton";
 import { FirstVisitRideForm } from "./FirstVisitRideForm";
+import { MembershipCard } from "./MembershipCard";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   const { id } = await params;
@@ -234,6 +236,15 @@ export default async function ChurchProfilePage({
                 manage its profile, gatherings, and members.
               </p>
               <ClaimAdminButton churchId={id} />
+            </Card>
+          )}
+
+          {isMember && membership && (
+            <Card>
+              <h2 className="mb-3 flex items-center gap-1.5 font-bold text-ink">
+                <IdentificationCard weight="bold" className="size-4 text-brand-600" /> Your membership
+              </h2>
+              <MembershipCard churchId={id} role={membership.role as Role} churchName={church.name} />
             </Card>
           )}
 

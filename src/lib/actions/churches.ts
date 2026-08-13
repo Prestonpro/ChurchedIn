@@ -7,7 +7,7 @@ import { requireUser } from "@/lib/auth";
 import { createSessionToken, setSessionCookie } from "@/lib/session";
 import { generateJoinCode } from "@/lib/codes";
 import { findSimilarChurches } from "@/lib/queries";
-import { ROLES, dashboardPathForRole, type Role } from "@/lib/constants";
+import { ROLES, dashboardPathForRole, roleLabel, type Role } from "@/lib/constants";
 import { churchProfileSchema, firstIssueMessage } from "@/lib/validation";
 import { z } from "zod";
 
@@ -327,5 +327,95 @@ export async function demoteFromAdminAction(churchId: string, memberUserId: stri
   });
 
   revalidatePath(`/churches/${churchId}/settings`);
+}
+
+const switchableRoleSchema = z.enum(["STUDENT", "VOLUNTEER"]);
+
+/**
+ * Lets a member switch their own role at a church, between STUDENT and
+ * VOLUNTEER — self-service, no admin needed. CHURCH_ADMIN is never a
+ * target here (that stays admin-granted only, via promoteToAdminAction);
+ * stepping down FROM admin to either regular role IS allowed, subject to
+ * the same "a church always needs at least one leader" rule
+ * demoteFromAdminAction enforces.
+ *
+ * Profile data tied to the role you're leaving (the StudentProfile row,
+ * or the volunteer fields carried directly on User — jobTitle, languages,
+ * openToMentorship, etc.) is left untouched rather than deleted, so
+ * switching back later picks up right where it left off instead of
+ * starting over.
+ */
+export async function switchRoleAction(churchId: string, newRole: "STUDENT" | "VOLUNTEER"): Promise<ActionResult> {
+  const user = await requireUser();
+  const parsedRole = switchableRoleSchema.safeParse(newRole);
+  if (!parsedRole.success) {
+    return { error: "Choose a valid role." };
+  }
+
+  const membership = user.memberships.find((m) => m.churchId === churchId);
+  if (!membership) {
+    return { error: "You're not a member of this church." };
+  }
+  if (membership.role === newRole) {
+    return { error: `You're already a ${roleLabel(newRole).toLowerCase()}.` };
+  }
+  if (membership.role === ROLES.CHURCH_ADMIN) {
+    const adminCount = await prisma.membership.count({ where: { churchId, role: ROLES.CHURCH_ADMIN } });
+    if (adminCount <= 1) {
+      return { error: "A church needs at least one leader. Promote someone else before stepping down." };
+    }
+  }
+
+  await prisma.membership.update({
+    where: { userId_churchId: { userId: user.id, churchId } },
+    data: { role: newRole },
+  });
+
+  const token = await createSessionToken({ userId: user.id, activeChurchId: churchId });
+  await setSessionCookie(token);
+
+  revalidatePath(`/churches/${churchId}`);
+  revalidatePath(`/churches/${churchId}/settings`);
+  redirect(dashboardPathForRole(newRole));
+}
+
+/**
+ * Lets a member leave a church on their own — removes their Membership row
+ * entirely. Refuses if they're the church's last CHURCH_ADMIN, same rule
+ * as above (leaving is effectively self-demotion to nothing).
+ *
+ * Reissues the session pointed at another remaining membership, since the
+ * old activeChurchId no longer resolves to anything once the row is gone.
+ * If this was their only church, falls back to the church-less ""
+ * activeChurchId — the exact same convention createBrowsingAccountAction
+ * and joinChurchAsExistingUserAction already use for "no church yet."
+ * Doesn't touch this user's other data at this church (past RSVPs,
+ * HelpRequests, etc.) — same "leave the history, remove the membership"
+ * choice every other part of this app makes when someone steps away.
+ */
+export async function leaveChurchAction(churchId: string): Promise<ActionResult> {
+  const user = await requireUser();
+  const membership = user.memberships.find((m) => m.churchId === churchId);
+  if (!membership) {
+    return { error: "You're not a member of this church." };
+  }
+
+  if (membership.role === ROLES.CHURCH_ADMIN) {
+    const adminCount = await prisma.membership.count({ where: { churchId, role: ROLES.CHURCH_ADMIN } });
+    if (adminCount <= 1) {
+      return { error: "A church needs at least one leader. Promote someone else before you leave." };
+    }
+  }
+
+  await prisma.membership.delete({ where: { userId_churchId: { userId: user.id, churchId } } });
+
+  const remaining = user.memberships.filter((m) => m.churchId !== churchId);
+  const next = remaining[0];
+  const token = await createSessionToken({ userId: user.id, activeChurchId: next?.churchId ?? "" });
+  await setSessionCookie(token);
+
+  revalidatePath(`/churches/${churchId}`);
+  revalidatePath("/discover");
+  redirect(next ? dashboardPathForRole(next.role as Role) : "/discover");
 }
 
