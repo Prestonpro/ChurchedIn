@@ -336,6 +336,11 @@ export default async function VolunteerRidesPage() {
                   <Avatar name={ride.student.name} size="xs" />
                   {isFirstVisit ? `${ride.student.name} is visiting for the first time` : `Requested by ${ride.student.name}`}
                 </p>
+                {ride.prefersGroupRide && (
+                  <Badge tone="brand" icon={UsersThree} className="mt-2">
+                    Prefers group ride
+                  </Badge>
+                )}
                 {ride.notes && <p className="mt-2 text-sm text-ink-soft">{ride.notes}</p>}
                 <div className="mt-3">
                   <RideActionButton

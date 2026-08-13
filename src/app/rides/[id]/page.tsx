@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Car, MapPin, Clock, ChatCircleDots, HandHeart, Buildings } from "@phosphor-icons/react/dist/ssr";
+import { Car, MapPin, Clock, ChatCircleDots, HandHeart, Buildings, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { getRideById } from "@/lib/queries";
 import { rideContactVisible } from "@/lib/rideState";
@@ -95,6 +95,11 @@ export default async function RideDetailPage({ params }: { params: Promise<{ id:
               {isFirstVisit && (
                 <Badge tone="accent" icon={HandHeart}>
                   First visit
+                </Badge>
+              )}
+              {ride.prefersGroupRide && (
+                <Badge tone="brand" icon={UsersThree}>
+                  Prefers group ride
                 </Badge>
               )}
               <Badge tone={STATUS_TONE[ride.status]}>{STATUS_LABEL[ride.status]}</Badge>

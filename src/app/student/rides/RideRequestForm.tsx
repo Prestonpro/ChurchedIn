@@ -3,7 +3,7 @@
 import { useActionState, useState } from "react";
 import { MapPin, Clock } from "@phosphor-icons/react/dist/ssr";
 import { createRideRequestAction } from "@/lib/actions/rides";
-import { Field, TextAreaField, FormError } from "@/components/ui/Field";
+import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { LocationAutocomplete } from "@/components/LocationAutocomplete";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
@@ -47,6 +47,7 @@ export function RideRequestForm() {
         name="notes"
         placeholder="Flight number, how much luggage, why you need the ride, ..."
       />
+      <CheckboxField label="I'd prefer a group ride with other students" name="prefersGroupRide" />
       <SubmitButton pendingText="Sending…" className="w-full">
         Request a ride
       </SubmitButton>

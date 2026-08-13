@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
-import { Car, MapPin, HandHeart } from "@phosphor-icons/react/dist/ssr";
+import { Car, MapPin, HandHeart, UsersThree } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { listAllRideRequestsForChurch } from "@/lib/queries";
 import { claimRideRequestAction, completeRideRequestAction } from "@/lib/actions/rides";
@@ -94,6 +94,7 @@ function RideCard({
     status: keyof typeof STATUS_LABEL;
     type: string;
     notes: string | null;
+    prefersGroupRide: boolean;
     student: { name: string; email: string | null };
     volunteer: { id: string; name: string } | null;
     volunteerId: string | null;
@@ -126,6 +127,11 @@ function RideCard({
         <Avatar name={ride.student.name} size="xs" />
         {isFirstVisit ? `${ride.student.name} is visiting for the first time` : `Requested by ${ride.student.name}`}
       </p>
+      {ride.prefersGroupRide && (
+        <Badge tone="brand" icon={UsersThree} className="mt-2">
+          Prefers group ride
+        </Badge>
+      )}
       {ride.notes && <p className="mt-2 text-sm text-ink-soft">{ride.notes}</p>}
       {ride.volunteer && (
         <p className="mt-1 text-xs text-ink-muted">

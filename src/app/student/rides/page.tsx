@@ -182,6 +182,11 @@ export default async function StudentRidesPage() {
                     </Link>
                     <Badge tone={STATUS_TONE[ride.status]}>{STATUS_LABEL[ride.status]}</Badge>
                   </div>
+                  {ride.prefersGroupRide && (
+                    <Badge tone="brand" icon={UsersThree} className="mt-2">
+                      Prefers group ride
+                    </Badge>
+                  )}
                   {ride.notes && <p className="mt-3 text-sm text-ink-soft">{ride.notes}</p>}
 
                   {ride.volunteer && rideContactVisible(ride.status) && (

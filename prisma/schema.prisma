@@ -577,6 +577,11 @@ model RideRequest {
   date        DateTime
   time        String
   notes       String?
+  // Lets a student flag that they'd rather ride along with other students
+  // than go one-on-one with a volunteer — purely informational for now
+  // (shown to volunteers browsing the board), doesn't change the claim
+  // flow or steer them toward a RideOffer automatically.
+  prefersGroupRide Boolean @default(false)
   status      RideStatus @default(OPEN)
   // GENERAL: a student asking their own church's volunteers for a ride.
   // FIRST_VISIT: someone (not necessarily a member of `churchId` at all —

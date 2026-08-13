@@ -38,6 +38,7 @@ export async function createRideRequestAction(
     date: formData.get("date"),
     time: formData.get("time"),
     notes: formData.get("notes"),
+    prefersGroupRide: formData.get("prefersGroupRide") === "on",
   });
   if (!parsed.success) {
     return { error: firstIssueMessage(parsed.error) };
@@ -55,6 +56,7 @@ export async function createRideRequestAction(
       date,
       time: data.time,
       notes: data.notes || null,
+      prefersGroupRide: data.prefersGroupRide,
       churchId: user.activeMembership.churchId,
       studentId: user.id,
     },
@@ -91,6 +93,7 @@ export async function createFirstVisitRideRequestAction(
     date: formData.get("date"),
     time: formData.get("time"),
     notes: formData.get("notes"),
+    prefersGroupRide: formData.get("prefersGroupRide") === "on",
   });
   if (!parsed.success) {
     return { error: firstIssueMessage(parsed.error) };
@@ -108,6 +111,7 @@ export async function createFirstVisitRideRequestAction(
       date,
       time: data.time,
       notes: data.notes || null,
+      prefersGroupRide: data.prefersGroupRide,
       churchId,
       studentId: user.id,
       type: RIDE_REQUEST_TYPE.FIRST_VISIT,

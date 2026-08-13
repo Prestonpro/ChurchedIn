@@ -181,6 +181,7 @@ export const rideRequestSchema = z.object({
   date: z.string().min(1, "Choose a date"),
   time: z.string().trim().min(1, "Enter a time").max(100),
   notes: z.string().trim().max(500).optional().or(z.literal("")),
+  prefersGroupRide: z.boolean().default(false),
 });
 
 export const rideOfferSchema = z.object({
