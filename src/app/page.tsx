@@ -35,9 +35,9 @@ const FEATURES = [
   },
   {
     iconKey: "users" as const,
-    title: "Find a friend",
-    body: "Students browse a friend directory and reach out. Contact info is shared only once a friend accepts.",
-    details: "Browse by language and interests, send a reach-out with a short note, and email addresses stay private on both sides until the other person accepts.",
+    title: "Ask for help",
+    body: "Students post a request or browse a mentor directory and reach out. Contact info is shared only once a request is accepted.",
+    details: "Post furniture, food, or housing requests for any church member to claim, or browse mentors by language and interests and send a reach-out with a short note. Email addresses stay private on both sides until the request is accepted.",
   },
 ];
 
@@ -58,14 +58,14 @@ const STEPS = [
     number: "03",
     demoKey: "connect" as const,
     title: "Connect one-on-one",
-    body: "Students find friends by language and interest, and message only after a friend accepts.",
+    body: "Students find mentors by language and interest, and message only after a request is accepted.",
   },
 ];
 
 export const metadata: Metadata = {
   title: { absolute: "ChurchedIn — A church-by-church home base for hospitality" },
   description:
-    "ChurchedIn helps churches plan gatherings, coordinate rides, and pair international students with a friend at their church. Register a church or join one with a code.",
+    "ChurchedIn helps churches plan gatherings, coordinate rides, and pair international students with a mentor at their church. Register a church or join one with a code.",
 };
 
 const appUrl = process.env.APP_URL ?? "http://localhost:3000";
@@ -75,7 +75,7 @@ const structuredData = {
   name: "ChurchedIn",
   url: appUrl,
   description:
-    "Plan gatherings, coordinate rides, and connect international students with a friend at their church.",
+    "Plan gatherings, coordinate rides, and connect international students with a mentor at their church.",
   applicationCategory: "SocialNetworkingApplication",
   operatingSystem: "Web",
 };

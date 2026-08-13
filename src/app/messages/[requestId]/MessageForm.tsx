@@ -9,8 +9,8 @@ import { SubmitButton } from "@/components/ui/SubmitButton";
 /** Remounted (via `key`) after a successful send to clear the textarea — the
  * new message appearing above is the confirmation, so there's no separate
  * "sent!" banner to go stale. Same pattern as RideRequestForm. */
-export function MessageForm({ connectionId }: { connectionId: string }) {
-  const action = sendMessageAction.bind(null, connectionId);
+export function MessageForm({ requestId }: { requestId: string }) {
+  const action = sendMessageAction.bind(null, requestId);
   const [state, formAction] = useActionState(action, undefined);
   const [formKey, setFormKey] = useState(0);
   const [lastState, setLastState] = useState(state);

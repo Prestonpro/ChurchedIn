@@ -9,9 +9,9 @@ import { SelectField, TextAreaField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { REPORT_REASONS } from "@/lib/validation";
 
-export function ReportConversationButton({ connectionId }: { connectionId: string }) {
+export function ReportConversationButton({ requestId }: { requestId: string }) {
   const [open, setOpen] = useState(false);
-  const action = reportConversationAction.bind(null, connectionId);
+  const action = reportConversationAction.bind(null, requestId);
   const [state, formAction] = useActionState(action, undefined);
   const reported = !!state && "ok" in state && state.ok;
 

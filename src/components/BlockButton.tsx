@@ -13,7 +13,7 @@ export function BlockButton({ userId, name }: { userId: string; name: string }) 
   const [blocked, setBlocked] = useState(false);
 
   function run() {
-    if (!confirm(`Block ${name}? They won't be able to RSVP to your events or contact you. You can undo this later from your Friends page.`)) {
+    if (!confirm(`Block ${name}? They won't be able to RSVP to your events or contact you. You can undo this later from your Requests page.`)) {
       return;
     }
     setError(undefined);

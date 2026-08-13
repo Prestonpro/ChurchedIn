@@ -111,14 +111,14 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: SquaresFour,
         title: "Your dashboard",
-        body: "See friend requests waiting on you, your active friends, and any gatherings you're hosting or helping with.",
+        body: "See requests waiting on you, your active requests, and any gatherings you're hosting or helping with.",
         linkHref: "/volunteer/dashboard",
         linkLabel: "Go to dashboard",
       },
       {
         icon: UserCircle,
-        title: "Set up your friend profile",
-        body: "Add the languages you speak, your interests, and a short bio so students know what you're about. Toggle “open to being a friend” whenever you have room for someone new.",
+        title: "Set up your mentor profile",
+        body: "Add the languages you speak, your interests, and a short bio so students know what you're about. Toggle “open to mentoring” whenever you have room for someone new.",
         linkHref: "/volunteer/profile",
         linkLabel: "Edit your profile",
       },
@@ -131,7 +131,7 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
       {
         icon: CalendarCheck,
         title: "Set up a recurring meeting",
-        body: "Once you're connected with a student, set a standing cadence (weekly, every other week, or monthly) right on the connection card.",
+        body: "Once you're connected with a student, set a standing cadence (weekly, every other week, or monthly) right on the request card.",
         linkHref: "/volunteer/dashboard",
       },
       {
@@ -169,22 +169,22 @@ export function getHelpSteps(role: Role, churchId: string): HelpStep[] {
     {
       icon: SquaresFour,
       title: "Your dashboard",
-      body: "See your upcoming events, your friend connections, and your ride requests at a glance.",
+      body: "See your upcoming events, your active requests, and your ride requests at a glance.",
       linkHref: "/student/dashboard",
       linkLabel: "Go to dashboard",
     },
     {
       icon: UsersFour,
-      title: "Find a friend",
-      body: "Browse volunteers by the languages they speak and their interests, and send a request with a short note about yourself.",
-      linkHref: "/student/mentors",
-      linkLabel: "Browse friends",
+      title: "Ask for help",
+      body: "Post a request for furniture, food, housing, or anything else you need, or browse mentors by the languages they speak and their interests and send a request with a short note about yourself.",
+      linkHref: "/student/requests",
+      linkLabel: "Go to requests",
     },
     {
       icon: HandHeart,
       title: "Once you're connected",
       body: "You'll be able to see their contact info, and either of you can set up a recurring meeting time: weekly, every other week, or monthly.",
-      linkHref: "/student/mentors",
+      linkHref: "/student/requests",
     },
     {
       icon: CalendarBlank,

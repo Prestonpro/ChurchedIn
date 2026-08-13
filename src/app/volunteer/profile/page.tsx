@@ -2,19 +2,17 @@ import { UsersThree } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { requireRole } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Avatar } from "@/components/ui/Avatar";
 import { MembershipsCard } from "@/components/MembershipsCard";
-import { MentorProfileForm } from "./MentorProfileForm";
+import { VolunteerProfileForm } from "./VolunteerProfileForm";
 import { ROLES } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Edit Profile" };
 
 export default async function VolunteerProfilePage() {
   const user = await requireRole(ROLES.VOLUNTEER);
-  const mentorProfile = await prisma.mentorProfile.findUnique({ where: { userId: user.id } });
 
   return (
     <AuthShell user={user}>
@@ -33,26 +31,26 @@ export default async function VolunteerProfilePage() {
               <UsersThree weight="fill" className="size-5" />
             </span>
             <div>
-              <h2 className="font-bold text-ink">Friend profile</h2>
+              <h2 className="font-bold text-ink">Mentor profile</h2>
               <p className="text-sm text-ink-muted">
-                Appear in the friend directory for international students.
+                Appear in the Mentorship directory for international students.
               </p>
             </div>
           </div>
-          <MentorProfileForm
+          <VolunteerProfileForm
             initial={{
               bio: user.bio ?? "",
               photoUrl: user.photoUrl ?? "",
-              languages: mentorProfile?.languages ?? "",
-              interests: mentorProfile?.interests ?? "",
-              openToMentor: mentorProfile?.openToMentor ?? false,
-              jobTitle: mentorProfile?.jobTitle ?? "",
-              company: mentorProfile?.company ?? "",
-              industry: mentorProfile?.industry ?? "",
-              hobbies: mentorProfile?.hobbies ?? "",
-              linkedinUrl: mentorProfile?.linkedinUrl ?? "",
-              facebookUrl: mentorProfile?.facebookUrl ?? "",
-              instagramUrl: mentorProfile?.instagramUrl ?? "",
+              languages: user.languages ?? "",
+              interests: user.interests ?? "",
+              openToMentorship: user.openToMentorship,
+              jobTitle: user.jobTitle ?? "",
+              company: user.company ?? "",
+              industry: user.industry ?? "",
+              hobbies: user.hobbies ?? "",
+              linkedinUrl: user.linkedinUrl ?? "",
+              facebookUrl: user.facebookUrl ?? "",
+              instagramUrl: user.instagramUrl ?? "",
             }}
           />
         </Card>

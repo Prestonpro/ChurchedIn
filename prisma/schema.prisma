@@ -43,17 +43,35 @@ enum RsvpStatus {
   CANCELLED
 }
 
-enum ConnectionStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-  ENDED
-}
-
 enum MeetingFrequency {
   WEEKLY
   BIWEEKLY
   MONTHLY
+}
+
+enum RequestCategory {
+  FURNITURE
+  FOOD
+  MENTORSHIP
+  HOUSING
+  OTHER
+}
+
+// PENDING: targeted at a specific claimer (Mentorship's "browse and pick a
+// volunteer" flow) — awaiting that person's accept/decline, same shape as
+// the old MentorConnection state machine.
+// OPEN: untargeted — any eligible person may claim it (Furniture/Food/
+// Housing/Other, and Mentorship too if posted without picking someone),
+// same shape as RideRequest.
+// Both funnel into CLAIMED, then COMPLETED/CANCELLED — see
+// src/lib/requestState.ts for the transition table.
+enum RequestStatus {
+  PENDING
+  OPEN
+  CLAIMED
+  DECLINED
+  COMPLETED
+  CANCELLED
 }
 
 enum ReportStatus {
@@ -132,6 +150,7 @@ model Church {
   rideRequests RideRequest[]
   rideOffers RideOffer[]
   conversations Conversation[]
+  helpRequests HelpRequest[]
 }
 
 /**
@@ -212,13 +231,34 @@ model User {
   hasSeenOnboarding Boolean @default(false)
   createdAt    DateTime @default(now())
 
+  // Carried forward from the deleted MentorProfile model — a volunteer's
+  // profile content (shown on their public profile page independent of
+  // any request/connection state), not tied to the Requests system at
+  // all. Field names deliberately match StudentProfile's languages/
+  // hobbies/interests/social-link fields so /profile/[userId] can fall
+  // back to these directly (`target.studentProfile ?? target`) instead of
+  // branching on a second profile model.
+  jobTitle     String?
+  company      String?
+  industry     String?
+  languages    String?
+  hobbies      String?
+  interests    String?
+  linkedinUrl  String?
+  facebookUrl  String?
+  instagramUrl String?
+  // Whether this user shows up in the Mentorship directory a student can
+  // browse — replaces MentorProfile.openToMentor. Unrelated to whether
+  // they can claim OPEN requests in other categories, which has no
+  // opt-in flag (mirrors RideRequest: any eligible volunteer can claim).
+  openToMentorship Boolean @default(true)
+
   memberships          Membership[]
-  mentorProfile        MentorProfile?
   studentProfile       StudentProfile?
   eventsCreated        Event[]            @relation("EventsCreated")
   rsvps                EventRsvp[]
-  connectionsAsStudent MentorConnection[] @relation("ConnectionsAsStudent")
-  connectionsAsMentor  MentorConnection[] @relation("ConnectionsAsMentor")
+  requestsAsRequester  HelpRequest[]      @relation("RequestsAsRequester")
+  requestsAsClaimer    HelpRequest[]      @relation("RequestsAsClaimer")
   messagesSent         Message[]          @relation("MessagesSent")
   reportsFiled         Report[]           @relation("ReportsFiled")
   reportsReceived      Report[]           @relation("ReportsReceived")
@@ -272,23 +312,6 @@ model Membership {
   // fan-out. Easy to assume the @@unique above already covered this; it
   // doesn't, because churchId isn't the leading column.
   @@index([churchId])
-}
-
-model MentorProfile {
-  id           String  @id @default(cuid())
-  jobTitle     String?
-  company      String?
-  industry     String?
-  languages    String?
-  hobbies      String?
-  interests    String?
-  linkedinUrl  String?
-  facebookUrl  String?
-  instagramUrl String?
-  openToMentor Boolean @default(true)
-
-  userId String @unique
-  user   User   @relation(fields: [userId], references: [id])
 }
 
 model StudentProfile {
@@ -404,45 +427,23 @@ model EventRsvp {
   @@index([userId, status])
 }
 
-model MentorConnection {
-  id              String           @id @default(cuid())
-  status          ConnectionStatus @default(PENDING)
-  message         String?
-  createdAt       DateTime         @default(now())
-  lastRequestedAt DateTime         @default(now())
-  respondedAt     DateTime?
-
-  studentId String
-  student   User   @relation("ConnectionsAsStudent", fields: [studentId], references: [id])
-  mentorId  String
-  mentor    User   @relation("ConnectionsAsMentor", fields: [mentorId], references: [id])
-
-  meetingPlan MentorMeetingPlan?
-  conversation Conversation?
-
-  @@unique([studentId, mentorId])
-  // listConnectionsAsMentor filters on mentorId alone, which the studentId-
-  // leading @@unique above can't serve. Loaded on every volunteer dashboard.
-  @@index([mentorId])
-}
-
 /**
- * The messaging thread for one ACCEPTED MentorConnection — a 1:1 pairing, not
- * a separate permission object. The connection itself is the source of truth
- * for whether messaging is allowed at all (respondToConnectionAction creates
- * this row the moment a request is accepted, alongside the existing
- * contact-info-reveal emails); this table only holds the conversation
- * container and its messages.
+ * The messaging thread for one CLAIMED (or since-COMPLETED/CANCELLED)
+ * HelpRequest — a 1:1 pairing, not a separate permission object. The
+ * request itself is the source of truth for whether messaging is allowed
+ * at all (claiming/accepting a request creates this row, alongside the
+ * existing contact-info-reveal emails); this table only holds the
+ * conversation container and its messages.
  *
- * `studentId`/`mentorId`/`churchId` are denormalized off the connection at
- * creation time rather than read through it on every check. That's safe
- * because a MentorConnection's studentId/mentorId never change after
- * creation, and it turns "list my conversations"/"my unread count" — both hot
- * paths, the unread count runs on every authenticated page render via the
- * nav badge — into a flat filter instead of a join through `connection` each
- * time. `churchId` specifically has to be resolved and stored here because
- * MentorConnection itself carries no churchId; see the doc comment on the
- * `conversationId` field in respondToConnectionAction for how it's chosen.
+ * `requesterId`/`claimerId`/`churchId` are denormalized off the request at
+ * creation time rather than read through it on every check — same
+ * reasoning as before the rekey: a HelpRequest's requesterId/claimerId
+ * never change after creation, and it turns "list my conversations"/"my
+ * unread count" — both hot paths, the unread count runs on every
+ * authenticated page render via the nav badge — into a flat filter
+ * instead of a join through `request` each time. Unlike the old
+ * MentorConnection, HelpRequest already carries its own churchId, so
+ * there's no cross-membership lookup needed to fill this in.
  */
 model Conversation {
   id            String   @id @default(cuid())
@@ -451,19 +452,19 @@ model Conversation {
   // recency without aggregating over Message.
   lastMessageAt DateTime @default(now())
 
-  connectionId String           @unique
-  connection   MentorConnection @relation(fields: [connectionId], references: [id])
+  requestId String      @unique
+  request   HelpRequest @relation(fields: [requestId], references: [id])
 
-  studentId String
-  mentorId  String
-  churchId  String
-  church    Church @relation(fields: [churchId], references: [id])
+  requesterId String
+  claimerId   String
+  churchId    String
+  church      Church @relation(fields: [churchId], references: [id])
 
   messages Message[]
   reports  Report[]
 
-  @@index([studentId, lastMessageAt])
-  @@index([mentorId, lastMessageAt])
+  @@index([requesterId, lastMessageAt])
+  @@index([claimerId, lastMessageAt])
 }
 
 model Message {
@@ -488,26 +489,76 @@ model Message {
 }
 
 /**
- * A private, informal recurring-meeting note attached to an ACCEPTED
- * MentorConnection — the "mentor sets up a bi-weekly/monthly standing
- * meeting with a mentee" behavior from real mentor feedback, which the
- * public Event/RSVP system isn't the right fit for (no audience,
- * capacity, or waitlist involved, just the two connected people). Either
- * person can set or edit it directly — no separate propose/accept step,
- * same trust-it-for-now spirit as the rest of this app. Calendar
- * invites/reminders are intentionally out of scope for now; this is a
- * shared note, not a scheduling system.
+ * A generalized help request — replaces the old Friends/mentor-matching
+ * feature (MentorProfile/MentorConnection) with a category-based system
+ * (Furniture/Food/Mentorship/Housing/Other). Named HelpRequest, not
+ * Request, since `Request` is a global TS/DOM type used throughout this
+ * app's own route handlers — shadowing it would be a constant, avoidable
+ * source of friction.
+ *
+ * One state machine serves two distinct UX flows, so there's no
+ * category-special-casing here or in src/lib/requestState.ts:
+ *   - Blind claim (Furniture/Food/Housing/Other, and Mentorship too if
+ *     posted without picking someone): created OPEN, claimerId null,
+ *     OPEN --CLAIM--> CLAIMED. Same shape as RideRequest.
+ *   - Targeted pick (Mentorship's browsable-directory flow): created
+ *     PENDING with claimerId already set to the chosen volunteer,
+ *     PENDING --ACCEPT--> CLAIMED, PENDING --DECLINE--> DECLINED. Same
+ *     shape as the old MentorConnection.
+ * Either way: CLAIMED --COMPLETE--> COMPLETED; CANCEL is reachable from
+ * PENDING/OPEN/CLAIMED --> CANCELLED.
+ *
+ * Same contact-info safety rule as ride requests and the old mentor
+ * connections: the requester's and claimer's contact info is only shown
+ * to each other once CLAIMED — see requestContactVisible() in
+ * src/lib/requestState.ts, enforced at the query layer.
  */
-model MentorMeetingPlan {
-  id           String          @id @default(cuid())
-  frequency    MeetingFrequency
-  dayOfWeek    Int?
-  time         String?
-  notes        String?
-  updatedAt    DateTime        @updatedAt
+model HelpRequest {
+  id          String          @id @default(cuid())
+  category    RequestCategory
+  title       String
+  description String?
+  status      RequestStatus
+  createdAt   DateTime        @default(now())
+  respondedAt DateTime?
 
-  connectionId String           @unique
-  connection   MentorConnection @relation(fields: [connectionId], references: [id])
+  requesterId String
+  requester   User    @relation("RequestsAsRequester", fields: [requesterId], references: [id])
+  claimerId   String?
+  claimer     User?   @relation("RequestsAsClaimer", fields: [claimerId], references: [id])
+  churchId    String
+  church      Church  @relation(fields: [churchId], references: [id])
+
+  meetingPlan  RequestMeetingPlan?
+  conversation Conversation?
+
+  @@index([churchId, status, category, createdAt])
+  @@index([requesterId])
+  @@index([claimerId])
+}
+
+/**
+ * A private, informal recurring-meeting note attached to a CLAIMED
+ * HelpRequest — the "mentor sets up a bi-weekly/monthly standing meeting
+ * with a mentee" behavior from real mentor feedback, which the public
+ * Event/RSVP system isn't the right fit for (no audience, capacity, or
+ * waitlist involved, just the two matched people). Not restricted to the
+ * Mentorship category at the schema level, though that's the only one the
+ * UI surfaces it for today. Either person can set or edit it directly —
+ * no separate propose/accept step, same trust-it-for-now spirit as the
+ * rest of this app. Calendar invites/reminders are intentionally out of
+ * scope for now; this is a shared note, not a scheduling system.
+ */
+model RequestMeetingPlan {
+  id        String           @id @default(cuid())
+  frequency MeetingFrequency
+  dayOfWeek Int?
+  time      String?
+  notes     String?
+  updatedAt DateTime         @updatedAt
+
+  requestId String      @unique
+  request   HelpRequest @relation(fields: [requestId], references: [id])
 }
 
 /**

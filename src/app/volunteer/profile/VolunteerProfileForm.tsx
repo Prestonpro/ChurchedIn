@@ -2,14 +2,14 @@
 
 import { useActionState, useState } from "react";
 import { Briefcase, Building, LinkedinLogo, FacebookLogo, InstagramLogo, Image as ImageIcon } from "@phosphor-icons/react/dist/ssr";
-import { updateMentorProfileAction } from "@/lib/actions/mentors";
+import { updateVolunteerProfileAction } from "@/lib/actions/mentors";
 import { Field, TextAreaField, CheckboxField, FormError } from "@/components/ui/Field";
 import { SearchableSelect } from "@/components/ui/SearchableSelect";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { SuccessToast } from "@/components/ui/SuccessToast";
 import { LANGUAGES, INDUSTRIES } from "@/lib/constants";
 
-export function MentorProfileForm({
+export function VolunteerProfileForm({
   initial,
 }: {
   initial: {
@@ -17,7 +17,7 @@ export function MentorProfileForm({
     photoUrl: string;
     languages: string;
     interests: string;
-    openToMentor: boolean;
+    openToMentorship: boolean;
     jobTitle: string;
     company: string;
     industry: string;
@@ -27,7 +27,7 @@ export function MentorProfileForm({
     instagramUrl: string;
   };
 }) {
-  const [state, formAction] = useActionState(updateMentorProfileAction, undefined);
+  const [state, formAction] = useActionState(updateVolunteerProfileAction, undefined);
 
   const [lastState, setLastState] = useState(state);
   const [saveCount, setSaveCount] = useState(0);
@@ -44,9 +44,9 @@ export function MentorProfileForm({
       <FormError message={state && "error" in state ? state.error : undefined} />
       <div className="rounded-xl border border-line bg-paper/60 p-3.5">
         <CheckboxField
-          label="I'm open to being a friend to a student"
-          name="openToMentor"
-          defaultChecked={initial.openToMentor}
+          label="I'm open to mentoring a student"
+          name="openToMentorship"
+          defaultChecked={initial.openToMentorship}
         />
       </div>
 
@@ -54,7 +54,7 @@ export function MentorProfileForm({
         label="Bio / about me"
         name="bio"
         defaultValue={initial.bio}
-        placeholder="A sentence or two about yourself. This shows up as-is on your profile and your Friends card."
+        placeholder="A sentence or two about yourself. This shows up as-is on your profile and the Mentorship directory."
         hint="Shown as a plain description, not split into tags. Write it like you'd introduce yourself."
       />
 
@@ -111,7 +111,7 @@ export function MentorProfileForm({
           placeholder="https://instagram.com/..."
         />
       </div>
-      
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <SearchableSelect
           label="Languages you speak"

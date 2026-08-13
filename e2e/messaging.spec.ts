@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signupChurch, joinChurch, getJoinCode, uniqueEmail } from "./helpers";
+import { signupChurch, joinChurch, getJoinCode, uniqueEmail, dismissOnboardingIfPresent } from "./helpers";
 
 test("accepted connections can message each other, mark unread, and file a report an admin can review", async ({
   browser,
@@ -32,7 +32,8 @@ test("accepted connections can message each other, mark unread, and file a repor
     password: "password123",
   });
   await mentorPage.goto("/volunteer/profile");
-  await mentorPage.getByLabel("I'm open to being a friend to a student").check();
+  await dismissOnboardingIfPresent(mentorPage);
+  await mentorPage.getByLabel("I'm open to mentoring a student").check();
   await mentorPage.getByRole("button", { name: "Save my profile" }).click();
 
   const studentEmail = uniqueEmail("student-msg");
@@ -44,9 +45,14 @@ test("accepted connections can message each other, mark unread, and file a repor
     email: studentEmail,
     password: "password123",
   });
-  await studentPage.goto("/student/mentors");
-  await studentPage.getByRole("button", { name: "Say hi" }).click();
-  await expect(studentPage.getByText("Request pending")).toBeVisible();
+  await studentPage.goto("/student/requests");
+  // Scoped to this specific person's card, not a page-wide getByRole — the
+  // church admin who created the church is also open to mentoring by
+  // default, so more than one directory card can legitimately be on the
+  // page at once, each with its own identical "Send request" button.
+  const mentorCard = studentPage.getByTestId("mentor-card").filter({ hasText: "Mentor Person" });
+  await mentorCard.getByRole("button", { name: "Send request" }).click();
+  await expect(mentorCard.getByText("Request pending")).toBeVisible();
 
   await mentorPage.goto("/volunteer/dashboard");
   await mentorPage.getByRole("button", { name: "Accept" }).click();
@@ -56,7 +62,7 @@ test("accepted connections can message each other, mark unread, and file a repor
   // never actually confirms the accept round-trip landed.
   await expect(mentorPage.getByText(studentEmail)).toBeVisible();
 
-  await studentPage.goto("/student/mentors");
+  await studentPage.goto("/student/requests");
   await expect(studentPage.getByText("Connected")).toBeVisible();
   await studentPage.getByRole("link", { name: "Message", exact: true }).click();
   await studentPage.waitForURL(/\/messages\/.+/);
@@ -126,7 +132,8 @@ test("a connection that has ended keeps message history read-only", async ({ bro
     password: "password123",
   });
   await mentorPage.goto("/volunteer/profile");
-  await mentorPage.getByLabel("I'm open to being a friend to a student").check();
+  await dismissOnboardingIfPresent(mentorPage);
+  await mentorPage.getByLabel("I'm open to mentoring a student").check();
   await mentorPage.getByRole("button", { name: "Save my profile" }).click();
 
   const studentEmail = uniqueEmail("student-ended-msg");
@@ -138,9 +145,14 @@ test("a connection that has ended keeps message history read-only", async ({ bro
     email: studentEmail,
     password: "password123",
   });
-  await studentPage.goto("/student/mentors");
-  await studentPage.getByRole("button", { name: "Say hi" }).click();
-  await expect(studentPage.getByText("Request pending")).toBeVisible();
+  await studentPage.goto("/student/requests");
+  // Scoped to this specific person's card, not a page-wide getByRole — the
+  // church admin who created the church is also open to mentoring by
+  // default, so more than one directory card can legitimately be on the
+  // page at once, each with its own identical "Send request" button.
+  const mentorCard = studentPage.getByTestId("mentor-card").filter({ hasText: "Ending Mentor" });
+  await mentorCard.getByRole("button", { name: "Send request" }).click();
+  await expect(mentorCard.getByText("Request pending")).toBeVisible();
 
   await mentorPage.goto("/volunteer/dashboard");
   await mentorPage.getByRole("button", { name: "Accept" }).click();
@@ -155,15 +167,18 @@ test("a connection that has ended keeps message history read-only", async ({ bro
 
   await mentorPage.goto("/volunteer/dashboard");
   mentorPage.once("dialog", (dialog) => dialog.accept());
-  await mentorPage.getByRole("button", { name: "End connection" }).click();
-  // The dashboard's "Your friends" list only shows ACCEPTED connections, so
+  await mentorPage.getByRole("button", { name: "End" }).click();
+  // The dashboard's "Your requests" list only shows CLAIMED requests, so
   // ending it removes the card entirely — the ready signal that the server
   // action's revalidatePath took effect before moving on.
-  await expect(mentorPage.getByRole("button", { name: "End connection" })).not.toBeVisible();
+  await expect(mentorPage.getByRole("button", { name: "End" })).not.toBeVisible();
 
-  // History is still visible, but sending is no longer offered.
+  // History is still visible, but sending is no longer offered. Matched on
+  // the footer's fuller copy specifically — the thread header also renders
+  // a shorter "This request has ended" note, so a bare /request has
+  // ended/i would match both and fail strict mode.
   await mentorPage.goto(threadUrl);
   await expect(mentorPage.getByText("Before we end this.")).toBeVisible();
   await expect(mentorPage.getByLabel("Write a message")).not.toBeVisible();
-  await expect(mentorPage.getByText(/you can't send new/i)).toBeVisible();
+  await expect(mentorPage.getByText(/can't send new messages/i)).toBeVisible();
 });

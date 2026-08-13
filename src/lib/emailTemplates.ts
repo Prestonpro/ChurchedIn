@@ -120,22 +120,27 @@ export function eventReminderEmail(opts: {
 }
 
 // ---------------------------------------------------------------------------
-// Mentor connections
+// Requests (Furniture/Food/Mentorship/Housing/Other) — replaces the old
+// mentor-connection emails. Mentorship's targeted pick keeps the
+// "requested"/"accepted"/"declined" wording (closest to how a connection
+// request used to read); the blind-claim flow used by every other category
+// (and untargeted Mentorship) reuses the "claimed" wording rides already
+// established below.
 // ---------------------------------------------------------------------------
 
-export function connectionRequestedEmail(opts: {
-  studentName: string;
+export function requestMentorRequestedEmail(opts: {
+  requesterName: string;
   message?: string | null;
 }): EmailContent {
-  const subject = `${opts.studentName} wants to connect`;
-  const text = `${opts.studentName} sent you a request to connect as a friend${
+  const subject = `${opts.requesterName} wants to connect`;
+  const text = `${opts.requesterName} sent you a request to connect as a mentor${
     opts.message ? `:\n\n"${opts.message}"` : "."
   }\n\nReview it from your dashboard.`;
   const html = renderEmailLayout({
     preheader: text,
-    heading: `${opts.studentName} wants to connect`,
+    heading: `${opts.requesterName} wants to connect`,
     bodyHtml: [
-      paragraph(`<strong>${escapeHtml(opts.studentName)}</strong> sent you a request to connect as a friend.`),
+      paragraph(`<strong>${escapeHtml(opts.requesterName)}</strong> sent you a request to connect as a mentor.`),
       opts.message
         ? `<p style="margin:0 0 12px 0; padding: 12px 16px; background-color:#f1f8f7; border-radius:8px; font-style:italic;">"${escapeHtml(opts.message)}"</p>`
         : "",
@@ -145,61 +150,102 @@ export function connectionRequestedEmail(opts: {
   return { subject, text, html };
 }
 
-export function connectionAcceptedForStudentEmail(opts: {
-  mentorName: string;
-  mentorEmail: string;
+export function requestAcceptedForRequesterEmail(opts: {
+  claimerName: string;
+  claimerEmail: string;
 }): EmailContent {
-  const subject = `${opts.mentorName} accepted your request`;
-  const text = `${opts.mentorName} accepted your request to connect. You can reach them at ${opts.mentorEmail}.`;
+  const subject = `${opts.claimerName} accepted your request`;
+  const text = `${opts.claimerName} accepted your request to connect. You can reach them at ${opts.claimerEmail}.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "You're connected!",
     bodyHtml: paragraph(
-      `<strong>${escapeHtml(opts.mentorName)}</strong> accepted your request to connect. You can reach them at <a href="mailto:${escapeHtml(opts.mentorEmail)}" style="color:#409688;">${escapeHtml(opts.mentorEmail)}</a>.`,
+      `<strong>${escapeHtml(opts.claimerName)}</strong> accepted your request to connect. You can reach them at <a href="mailto:${escapeHtml(opts.claimerEmail)}" style="color:#409688;">${escapeHtml(opts.claimerEmail)}</a>.`,
     ),
-    cta: { label: "View your friends", url: appUrl("/student/mentors") },
+    cta: { label: "View your requests", url: appUrl("/student/requests") },
   });
   return { subject, text, html };
 }
 
-export function connectionAcceptedForMentorEmail(opts: {
-  studentName: string;
-  studentEmail: string;
+export function requestAcceptedForClaimerEmail(opts: {
+  requesterName: string;
+  requesterEmail: string;
 }): EmailContent {
-  const subject = `You're connected with ${opts.studentName}`;
-  const text = `You accepted ${opts.studentName}'s request. You can reach them at ${opts.studentEmail}.`;
+  const subject = `You're connected with ${opts.requesterName}`;
+  const text = `You accepted ${opts.requesterName}'s request. You can reach them at ${opts.requesterEmail}.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "You're connected!",
     bodyHtml: paragraph(
-      `You accepted <strong>${escapeHtml(opts.studentName)}</strong>'s request. You can reach them at <a href="mailto:${escapeHtml(opts.studentEmail)}" style="color:#409688;">${escapeHtml(opts.studentEmail)}</a>.`,
+      `You accepted <strong>${escapeHtml(opts.requesterName)}</strong>'s request. You can reach them at <a href="mailto:${escapeHtml(opts.requesterEmail)}" style="color:#409688;">${escapeHtml(opts.requesterEmail)}</a>.`,
     ),
     cta: { label: "View your dashboard", url: appUrl("/volunteer/dashboard") },
   });
   return { subject, text, html };
 }
 
-export function connectionDeclinedEmail(opts: { mentorName: string }): EmailContent {
+export function requestDeclinedEmail(opts: { claimerName: string }): EmailContent {
   const subject = "Update on your request";
-  const text = `${opts.mentorName} isn't able to connect right now.`;
+  const text = `${opts.claimerName} isn't able to connect right now.`;
   const html = renderEmailLayout({
     preheader: text,
     heading: "Update on your request",
     bodyHtml: paragraph(
-      `<strong>${escapeHtml(opts.mentorName)}</strong> isn't able to connect right now.`,
+      `<strong>${escapeHtml(opts.claimerName)}</strong> isn't able to connect right now.`,
     ),
-    cta: { label: "Browse other friends", url: appUrl("/student/mentors") },
+    cta: { label: "Browse other mentors", url: appUrl("/student/requests") },
   });
   return { subject, text, html };
 }
 
-export function connectionEndedEmail(opts: { otherName: string }): EmailContent {
-  const subject = "A connection was ended";
-  const text = `${opts.otherName} ended your connection.`;
+export function requestCancelledEmail(opts: { otherName: string; title: string }): EmailContent {
+  const subject = "A request was cancelled";
+  const text = `${opts.otherName} cancelled "${opts.title}".`;
   const html = renderEmailLayout({
     preheader: text,
-    heading: "A connection was ended",
-    bodyHtml: paragraph(`<strong>${escapeHtml(opts.otherName)}</strong> ended your connection.`),
+    heading: "A request was cancelled",
+    bodyHtml: paragraph(
+      `<strong>${escapeHtml(opts.otherName)}</strong> cancelled "${escapeHtml(opts.title)}".`,
+    ),
+  });
+  return { subject, text, html };
+}
+
+// Contact info reveal happens only once a request is CLAIMED — same
+// non-negotiable safety rule as rides (CLAUDE.md §1) — applied here for the
+// blind-claim flow (Furniture/Food/Housing/Other, and untargeted Mentorship).
+export function requestClaimedForRequesterEmail(opts: {
+  claimerName: string;
+  claimerEmail: string;
+  title: string;
+}): EmailContent {
+  const subject = `${opts.claimerName} can help with "${opts.title}"`;
+  const text = `${opts.claimerName} claimed your request "${opts.title}". You can reach them at ${opts.claimerEmail}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Your request is covered!",
+    bodyHtml: paragraph(
+      `<strong>${escapeHtml(opts.claimerName)}</strong> claimed your request "${escapeHtml(opts.title)}". You can reach them at <a href="mailto:${escapeHtml(opts.claimerEmail)}" style="color:#409688;">${escapeHtml(opts.claimerEmail)}</a>.`,
+    ),
+    cta: { label: "View your requests", url: appUrl("/student/requests") },
+  });
+  return { subject, text, html };
+}
+
+export function requestClaimedForClaimerEmail(opts: {
+  requesterName: string;
+  requesterEmail: string;
+  title: string;
+}): EmailContent {
+  const subject = `You claimed "${opts.title}"`;
+  const text = `You're helping ${opts.requesterName} with "${opts.title}". You can reach them at ${opts.requesterEmail}.`;
+  const html = renderEmailLayout({
+    preheader: text,
+    heading: "Request claimed",
+    bodyHtml: paragraph(
+      `You're helping <strong>${escapeHtml(opts.requesterName)}</strong> with "${escapeHtml(opts.title)}". You can reach them at <a href="mailto:${escapeHtml(opts.requesterEmail)}" style="color:#409688;">${escapeHtml(opts.requesterEmail)}</a>.`,
+    ),
+    cta: { label: "View your dashboard", url: appUrl("/volunteer/dashboard") },
   });
   return { subject, text, html };
 }
@@ -370,7 +416,7 @@ export function rideOfferCancelledEmail(opts: { volunteerName: string; date: Dat
  * notification, not a copy of private correspondence sitting in an inbox. */
 export function newMessageEmail(opts: {
   senderName: string;
-  connectionId: string;
+  requestId: string;
 }): EmailContent {
   const subject = `New message from ${opts.senderName}`;
   const text = `${opts.senderName} sent you a message.`;
@@ -378,7 +424,7 @@ export function newMessageEmail(opts: {
     preheader: text,
     heading: "New message",
     bodyHtml: paragraph(`<strong>${escapeHtml(opts.senderName)}</strong> sent you a message.`),
-    cta: { label: "Read and reply", url: appUrl(`/messages/${opts.connectionId}`) },
+    cta: { label: "Read and reply", url: appUrl(`/messages/${opts.requestId}`) },
   });
   return { subject, text, html };
 }

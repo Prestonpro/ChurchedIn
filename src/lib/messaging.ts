@@ -1,25 +1,33 @@
-import { CONNECTION_STATUS, type ConnectionStatus } from "@/lib/constants";
+import { REQUEST_STATUS, type RequestStatus } from "@/lib/constants";
 
 /**
- * Whether a new message can be sent in this connection's conversation.
- * ACCEPTED only, and never when the pair is blocked — a block must close off
+ * Whether a new message can be sent in this request's conversation.
+ * CLAIMED only, and never when the pair is blocked — a block must close off
  * messaging as completely as it closes off everything else (safety rule 2).
  */
-export function canSendMessage(status: ConnectionStatus, isBlocked: boolean): boolean {
-  return status === CONNECTION_STATUS.ACCEPTED && !isBlocked;
+export function canSendMessage(status: RequestStatus, isBlocked: boolean): boolean {
+  return status === REQUEST_STATUS.CLAIMED && !isBlocked;
 }
 
 /**
  * Whether the conversation's existing history can even be viewed. Wider than
- * canSendMessage on purpose: an ENDED connection keeps its thread visible,
- * read-only — ending a connection is often exactly the moment someone wants
- * to look back at it or report it, so hiding the history at that point would
- * work against the safety rule it exists to serve. A block still overrides
- * everything, same as canSendMessage.
+ * canSendMessage on purpose: a COMPLETED or CANCELLED request keeps its
+ * thread visible, read-only — finishing or cancelling a request is often
+ * exactly the moment someone wants to look back at it or report it, so
+ * hiding the history at that point would work against the safety rule it
+ * exists to serve. A block still overrides everything, same as
+ * canSendMessage. Safe to key on status alone here (unlike
+ * requestContactVisible, which also checks respondedAt) — a Conversation
+ * row only ever gets lazy-created once a request has genuinely passed
+ * through CLAIMED, so by the time one exists, status alone is enough.
  */
-export function canViewConversation(status: ConnectionStatus, isBlocked: boolean): boolean {
+export function canViewConversation(status: RequestStatus, isBlocked: boolean): boolean {
   if (isBlocked) return false;
-  return status === CONNECTION_STATUS.ACCEPTED || status === CONNECTION_STATUS.ENDED;
+  return (
+    status === REQUEST_STATUS.CLAIMED ||
+    status === REQUEST_STATUS.COMPLETED ||
+    status === REQUEST_STATUS.CANCELLED
+  );
 }
 
 export type MessageForUnreadCheck = { senderId: string; readAt: Date | null };

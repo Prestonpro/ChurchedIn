@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signupChurch, joinChurch, getJoinCode, uniqueEmail } from "./helpers";
+import { signupChurch, joinChurch, getJoinCode, uniqueEmail, dismissOnboardingIfPresent } from "./helpers";
 
 test("blocking a mentor removes them from the student's directory (and any future request path)", async ({
   browser,
@@ -26,7 +26,8 @@ test("blocking a mentor removes them from the student's directory (and any futur
     password: "password123",
   });
   await mentorPage.goto("/volunteer/profile");
-  await mentorPage.getByLabel("I'm open to being a friend to a student").check();
+  await dismissOnboardingIfPresent(mentorPage);
+  await mentorPage.getByLabel("I'm open to mentoring a student").check();
   await mentorPage.getByRole("button", { name: "Save my profile" }).click();
 
   const studentEmail = uniqueEmail("student-block");
@@ -39,15 +40,20 @@ test("blocking a mentor removes them from the student's directory (and any futur
     password: "password123",
   });
 
-  await studentPage.goto("/student/mentors");
+  await studentPage.goto("/student/requests");
   await expect(studentPage.getByText("Blockable Mentor")).toBeVisible();
 
+  // Blocking now happens from the target's own profile page, not from a
+  // control on the directory card itself — see BlockButton.tsx.
+  await studentPage.getByRole("heading", { name: "Blockable Mentor" }).click();
   studentPage.once("dialog", (dialog) => dialog.accept());
-  await studentPage.getByTitle("Block Blockable Mentor").click();
+  await studentPage.getByRole("button", { name: "Block Blockable" }).click();
+  await expect(studentPage.getByText("You've blocked Blockable.")).toBeVisible();
 
-  // Removed from the friend directory itself (rendered as an h2 there) —
+  // Removed from the mentor directory itself (rendered as an h2 there) —
   // but it now legitimately reappears in the "Blocked" list at the bottom
   // of the page (a plain row, not an h2), since blocking got an undo.
+  await studentPage.goto("/student/requests");
   await expect(studentPage.getByRole("heading", { name: "Blockable Mentor" })).not.toBeVisible();
   await expect(studentPage.getByText("Blockable Mentor")).toBeVisible();
   await expect(studentPage.getByRole("button", { name: "Unblock" })).toBeVisible();
@@ -73,8 +79,9 @@ test("a blocked volunteer never sees the blocking student's ride request", async
   });
   const joinCode = await getJoinCode(adminPage);
 
-  // The volunteer has to be listable as a friend for the student to reach the
-  // block control at all — /student/mentors is the only surface that has one.
+  // The volunteer has to be listable as a mentor for the student to reach
+  // their profile page, where the block control lives — /student/requests'
+  // directory tab is the only surface that links there.
   const volunteerPage = await (await browser.newContext()).newPage();
   await joinChurch(volunteerPage, {
     joinCode,
@@ -84,7 +91,8 @@ test("a blocked volunteer never sees the blocking student's ride request", async
     password,
   });
   await volunteerPage.goto("/volunteer/profile");
-  await volunteerPage.getByLabel("I'm open to being a friend to a student").check();
+  await dismissOnboardingIfPresent(volunteerPage);
+  await volunteerPage.getByLabel("I'm open to mentoring a student").check();
   await volunteerPage.getByRole("button", { name: "Save my profile" }).click();
 
   const studentPage = await (await browser.newContext()).newPage();
@@ -96,10 +104,11 @@ test("a blocked volunteer never sees the blocking student's ride request", async
     password,
   });
 
-  await studentPage.goto("/student/mentors");
+  await studentPage.goto("/student/requests");
+  await studentPage.getByRole("heading", { name: "Blocked Driver" }).click();
   studentPage.once("dialog", (dialog) => dialog.accept());
-  await studentPage.getByTitle("Block Blocked Driver").click();
-  await expect(studentPage.getByRole("button", { name: "Unblock" })).toBeVisible();
+  await studentPage.getByRole("button", { name: "Block Blocked" }).click();
+  await expect(studentPage.getByText("You've blocked Blocked.")).toBeVisible();
 
   // Now the blocking student asks for a ride at the same church.
   await studentPage.goto("/student/rides");

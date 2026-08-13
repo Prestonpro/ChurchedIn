@@ -56,13 +56,20 @@ committing to a church.
 
 ## 🗂 Data Model (prisma/schema.prisma)
 `Church`, `ChurchPartnership`, `ChurchAdminInvite`, `User`,
-`PasswordResetToken`, `Membership`, `MentorProfile`, `StudentProfile`, `Event`,
-`EventCohost`, `EventRsvp`, `MentorConnection`, `MentorMeetingPlan`,
+`PasswordResetToken`, `Membership`, `StudentProfile`, `Event`,
+`EventCohost`, `EventRsvp`, `HelpRequest`, `RequestMeetingPlan`,
 `RideRequest`, `Block`, `Report`
 
 Enums: `Role`, `EventCategory`, `EventStatus`, `RsvpRole`, `RsvpStatus`,
-`ConnectionStatus`, `MeetingFrequency`, `ReportStatus`, `PartnershipStatus`,
-`RideStatus`, `RideRequestType`
+`RequestCategory`, `RequestStatus`, `MeetingFrequency`, `ReportStatus`,
+`PartnershipStatus`, `RideStatus`, `RideRequestType`
+
+A volunteer's mentor-profile fields (job title, company, industry,
+languages, hobbies, interests, social links, `openToMentorship`) live
+directly on `User` — carried forward from a deleted `MentorProfile` model,
+not a separate row. `/profile/[userId]` renders `target.studentProfile ??
+target` as its one fallback pattern instead of branching between two
+profile models.
 
 ## 🔑 Key Workflows
 - **Join:** 6-char church code at `/join/[code]`, email/password or Google.
@@ -76,9 +83,17 @@ Enums: `Role`, `EventCategory`, `EventStatus`, `RsvpRole`, `RsvpStatus`,
   (`decideRsvpStatus`, `pickPromotionCandidate`) kept separate from the
   Prisma-backed actions, so capacity/waitlist rules are testable without a DB.
   Cancelling a CONFIRMED RSVP auto-promotes the longest-waiting waitlister.
-- **Mentor connections:** state machine in `src/lib/connectionState.ts`
-  (PENDING → ACCEPTED/DECLINED, DECLINED → PENDING re-request, ACCEPTED → ENDED),
-  rate-limited per student per day.
+- **Requests (Furniture/Food/Mentorship/Housing/Other):** state machine in
+  `src/lib/requestState.ts` + `src/lib/actions/requests.ts`. One `HelpRequest`
+  model covers two flows: a blind, untargeted post (OPEN → CLAIMED, any
+  eligible church member may claim — Furniture/Food/Housing/Other, and
+  Mentorship too if posted without picking someone) and the Mentorship
+  directory's targeted pick (PENDING → CLAIMED/DECLINED, awaiting the chosen
+  volunteer's response). A re-request after DECLINED/COMPLETED/CANCELLED
+  creates a new row rather than reviving the old one — see
+  `MAX_TARGETED_REQUESTS_PER_DAY` in `constants.ts` for the per-student rate
+  limit on the targeted flow. `RideRequest` (below) stays fully separate —
+  it predates this system and was deliberately not folded in.
 - **Rides:** `src/lib/rideState.ts` + `src/lib/actions/rides.ts`.
 - **Event reminders:** `src/lib/eventReminders.ts` +
   `src/app/api/cron/event-reminders/route.ts`.
@@ -86,10 +101,14 @@ Enums: `Role`, `EventCategory`, `EventStatus`, `RsvpRole`, `RsvpStatus`,
   `null`/blank means uncapped. Don't collapse the two.
 
 ## 🔒 Non-Negotiable Safety Rules
-1. **Never expose a student's or mentor's contact info before their
-   `MentorConnection` is `ACCEPTED`.** `contactInfoVisible()` in
-   `connectionState.ts` is the single source of truth. This governs UI, emails,
-   and any future messaging/notification surface.
+1. **Never expose a requester's or claimer's contact info before a
+   `HelpRequest` is `CLAIMED`** (same rule for `RideRequest` — see
+   `rideContactVisible()`). `requestContactVisible()` in `requestState.ts` is
+   the single source of truth — note it takes `respondedAt` as a second
+   argument, not just `status`, because a targeted (PENDING) request already
+   has `claimerId` set before the claimer responds, so status alone can't
+   distinguish "never claimed" from "claimed, then later cancelled." This
+   governs UI, emails, and messaging.
 2. **Blocks are bidirectional in effect.** A blocked pair must not see each
    other in directories, must not be able to connect, RSVP to each other's
    events, or (once it exists) message each other. `blockedPairUserIds()` in
@@ -179,19 +198,10 @@ Prefer extracting pure logic into a testable module over testing through Prisma.
 `EMAIL_FROM`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`
 
 ## 🚧 Not Built Yet
-- **Direct messaging** between mentors and students (must respect rules 1 & 2 above)
 - **Church announcements / bulletin** platform
 
 ## 🐛 Known gaps (audited, not yet fixed)
 Findings from the full-app audit that are real but deliberately deferred:
-- **The schema declares zero `@@index`.** Every index present comes from `@id`,
-  `@unique`, or `@@unique` — and a btree on `(a, b)` cannot serve a filter on `b`
-  alone, so several hot paths are unindexed despite looking covered:
-  `Membership.churchId` (four dashboards + every member count),
-  `MentorConnection.mentorId`, `EventRsvp.userId`, `EventCohost.userId`,
-  `Block.blockedId` (half of `blockedPairUserIds`, which runs on every RSVP and
-  connection request), all of `Event`, and all of `RideRequest` (which has no
-  unique constraint at all, so no secondary index whatsoever).
 - **`Report` is a dead model.** No action, no UI, no admin review queue;
   `REPORT_STATUS` is unreferenced. Nothing can create a row. Either build the
   reporting flow (messaging needs it) or delete the model and enum.

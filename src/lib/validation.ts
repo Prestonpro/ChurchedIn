@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { MAX_RIDE_OFFER_CAPACITY } from "@/lib/constants";
+import { MAX_RIDE_OFFER_CAPACITY, REQUEST_CATEGORY } from "@/lib/constants";
 
 export const emailSchema = z
   .string()
@@ -102,7 +102,10 @@ export const eventSchema = z.object({
   locationLng: z.number().min(-180).max(180).optional().nullable(),
 });
 
-export const mentorProfileSchema = z.object({
+// Replaces mentorProfileSchema — the same fields, now written straight onto
+// User (see prisma/schema.prisma's "carried forward from MentorProfile"
+// comment) instead of a separate profile row.
+export const volunteerProfileSchema = z.object({
   // Free-text "about me" shown as-is (a paragraph, not tags) everywhere a
   // profile is displayed — see User.bio. Kept separate from `interests`
   // below, which is comma-tag-rendered; without a dedicated field for it,
@@ -121,7 +124,7 @@ export const mentorProfileSchema = z.object({
   linkedinUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
   facebookUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
   instagramUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
-  openToMentor: z.boolean().default(true),
+  openToMentorship: z.boolean().default(true),
 });
 
 export const studentProfileSchema = z.object({
@@ -140,8 +143,26 @@ export const studentProfileSchema = z.object({
   instagramUrl: z.string().trim().url("Enter a valid URL").optional().or(z.literal("")),
 });
 
-export const connectionRequestSchema = z.object({
-  mentorId: z.string().min(1),
+// Blind, untargeted request (Furniture/Food/Housing/Other, and Mentorship
+// too if posted without picking someone from the directory) — created OPEN,
+// claimerId left unset. See src/lib/requestState.ts for the status flow.
+export const helpRequestSchema = z.object({
+  category: z.enum([
+    REQUEST_CATEGORY.FURNITURE,
+    REQUEST_CATEGORY.FOOD,
+    REQUEST_CATEGORY.MENTORSHIP,
+    REQUEST_CATEGORY.HOUSING,
+    REQUEST_CATEGORY.OTHER,
+  ]),
+  title: z.string().trim().min(1, "Enter a title").max(150),
+  description: z.string().trim().max(1000).optional().or(z.literal("")),
+});
+
+// Targeted pick from the Mentorship directory — replaces
+// connectionRequestSchema. Created PENDING with claimerId already set to
+// the chosen volunteer, awaiting their accept/decline.
+export const requestMentorSchema = z.object({
+  claimerId: z.string().min(1),
   message: z.string().trim().max(500).optional().or(z.literal("")),
 });
 

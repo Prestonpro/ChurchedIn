@@ -177,8 +177,8 @@ export default async function StudentRidesPage() {
                         </Link>
                         {ride.volunteer.email && <ContactEmail email={ride.volunteer.email} />}
                       </div>
-                      {ride.connectionId && (
-                        <LinkButton href={`/messages/${ride.connectionId}`} variant="secondary" size="sm">
+                      {ride.requestId && (
+                        <LinkButton href={`/messages/${ride.requestId}`} variant="secondary" size="sm">
                           <ChatCircleDots weight="bold" className="size-4" /> Message
                         </LinkButton>
                       )}

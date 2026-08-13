@@ -2,63 +2,58 @@
 
 import { useState, useTransition, useActionState } from "react";
 import { Check, ChatCircleDots, ArrowCounterClockwise, PaperPlaneRight } from "@phosphor-icons/react/dist/ssr";
-import { requestConnectionAction } from "@/lib/actions/connections";
-import { cancelConnectionRequestAction, endConnectionAction } from "@/lib/actions/connections";
+import { requestMentorAction, cancelRequestAction } from "@/lib/actions/requests";
 import { Button, LinkButton } from "@/components/ui/Button";
 import { FormError } from "@/components/ui/Field";
 import { Badge } from "@/components/ui/Badge";
+import { REQUEST_STATUS, type RequestStatus } from "@/lib/constants";
 
-type Connection = {
+type RequestSummary = {
   id: string;
-  status: string;
-  conversationId?: string | null;
+  status: RequestStatus;
+  hasConversation: boolean;
 };
 
-export function ProfileConnectionButton({
-  mentorId,
-  isOpenToMentor,
-  connection,
+/** Replaces ProfileConnectionButton — the Mentorship directory's targeted
+ * pick, shown on a volunteer's public profile when a student views it.
+ * `request` is the most recent Mentorship HelpRequest between the viewer
+ * and this volunteer (there can be several over time, since a re-request
+ * creates a new row instead of reviving an old one — see
+ * requestState.ts). */
+export function ProfileRequestButton({
+  claimerId,
+  isOpenToMentorship,
+  request,
   email,
 }: {
-  mentorId: string;
-  isOpenToMentor: boolean;
-  connection: Connection | null;
+  claimerId: string;
+  isOpenToMentorship: boolean;
+  request: RequestSummary | null;
   email: string | null;
 }) {
-  const [requestState, requestAction] = useActionState(requestConnectionAction, undefined);
+  const [requestState, requestAction] = useActionState(requestMentorAction, undefined);
   const [cancelPending, startCancelTransition] = useTransition();
   const [cancelError, setCancelError] = useState<string | undefined>();
-  const [endPending, startEndTransition] = useTransition();
-  const [endError, setEndError] = useState<string | undefined>();
 
-  function cancelRequest() {
-    if (!connection) return;
-    if (!confirm("Cancel this friend request?")) return;
+  function cancel() {
+    if (!request) return;
+    if (!confirm("Cancel this request?")) return;
     setCancelError(undefined);
     startCancelTransition(async () => {
-      const result = await cancelConnectionRequestAction(connection.id);
+      const result = await cancelRequestAction(request.id);
       if (result && "error" in result) setCancelError(result.error);
     });
   }
 
-  function endConnection() {
-    if (!connection) return;
-    if (!confirm("End this friendship?")) return;
-    setEndError(undefined);
-    startEndTransition(async () => {
-      const result = await endConnectionAction(connection.id);
-      if (result && "error" in result) setEndError(result.error);
-    });
-  }
-
-  // No connection yet — show Add Friend if they're open to it
-  if (!connection) {
-    if (!isOpenToMentor) return null;
+  // No request yet (or the last one is fully resolved and terminal) — show
+  // "Send request" if they're open to it.
+  if (!request || request.status === REQUEST_STATUS.CANCELLED) {
+    if (!isOpenToMentorship) return null;
     return (
       <div className="pt-4 mt-4 border-t border-line">
         <FormError message={requestState && "error" in requestState ? requestState.error : undefined} />
         <form action={requestAction} className="space-y-3">
-          <input type="hidden" name="mentorId" value={mentorId} />
+          <input type="hidden" name="claimerId" value={claimerId} />
           <div className="space-y-1">
             <label htmlFor="message" className="block text-sm font-bold text-ink-soft">
               Message (optional)
@@ -72,14 +67,14 @@ export function ProfileConnectionButton({
             />
           </div>
           <Button type="submit" size="sm" className="w-fit">
-            <PaperPlaneRight weight="bold" className="size-4" /> Send friend request
+            <PaperPlaneRight weight="bold" className="size-4" /> Send request
           </Button>
         </form>
       </div>
     );
   }
 
-  if (connection.status === "PENDING") {
+  if (request.status === REQUEST_STATUS.PENDING) {
     return (
       <div className="space-y-2">
         <Badge tone="warning">Request sent</Badge>
@@ -89,7 +84,7 @@ export function ProfileConnectionButton({
           size="sm"
           className="text-ink-muted hover:bg-danger-soft hover:text-danger"
           disabled={cancelPending}
-          onClick={cancelRequest}
+          onClick={cancel}
         >
           {cancelPending ? "Cancelling…" : "Cancel request"}
         </Button>
@@ -97,53 +92,51 @@ export function ProfileConnectionButton({
     );
   }
 
-  if (connection.status === "ACCEPTED") {
+  if (request.status === REQUEST_STATUS.CLAIMED) {
     return (
       <div className="space-y-2">
         <Badge tone="success">
-          <Check weight="bold" className="size-3" /> Friends
+          <Check weight="bold" className="size-3" /> Connected
         </Badge>
-        {email && (
-          <p className="text-sm text-ink-muted">{email}</p>
-        )}
-        {connection.conversationId && (
-          <LinkButton href={`/messages/${connection.id}`} variant="secondary" size="sm">
+        {email && <p className="text-sm text-ink-muted">{email}</p>}
+        {request.hasConversation && (
+          <LinkButton href={`/messages/${request.id}`} variant="secondary" size="sm">
             <ChatCircleDots weight="bold" className="size-4" /> Message
           </LinkButton>
         )}
-        <FormError message={endError} />
+        <FormError message={cancelError} />
         <Button
           variant="ghost"
           size="sm"
           className="text-ink-muted hover:bg-danger-soft hover:text-danger"
-          disabled={endPending}
-          onClick={endConnection}
+          disabled={cancelPending}
+          onClick={cancel}
         >
-          {endPending ? "Ending…" : "End friendship"}
+          {cancelPending ? "Ending…" : "End connection"}
         </Button>
       </div>
     );
   }
 
-  if (connection.status === "DECLINED") {
+  if (request.status === REQUEST_STATUS.DECLINED || request.status === REQUEST_STATUS.COMPLETED) {
+    // requestMentorAction allows a fresh request after either of these —
+    // DECLINED because the claimer just wasn't available last time,
+    // COMPLETED because a naturally-concluded mentorship (e.g. end of
+    // semester) isn't permanently closed the way the old ENDED state was.
     return (
       <div className="space-y-2">
         <p className="text-sm text-ink-muted">
-          This person wasn&apos;t able to connect last time. You can try again.
+          {request.status === REQUEST_STATUS.DECLINED
+            ? "This person wasn't able to connect last time. You can try again."
+            : "This connection has ended. You can send a new request."}
         </p>
         <form action={requestAction}>
-          <input type="hidden" name="mentorId" value={mentorId} />
+          <input type="hidden" name="claimerId" value={claimerId} />
           <Button type="submit" size="sm" variant="secondary">
             <ArrowCounterClockwise weight="bold" className="size-4" /> Try again
           </Button>
         </form>
       </div>
-    );
-  }
-
-  if (connection.status === "ENDED") {
-    return (
-      <p className="text-sm text-ink-muted">This connection has ended.</p>
     );
   }
 

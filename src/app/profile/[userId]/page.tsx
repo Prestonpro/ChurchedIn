@@ -19,12 +19,12 @@ import { Avatar } from "@/components/ui/Avatar";
 import { Badge } from "@/components/ui/Badge";
 import { SocialIconLink } from "@/components/ui/SocialIconLink";
 import { VerifiedBadge } from "@/components/ui/VerifiedBadge";
-import { ProfileConnectionButton } from "@/components/ProfileConnectionButton";
+import { ProfileRequestButton } from "@/components/ProfileRequestButton";
 import { ReportButton } from "@/components/ReportButton";
 import { BlockButton } from "@/components/BlockButton";
 import { BackLink } from "@/components/ui/BackLink";
-import { ROLES, roleLabel, type Role } from "@/lib/constants";
-import { contactInfoVisible } from "@/lib/connectionState";
+import { ROLES, REQUEST_CATEGORY, roleLabel, type Role, type RequestStatus } from "@/lib/constants";
+import { requestContactVisible } from "@/lib/requestState";
 
 export async function generateMetadata({ params }: { params: Promise<{ userId: string }> }): Promise<Metadata> {
   const { userId } = await params;
@@ -52,32 +52,33 @@ export default async function PublicProfilePage({
   const isSelf = viewer.id === target.id;
   const viewerRole = viewer.activeMembership?.role;
   const isViewerStudent = viewerRole === ROLES.STUDENT;
-  const profile = target.mentorProfile ?? target.studentProfile;
-  const isMentor = !!target.mentorProfile;
+  // A student's dedicated profile takes priority; otherwise the volunteer
+  // fields on `target` itself apply (carried forward from the deleted
+  // MentorProfile) — see schema.prisma's User model doc comment.
+  const profile = target.studentProfile ?? target;
+  const isMentor = !target.studentProfile;
 
-  // Load existing connection if viewer is a student viewing a mentor
-  let connection: {
-    id: string;
-    status: string;
-    conversationId?: string | null;
-  } | null = null;
-  let connectionEmail: string | null = null;
+  // Load the most recent Mentorship HelpRequest between viewer and target,
+  // if viewer is a student viewing a mentor. There can be several over
+  // time — a re-request creates a new row instead of reviving an old one
+  // (see requestState.ts) — so the most recent is the relevant one to show.
+  let request: { id: string; status: RequestStatus; hasConversation: boolean } | null = null;
+  let requestEmail: string | null = null;
 
   if (isViewerStudent && isMentor && !isSelf) {
-    const rawConn = await prisma.mentorConnection.findFirst({
-      where: { studentId: viewer.id, mentorId: target.id },
+    const rawRequest = await prisma.helpRequest.findFirst({
+      where: { requesterId: viewer.id, claimerId: target.id, category: REQUEST_CATEGORY.MENTORSHIP },
+      orderBy: { createdAt: "desc" },
       include: { conversation: { select: { id: true } } },
     });
-    if (rawConn) {
-      connection = {
-        id: rawConn.id,
-        status: rawConn.status,
-        conversationId: rawConn.conversation?.id ?? null,
+    if (rawRequest) {
+      request = {
+        id: rawRequest.id,
+        status: rawRequest.status,
+        hasConversation: !!rawRequest.conversation,
       };
-      if (contactInfoVisible(rawConn.status)) {
-        connectionEmail = target.mentorProfile
-          ? (await prisma.user.findUnique({ where: { id: target.id }, select: { email: true } }))?.email ?? null
-          : null;
+      if (requestContactVisible(rawRequest.status, rawRequest.respondedAt)) {
+        requestEmail = (await prisma.user.findUnique({ where: { id: target.id }, select: { email: true } }))?.email ?? null;
       }
     }
   }
@@ -119,10 +120,10 @@ export default async function PublicProfilePage({
             {target.bio && <p className="text-sm text-ink-soft">{target.bio}</p>}
 
             {/* Job info */}
-            {isMentor && (target.mentorProfile?.jobTitle || target.mentorProfile?.company) && (
+            {isMentor && (target.jobTitle || target.company) && (
               <p className="flex items-center gap-1.5 text-sm text-ink-muted">
                 <Briefcase className="size-4 shrink-0 text-ink-faint" />
-                {[target.mentorProfile.jobTitle, target.mentorProfile.company].filter(Boolean).join(" · ")}
+                {[target.jobTitle, target.company].filter(Boolean).join(" · ")}
               </p>
             )}
 
@@ -188,20 +189,20 @@ export default async function PublicProfilePage({
             </div>
           )}
 
-          {/* Friend request / connection actions — only for students viewing mentors */}
+          {/* Mentorship request actions — only for students viewing mentors */}
           {isViewerStudent && isMentor && !isSelf && (
             <div className="mt-2">
-              {connectionEmail && (
+              {requestEmail && (
                 <p className="mb-3 flex items-center gap-1.5 text-sm text-ink-muted">
                   <EnvelopeSimple weight="bold" className="size-4 shrink-0 text-ink-faint" />
-                  {connectionEmail}
+                  {requestEmail}
                 </p>
               )}
-              <ProfileConnectionButton
-                mentorId={target.id}
-                isOpenToMentor={target.mentorProfile?.openToMentor ?? false}
-                connection={connection}
-                email={connectionEmail}
+              <ProfileRequestButton
+                claimerId={target.id}
+                isOpenToMentorship={target.openToMentorship}
+                request={request}
+                email={requestEmail}
               />
             </div>
           )}

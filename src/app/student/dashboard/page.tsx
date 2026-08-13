@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CalendarBlank, UsersThree, HandHeart, Car } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listConnectionsAsStudent, listRideRequestsForStudent } from "@/lib/queries";
+import { listRequestsForRequester, listRideRequestsForStudent } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
@@ -11,7 +11,7 @@ import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { CONNECTION_STATUS, RSVP_STATUS, RIDE_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+import { REQUEST_STATUS, RSVP_STATUS, RIDE_STATUS, ROLES, type EventCategory } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -19,17 +19,17 @@ export default async function StudentDashboardPage() {
   const user = await requireRole(ROLES.STUDENT);
   const churchId = user.activeMembership!.churchId;
 
-  const [rsvps, connections, memberCount, rides] = await Promise.all([
+  const [rsvps, requests, memberCount, rides] = await Promise.all([
     prisma.eventRsvp.findMany({
       where: { userId: user.id, status: { not: RSVP_STATUS.CANCELLED } },
       include: { event: true },
       orderBy: { event: { startsAt: "asc" } },
     }),
-    listConnectionsAsStudent(user.id),
+    listRequestsForRequester(user.id),
     prisma.membership.count({ where: { churchId } }),
     listRideRequestsForStudent(user.id),
   ]);
-  const friendCount = connections.filter((c) => c.status === CONNECTION_STATUS.ACCEPTED).length;
+  const activeRequestCount = requests.filter((r) => r.status === REQUEST_STATUS.CLAIMED).length;
   const activeRides = rides.filter(
     (r) => r.status === RIDE_STATUS.OPEN || r.status === RIDE_STATUS.CLAIMED,
   ).length;
@@ -45,8 +45,8 @@ export default async function StudentDashboardPage() {
             {user.activeMembership?.church.name}, {memberCount} {memberCount === 1 ? "member" : "members"}
           </p>
         </div>
-        <LinkButton href="/student/mentors">
-          <UsersThree weight="bold" className="size-4" /> Find a friend
+        <LinkButton href="/student/requests">
+          <UsersThree weight="bold" className="size-4" /> Find help
         </LinkButton>
       </div>
 
@@ -62,11 +62,11 @@ export default async function StudentDashboardPage() {
         />
         <StatCard
           icon={HandHeart}
-          label="Friends"
-          value={friendCount}
+          label="Active requests"
+          value={activeRequestCount}
           tone="bg-accent-100 text-accent-700"
           accent="border-l-accent-500"
-          href="/student/mentors"
+          href="/student/requests"
         />
         <StatCard
           icon={Car}

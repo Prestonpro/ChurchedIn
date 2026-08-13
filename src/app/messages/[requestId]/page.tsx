@@ -4,23 +4,24 @@ import type { Metadata } from "next";
 import { ArrowLeft } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getConversationForConnection } from "@/lib/queries";
+import { getConversationForRequest } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Avatar } from "@/components/ui/Avatar";
-import { CONNECTION_STATUS } from "@/lib/constants";
+import { REQUEST_STATUS } from "@/lib/constants";
 import { MessageForm } from "./MessageForm";
 import { ReportConversationButton } from "./ReportConversationButton";
 
 export const metadata: Metadata = { title: "Conversation" };
 
-export default async function ConversationPage({ params }: { params: Promise<{ connectionId: string }> }) {
-  const { connectionId } = await params;
+export default async function ConversationPage({ params }: { params: Promise<{ requestId: string }> }) {
+  const { requestId } = await params;
   const user = await requireUser();
 
-  const conversation = await getConversationForConnection(connectionId, user.id);
-  if (!conversation) {
+  const conversation = await getConversationForRequest(requestId, user.id);
+  if (!conversation || !conversation.otherParty) {
     notFound();
   }
+  const otherParty = conversation.otherParty;
 
   // Marking the other party's messages read as part of loading the thread,
   // the same "write during the read" tradeoff /events' page.tsx already
@@ -32,6 +33,10 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
     where: { conversationId: conversation.id, senderId: { not: user.id }, readAt: null },
     data: { readAt: new Date() },
   });
+
+  const ended =
+    conversation.requestStatus === REQUEST_STATUS.COMPLETED ||
+    conversation.requestStatus === REQUEST_STATUS.CANCELLED;
 
   return (
     <AuthShell user={user}>
@@ -45,25 +50,27 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
             >
               <ArrowLeft weight="bold" className="size-4.5" />
             </Link>
-            <Link href={`/profile/${conversation.otherParty.id}`} className="hover:opacity-80">
-              <Avatar name={conversation.otherParty.name} src={conversation.otherParty.photoUrl} size="sm" />
+            <Link href={`/profile/${otherParty.id}`} className="hover:opacity-80">
+              <Avatar name={otherParty.name} src={otherParty.photoUrl} size="sm" />
             </Link>
             <div>
-              <Link href={`/profile/${conversation.otherParty.id}`} className="font-bold text-ink hover:text-brand-700 hover:underline">
-                {conversation.otherParty.name}
+              <Link href={`/profile/${otherParty.id}`} className="font-bold text-ink hover:text-brand-700 hover:underline">
+                {otherParty.name}
               </Link>
-              {conversation.connectionStatus === CONNECTION_STATUS.ENDED && (
-                <p className="text-xs text-ink-faint">This connection has ended</p>
+              {ended && (
+                <p className="text-xs text-ink-faint">
+                  This request has {conversation.requestStatus === REQUEST_STATUS.COMPLETED ? "been completed" : "ended"}
+                </p>
               )}
             </div>
           </div>
-          <ReportConversationButton connectionId={connectionId} />
+          <ReportConversationButton requestId={requestId} />
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto p-4">
           {conversation.messages.length === 0 ? (
             <p className="py-8 text-center text-sm text-ink-faint">
-              No messages yet. Say hello to {conversation.otherParty.name.split(" ")[0]}!
+              No messages yet. Say hello to {otherParty.name.split(" ")[0]}!
             </p>
           ) : (
             conversation.messages.map((m) => {
@@ -92,11 +99,10 @@ export default async function ConversationPage({ params }: { params: Promise<{ c
         </div>
 
         {conversation.canSend ? (
-          <MessageForm connectionId={connectionId} />
+          <MessageForm requestId={requestId} />
         ) : (
           <p className="border-t border-line bg-paper px-4 py-3 text-center text-sm text-ink-muted">
-            This connection has ended. You can still read the history above, but you can&apos;t send new
-            messages.
+            This request has ended. You can still read the history above, but you can&apos;t send new messages.
           </p>
         )}
       </div>

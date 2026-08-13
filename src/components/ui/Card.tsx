@@ -4,6 +4,7 @@ export function Card({
   interactive = false,
   style,
   id,
+  "data-testid": dataTestId,
 }: {
   children: React.ReactNode;
   className?: string;
@@ -12,10 +13,14 @@ export function Card({
   style?: React.CSSProperties;
   /** For anchor-linking to a specific card, e.g. from a dashboard stat card. */
   id?: string;
+  /** For e2e specs to scope an interaction to one of several repeated
+   * cards, when there's no unique visible text to key off of otherwise. */
+  "data-testid"?: string;
 }) {
   return (
     <div
       id={id}
+      data-testid={dataTestId}
       // min-w-0 matters more than it looks: as a grid/flex item, a Card
       // defaults to min-width:auto, so it can't shrink below its content's
       // min-content width. One long unbreakable string inside (an email

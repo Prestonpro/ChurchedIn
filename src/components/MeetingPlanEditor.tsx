@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition, useActionState } from "react";
 import { CalendarCheck, PencilSimple } from "@phosphor-icons/react/dist/ssr";
-import { setMeetingPlanAction, clearMeetingPlanAction } from "@/lib/actions/connections";
+import { setMeetingPlanAction, clearMeetingPlanAction } from "@/lib/actions/requests";
 import { Button } from "@/components/ui/Button";
 import { SelectField, Field, TextAreaField, FormError } from "@/components/ui/Field";
 import { SubmitButton } from "@/components/ui/SubmitButton";
@@ -23,12 +23,12 @@ function summarize(plan: NonNullable<Plan>): string {
   return parts.join(" ");
 }
 
-/** A private recurring-meeting note on an ACCEPTED connection — see
- * MentorMeetingPlan's doc comment in schema.prisma. Shown on both the
- * student's Friends page and the mentor's dashboard. */
-export function MeetingPlanEditor({ connectionId, plan }: { connectionId: string; plan: Plan }) {
+/** A private recurring-meeting note on a CLAIMED request — see
+ * RequestMeetingPlan's doc comment in schema.prisma. Shown on both the
+ * student's requests page and the mentor's dashboard. */
+export function MeetingPlanEditor({ requestId, plan }: { requestId: string; plan: Plan }) {
   const [editing, setEditing] = useState(false);
-  const action = setMeetingPlanAction.bind(null, connectionId);
+  const action = setMeetingPlanAction.bind(null, requestId);
   const [state, formAction] = useActionState(action, undefined);
   const [pending, startTransition] = useTransition();
 
@@ -41,7 +41,7 @@ export function MeetingPlanEditor({ connectionId, plan }: { connectionId: string
   function handleClear() {
     if (!confirm("Remove this recurring meeting plan?")) return;
     startTransition(async () => {
-      await clearMeetingPlanAction(connectionId);
+      await clearMeetingPlanAction(requestId);
       setEditing(false);
     });
   }

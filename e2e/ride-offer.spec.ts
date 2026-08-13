@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { signupChurch, joinChurch, getJoinCode, uniqueEmail } from "./helpers";
+import { signupChurch, joinChurch, getJoinCode, uniqueEmail, dismissOnboardingIfPresent } from "./helpers";
 
 test("a capped ride offer waitlists the second rider and promotes them when the first leaves", async ({ browser }) => {
   const churchName = `Ride Offer Test Church ${Date.now()}`;
@@ -99,7 +99,8 @@ test("a blocked volunteer's ride offer never appears to the student who blocked 
     password,
   });
   await volunteerPage.goto("/volunteer/profile");
-  await volunteerPage.getByLabel("I'm open to being a friend to a student").check();
+  await dismissOnboardingIfPresent(volunteerPage);
+  await volunteerPage.getByLabel("I'm open to mentoring a student").check();
   await volunteerPage.getByRole("button", { name: "Save my profile" }).click();
 
   const studentPage = await (await browser.newContext()).newPage();
@@ -111,10 +112,11 @@ test("a blocked volunteer's ride offer never appears to the student who blocked 
     password,
   });
 
-  await studentPage.goto("/student/mentors");
+  await studentPage.goto("/student/requests");
+  await studentPage.getByRole("heading", { name: "Blocked Offerer" }).click();
   studentPage.once("dialog", (dialog) => dialog.accept());
-  await studentPage.getByTitle("Block Blocked Offerer").click();
-  await expect(studentPage.getByRole("button", { name: "Unblock" })).toBeVisible();
+  await studentPage.getByRole("button", { name: "Block Blocked" }).click();
+  await expect(studentPage.getByText("You've blocked Blocked.")).toBeVisible();
 
   await volunteerPage.goto("/volunteer/rides");
   const date = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10);

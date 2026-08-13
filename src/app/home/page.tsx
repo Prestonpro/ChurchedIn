@@ -40,7 +40,7 @@ export default async function HomePage() {
       : []),
     { href: "/discover", label: "Discover churches", icon: Compass, tone: "accent" as const },
     ...(role === ROLES.STUDENT
-      ? [{ href: "/student/mentors", label: "Find a friend", icon: UsersThree, tone: "brand" as const }]
+      ? [{ href: "/student/requests", label: "Ask for help", icon: UsersThree, tone: "brand" as const }]
       : []),
     {
       href: role === ROLES.STUDENT ? "/student/rides" : role === ROLES.CHURCH_ADMIN ? "/admin/rides" : "/volunteer/rides",

@@ -31,6 +31,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string, un
       events,
       discover,
       { href: "/admin/rides", label: "Rides", iconKey: "rides" },
+      messages,
       { href: "/admin/reports", label: "Reports", iconKey: "reports" },
       { href: `/churches/${churchId}/settings`, label: "Church settings", iconKey: "settings" },
     ];
@@ -48,7 +49,7 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string, un
     { href: "/student/dashboard", label: "Dashboard", iconKey: "dashboard" },
     events,
     discover,
-    { href: "/student/mentors", label: "Friends", iconKey: "mentors" },
+    { href: "/student/requests", label: "Requests", iconKey: "mentors" },
     messages,
     { href: "/student/rides", label: "Rides", iconKey: "rides" },
   ];
@@ -71,13 +72,9 @@ export async function AuthShell({
   const unseenEvents = user.activeMembership
     ? await hasUnseenEvents(user.activeMembership.churchId, user.activeMembership.lastSeenEventsAt)
     : false;
-  // Only STUDENT/VOLUNTEER can have a MentorConnection at all — skip the
-  // query entirely for CHURCH_ADMIN and church-less accounts rather than
-  // running a count that can only ever be zero for them.
-  const unreadMessages =
-    user.activeMembership && (role === ROLES.STUDENT || role === ROLES.VOLUNTEER)
-      ? await countUnreadMessagesForUser(user.id)
-      : 0;
+  // Any role can now be a HelpRequest requester or claimer, so the only
+  // real skip condition is having no church at all.
+  const unreadMessages = user.activeMembership ? await countUnreadMessagesForUser(user.id) : 0;
   const links = user.activeMembership
     ? navLinksForRole(role, unseenEvents, user.activeMembership.churchId, unreadMessages)
     : BROWSING_LINKS;

@@ -48,7 +48,7 @@ test("signing in works with JavaScript disabled", async ({ browser }) => {
   const noJsPage = await (await browser.newContext({ javaScriptEnabled: false })).newPage();
   await noJsPage.goto("/login");
   await noJsPage.getByLabel("Email").fill(volEmail);
-  await noJsPage.getByLabel("Password").fill(password);
+  await noJsPage.getByLabel("Password", { exact: true }).fill(password);
   await noJsPage.getByRole("button", { name: "Log in" }).click();
   // A role-derived redirect proves the action ran server-side and the session
   // cookie was set, without depending on the destination page's rendering.
@@ -58,7 +58,7 @@ test("signing in works with JavaScript disabled", async ({ browser }) => {
   const badPage = await (await browser.newContext({ javaScriptEnabled: false })).newPage();
   await badPage.goto("/login");
   await badPage.getByLabel("Email").fill(volEmail);
-  await badPage.getByLabel("Password").fill("wrong-password");
+  await badPage.getByLabel("Password", { exact: true }).fill("wrong-password");
   await badPage.getByRole("button", { name: "Log in" }).click();
   await expect(badPage.getByText(/incorrect|invalid|check/i).first()).toBeVisible();
 });

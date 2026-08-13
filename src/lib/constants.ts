@@ -56,14 +56,40 @@ export const RSVP_STATUS = {
 
 export type RsvpStatus = (typeof RSVP_STATUS)[keyof typeof RSVP_STATUS];
 
-export const CONNECTION_STATUS = {
-  PENDING: "PENDING",
-  ACCEPTED: "ACCEPTED",
-  DECLINED: "DECLINED",
-  ENDED: "ENDED",
+export const REQUEST_CATEGORY = {
+  FURNITURE: "FURNITURE",
+  FOOD: "FOOD",
+  MENTORSHIP: "MENTORSHIP",
+  HOUSING: "HOUSING",
+  OTHER: "OTHER",
 } as const;
 
-export type ConnectionStatus = (typeof CONNECTION_STATUS)[keyof typeof CONNECTION_STATUS];
+export type RequestCategory = (typeof REQUEST_CATEGORY)[keyof typeof REQUEST_CATEGORY];
+
+export const REQUEST_CATEGORY_LABELS: Record<RequestCategory, string> = {
+  FURNITURE: "Furniture",
+  FOOD: "Food",
+  MENTORSHIP: "Mentorship",
+  HOUSING: "Housing",
+  OTHER: "Other",
+};
+
+// PENDING: targeted at a specific claimer (Mentorship's browse-and-pick
+// flow), awaiting their accept/decline.
+// OPEN: untargeted — any eligible person may claim it (Furniture/Food/
+// Housing/Other, and Mentorship too if posted without picking someone).
+// Both funnel into CLAIMED, then COMPLETED/CANCELLED — see
+// src/lib/requestState.ts for the transition table.
+export const REQUEST_STATUS = {
+  PENDING: "PENDING",
+  OPEN: "OPEN",
+  CLAIMED: "CLAIMED",
+  DECLINED: "DECLINED",
+  COMPLETED: "COMPLETED",
+  CANCELLED: "CANCELLED",
+} as const;
+
+export type RequestStatus = (typeof REQUEST_STATUS)[keyof typeof REQUEST_STATUS];
 
 export const MEETING_FREQUENCY = {
   WEEKLY: "WEEKLY",
@@ -149,12 +175,17 @@ export function roleLabel(role: Role): string {
   }
 }
 
-// A student can send at most this many mentor connection requests (new
-// requests or re-requests after a decline) in a rolling 24h window. This is
-// the actual anti-harassment control referenced in the safety rule — it is
-// enforced in src/lib/actions/connections.ts by counting recent
-// MentorConnection.lastRequestedAt values, not by an external rate limiter.
-export const MAX_CONNECTION_REQUESTS_PER_DAY = 5;
+// A student can target at most this many specific volunteers with a
+// Mentorship request (new picks or re-requests after a decline) in a
+// rolling 24h window — the anti-harassment control that used to guard
+// mentor-connection requests. Since a re-request now creates a new
+// HelpRequest row rather than reusing one (there's no lastRequestedAt to
+// bump), this is enforced in src/lib/actions/requests.ts by counting
+// recent HelpRequest.createdAt rows for this requester, not an external
+// rate limiter. Only applies to the targeted (PENDING) flow — an OPEN,
+// untargeted request isn't aimed at any one person, so it isn't
+// harassment-shaped the same way.
+export const MAX_TARGETED_REQUESTS_PER_DAY = 5;
 
 // Caps "new event" notification emails per church per rolling 24h window,
 // so one eager volunteer creating a string of events doesn't spam every

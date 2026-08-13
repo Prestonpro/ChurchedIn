@@ -1,4 +1,4 @@
-// No "server-only" guard, deliberately — same call as rsvp.ts/connectionState.ts:
+// No "server-only" guard, deliberately — same call as rsvp.ts/requestState.ts:
 // this only touches jose + process.env (no Next.js-bound APIs), it's only ever
 // imported from Route Handlers (never bundled client-side regardless), and
 // keeping it guard-free is what makes it unit-testable under Vitest.

@@ -9,8 +9,7 @@ import { EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
  * stay `shrink-0` so it isn't squashed instead.
  *
  * Only ever render this where the contact-info safety rule already allows it
- * (see contactInfoVisible / rideContactVisible) — this component does no
- * gating of its own.
+ * (see requestContactVisible) — this component does no gating of its own.
  */
 export function ContactEmail({ email, size = "xs" }: { email: string; size?: "xs" | "sm" }) {
   const text = size === "sm" ? "text-sm" : "text-xs";

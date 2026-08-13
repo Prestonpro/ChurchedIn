@@ -8,9 +8,10 @@ import {
   PARTNERSHIP_STATUS,
   RIDE_STATUS,
   RIDE_REQUEST_TYPE,
-  CONNECTION_STATUS,
+  REQUEST_STATUS,
+  REQUEST_CATEGORY,
 } from "@/lib/constants";
-import { contactInfoVisible } from "@/lib/connectionState";
+import { requestContactVisible } from "@/lib/requestState";
 import { rideContactVisible } from "@/lib/rideState";
 import { canSendMessage, canViewConversation } from "@/lib/messaging";
 
@@ -126,20 +127,17 @@ export function listBlockedUsers(userId: string) {
   });
 }
 
-/** Every VOLUNTEER/CHURCH_ADMIN member of this church is a potential friend,
- * the same population that shows up in the plain church member list —
- * driven by Membership, not by whether someone has gotten around to filling
- * out a MentorProfile yet. Previously this queried *from* MentorProfile, so
- * a volunteer with no profile row at all silently never appeared here even
- * though they were a real, listed church member; a fresh volunteer looked
- * like a ghost to every student until they visited their own profile
- * settings once. A member with no MentorProfile row is treated the same as
- * MentorProfile.openToMentor's own default (open); one who has a profile and
- * explicitly closed themselves off is excluded, UNLESS the viewer already
- * has a connection with them (any status) — otherwise closing yourself off
- * would make an existing pending/accepted/ended connection vanish from the
- * student's own page with no way to see or cancel it. */
-export async function listMentorsForChurch(churchId: string, viewerId: string) {
+/** Every VOLUNTEER/CHURCH_ADMIN member of this church who's open to being
+ * browsed in the Mentorship directory — the same population that shows up
+ * in the plain church member list, driven by Membership, filtered by
+ * `User.openToMentorship` (carried forward from the deleted
+ * MentorProfile.openToMentor, now defaulting true on every user instead of
+ * needing a profile row to exist first). Someone who has closed themselves
+ * off is still shown if the viewer already has a HelpRequest targeting them
+ * (any status) — otherwise closing yourself off would make an existing
+ * pending/claimed/declined request vanish from the student's own page with
+ * no way to see or cancel it. */
+export async function listOpenMentorshipVolunteers(churchId: string, viewerId: string) {
   const excluded = await blockedPairUserIds(viewerId);
 
   const memberships = await prisma.membership.findMany({
@@ -148,81 +146,154 @@ export async function listMentorsForChurch(churchId: string, viewerId: string) {
       role: { in: [ROLES.VOLUNTEER, ROLES.CHURCH_ADMIN] },
       user: {
         OR: [
-          { mentorProfile: null },
-          { mentorProfile: { openToMentor: true } },
-          { connectionsAsMentor: { some: { studentId: viewerId } } },
+          { openToMentorship: true },
+          {
+            requestsAsClaimer: {
+              some: { requesterId: viewerId, category: REQUEST_CATEGORY.MENTORSHIP },
+            },
+          },
         ],
       },
     },
     include: {
       user: {
-        select: { id: true, name: true, bio: true, photoUrl: true, verified: true, mentorProfile: true },
+        select: {
+          id: true,
+          name: true,
+          bio: true,
+          photoUrl: true,
+          verified: true,
+          jobTitle: true,
+          company: true,
+          industry: true,
+          languages: true,
+          hobbies: true,
+          interests: true,
+          linkedinUrl: true,
+          facebookUrl: true,
+          instagramUrl: true,
+        },
       },
     },
   });
 
   return memberships
     .filter((m) => !excluded.has(m.userId))
-    .map((m) => {
-      const profile = m.user.mentorProfile;
-      return {
-        id: profile?.id ?? m.userId,
-        userId: m.userId,
-        jobTitle: profile?.jobTitle ?? null,
-        company: profile?.company ?? null,
-        industry: profile?.industry ?? null,
-        languages: profile?.languages ?? null,
-        hobbies: profile?.hobbies ?? null,
-        interests: profile?.interests ?? null,
-        linkedinUrl: profile?.linkedinUrl ?? null,
-        facebookUrl: profile?.facebookUrl ?? null,
-        instagramUrl: profile?.instagramUrl ?? null,
-        role: m.role,
-        user: {
-          id: m.user.id,
-          name: m.user.name,
-          bio: m.user.bio,
-          photoUrl: m.user.photoUrl,
-          verified: m.user.verified,
-        },
-        memberSince: m.createdAt,
-      };
-    });
+    .map((m) => ({
+      id: m.userId,
+      userId: m.userId,
+      jobTitle: m.user.jobTitle,
+      company: m.user.company,
+      industry: m.user.industry,
+      languages: m.user.languages,
+      hobbies: m.user.hobbies,
+      interests: m.user.interests,
+      linkedinUrl: m.user.linkedinUrl,
+      facebookUrl: m.user.facebookUrl,
+      instagramUrl: m.user.instagramUrl,
+      role: m.role,
+      user: {
+        id: m.user.id,
+        name: m.user.name,
+        bio: m.user.bio,
+        photoUrl: m.user.photoUrl,
+        verified: m.user.verified,
+      },
+      memberSince: m.createdAt,
+    }));
 }
 
-// Both listConnections* functions strip the other party's email from
-// anything not ACCEPTED before returning, rather than trusting every future
-// caller to only render `.email` inside the right status branch — pushing
-// the one non-negotiable safety rule (PLAN.md section 8) down into the
-// query layer so it can't be bypassed by a page that forgets.
-export async function listConnectionsAsStudent(studentId: string) {
-  const connections = await prisma.mentorConnection.findMany({
-    where: { studentId },
+// Both listRequestsFor* functions strip the other party's email from
+// anything requestContactVisible doesn't allow yet, rather than trusting
+// every future caller to only render `.email` inside the right status
+// branch — pushing the one non-negotiable safety rule (CLAUDE.md §1) down
+// into the query layer so it can't be bypassed by a page that forgets.
+// Replaces listConnectionsAsStudent/listConnectionsAsMentor — now spans
+// every category, not just Mentorship, since any role can be a requester or
+// claimer.
+export async function listRequestsForRequester(requesterId: string) {
+  const requests = await prisma.helpRequest.findMany({
+    where: { requesterId },
     include: {
-      mentor: { select: { id: true, name: true, email: true, bio: true } },
+      claimer: { select: { id: true, name: true, email: true, bio: true, photoUrl: true } },
       meetingPlan: true,
     },
-    orderBy: { lastRequestedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   });
-  return connections.map((c) => ({
-    ...c,
-    mentor: { ...c.mentor, email: contactInfoVisible(c.status) ? c.mentor.email : null },
+  return requests.map((r) => ({
+    ...r,
+    claimer: r.claimer
+      ? {
+          ...r.claimer,
+          email: requestContactVisible(r.status, r.respondedAt) ? r.claimer.email : null,
+        }
+      : null,
   }));
 }
 
-export async function listConnectionsAsMentor(mentorId: string) {
-  const connections = await prisma.mentorConnection.findMany({
-    where: { mentorId },
+export async function listRequestsForClaimer(claimerId: string) {
+  const requests = await prisma.helpRequest.findMany({
+    where: { claimerId },
     include: {
-      student: { select: { id: true, name: true, email: true, bio: true } },
+      requester: { select: { id: true, name: true, email: true, bio: true, photoUrl: true } },
       meetingPlan: true,
     },
-    orderBy: { lastRequestedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   });
-  return connections.map((c) => ({
-    ...c,
-    student: { ...c.student, email: contactInfoVisible(c.status) ? c.student.email : null },
+  return requests.map((r) => ({
+    ...r,
+    requester: {
+      ...r.requester,
+      email: requestContactVisible(r.status, r.respondedAt) ? r.requester.email : null,
+    },
   }));
+}
+
+/** OPEN, untargeted requests for a church's blind-claim board (Furniture/
+ * Food/Housing/Other, and any Mentorship request posted without picking
+ * someone) — every row here is pre-claim by definition, modeled on
+ * listOpenRideRequestsForChurch. Blocked pairs must never see each other in
+ * a listing (safety rule 2), same exclusion as every other directory/board
+ * in this app. */
+export async function listOpenRequestsForChurch(churchId: string, viewerId: string) {
+  const [requests, excluded] = await Promise.all([
+    prisma.helpRequest.findMany({
+      where: { churchId, status: REQUEST_STATUS.OPEN },
+      include: { requester: { select: { id: true, name: true, photoUrl: true } } },
+      orderBy: { createdAt: "asc" },
+    }),
+    blockedPairUserIds(viewerId),
+  ]);
+  return requests.filter((r) => !excluded.has(r.requesterId));
+}
+
+/** Every HelpRequest at this church, every status/category — for a church
+ * leader's oversight view, modeled on listAllRideRequestsForChurch. A
+ * leader isn't a party to a request claimed by someone else, so the
+ * requester's contact info for those stays hidden; but for the one row
+ * where `claimerId === viewerId` (the leader claimed it themself), that
+ * row's requester contact is revealed the same way listRequestsForClaimer
+ * reveals it. */
+export async function listAllRequestsForChurch(churchId: string, viewerId: string) {
+  const requests = await prisma.helpRequest.findMany({
+    where: { churchId },
+    include: {
+      requester: { select: { id: true, name: true, email: true, photoUrl: true } },
+      claimer: { select: { id: true, name: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+  return requests.map((r) => {
+    const isMyClaim = r.claimerId === viewerId;
+    return {
+      ...r,
+      requester: {
+        ...r.requester,
+        email:
+          isMyClaim && requestContactVisible(r.status, r.respondedAt) ? r.requester.email : null,
+      },
+    };
+  });
 }
 
 // Wrapped in React's cache() so generateMetadata and the page component can
@@ -395,21 +466,29 @@ export async function listRideRequestsForStudent(studentId: string) {
     include: { volunteer: { select: { id: true, name: true, email: true } } },
     orderBy: { createdAt: "desc" },
   });
-  // Also fetch accepted connections between this student and any of the volunteers
+  // Also fetch this student's own CLAIMED Mentorship requests with any of the
+  // ride's volunteers, so a ride card can link straight to that existing
+  // message thread — same lookup as before, now against HelpRequest instead
+  // of the deleted MentorConnection.
   const volunteerIds = rides.map((r) => r.volunteerId).filter(Boolean) as string[];
-  const acceptedConnections = volunteerIds.length
-    ? await prisma.mentorConnection.findMany({
-        where: { studentId, mentorId: { in: volunteerIds }, status: CONNECTION_STATUS.ACCEPTED },
-        select: { id: true, mentorId: true },
+  const claimedRequests = volunteerIds.length
+    ? await prisma.helpRequest.findMany({
+        where: {
+          requesterId: studentId,
+          claimerId: { in: volunteerIds },
+          category: REQUEST_CATEGORY.MENTORSHIP,
+          status: REQUEST_STATUS.CLAIMED,
+        },
+        select: { id: true, claimerId: true },
       })
     : [];
-  const connectionByVolunteer = new Map(acceptedConnections.map((c) => [c.mentorId, c.id]));
+  const requestByVolunteer = new Map(claimedRequests.map((r) => [r.claimerId, r.id]));
   return rides.map((r) => ({
     ...r,
     volunteer: r.volunteer
       ? { ...r.volunteer, email: rideContactVisible(r.status) ? r.volunteer.email : null }
       : null,
-    connectionId: r.volunteerId ? (connectionByVolunteer.get(r.volunteerId) ?? null) : null,
+    requestId: r.volunteerId ? (requestByVolunteer.get(r.volunteerId) ?? null) : null,
   }));
 }
 
@@ -611,9 +690,13 @@ export function listMembersForChurch(churchId: string) {
   });
 }
 
-/** Full profile for the /profile/[userId] page — includes mentor profile,
- * student profile, and church memberships so the page can verify the
- * viewer shares a church with this person. */
+/** Full profile for the /profile/[userId] page — includes the volunteer
+ * profile fields (now directly on User, carried forward from the deleted
+ * MentorProfile), student profile, and church memberships so the page can
+ * verify the viewer shares a church with this person. Rendering collapses
+ * to `target.studentProfile ?? target` (a student's dedicated profile takes
+ * priority; otherwise the top-level User fields apply) — one fallback
+ * pattern instead of branching between two profile models. */
 export async function getUserProfile(userId: string) {
   return prisma.user.findUnique({
     where: { id: userId },
@@ -624,22 +707,18 @@ export async function getUserProfile(userId: string) {
       photoUrl: true,
       verified: true,
       createdAt: true,
+      jobTitle: true,
+      company: true,
+      industry: true,
+      languages: true,
+      hobbies: true,
+      interests: true,
+      linkedinUrl: true,
+      facebookUrl: true,
+      instagramUrl: true,
+      openToMentorship: true,
       memberships: {
         select: { churchId: true, role: true, church: { select: { name: true } } },
-      },
-      mentorProfile: {
-        select: {
-          jobTitle: true,
-          company: true,
-          industry: true,
-          languages: true,
-          hobbies: true,
-          interests: true,
-          linkedinUrl: true,
-          facebookUrl: true,
-          instagramUrl: true,
-          openToMentor: true,
-        },
       },
       studentProfile: {
         select: {
@@ -665,22 +744,22 @@ export async function getUserProfile(userId: string) {
 // ---------------------------------------------------------------------------
 
 /** Every conversation `userId` is a participant in, most recently active
- * first, for /messages. `studentId`/`mentorId` are queried directly (not
- * through `connection`) since they're denormalized onto Conversation for
+ * first, for /messages. `requesterId`/`claimerId` are queried directly (not
+ * through `request`) since they're denormalized onto Conversation for
  * exactly this — see the model's doc comment. */
 export async function listConversationsForUser(userId: string) {
   const conversations = await prisma.conversation.findMany({
-    where: { OR: [{ studentId: userId }, { mentorId: userId }] },
+    where: { OR: [{ requesterId: userId }, { claimerId: userId }] },
     orderBy: { lastMessageAt: "desc" },
     include: {
-      // Conversation only stores studentId/mentorId as plain scalars (for the
-      // filter above); the actual User rows for display come through the
-      // connection, which already has that relation.
-      connection: {
+      // Conversation only stores requesterId/claimerId as plain scalars (for
+      // the filter above); the actual User rows for display come through
+      // the request, which already has that relation.
+      request: {
         select: {
           status: true,
-          student: { select: { id: true, name: true, photoUrl: true } },
-          mentor: { select: { id: true, name: true, photoUrl: true } },
+          requester: { select: { id: true, name: true, photoUrl: true } },
+          claimer: { select: { id: true, name: true, photoUrl: true } },
         },
       },
       messages: {
@@ -692,11 +771,11 @@ export async function listConversationsForUser(userId: string) {
   });
 
   return conversations.map((c) => {
-    const otherParty = c.studentId === userId ? c.connection.mentor : c.connection.student;
+    const otherParty = c.requesterId === userId ? c.request.claimer : c.request.requester;
     return {
       id: c.id,
-      connectionId: c.connectionId,
-      connectionStatus: c.connection.status,
+      requestId: c.requestId,
+      requestStatus: c.request.status,
       lastMessageAt: c.lastMessageAt,
       lastMessage: c.messages[0] ?? null,
       otherParty,
@@ -707,35 +786,40 @@ export async function listConversationsForUser(userId: string) {
 /** Total unread messages across every conversation `userId` is in — the nav
  * badge's count, computed on every authenticated page render the same way
  * hasUnseenEvents already is. One join level (through `conversation`'s
- * denormalized studentId/mentorId), not through `connection`. */
+ * denormalized requesterId/claimerId), not through `request`. */
 export async function countUnreadMessagesForUser(userId: string): Promise<number> {
   return prisma.message.count({
     where: {
       readAt: null,
       senderId: { not: userId },
-      conversation: { OR: [{ studentId: userId }, { mentorId: userId }] },
+      conversation: { OR: [{ requesterId: userId }, { claimerId: userId }] },
     },
   });
 }
 
 /**
- * Loads one conversation's full thread for `viewerId`, enforcing every
+ * Loads one request's conversation for `viewerId`, enforcing every
  * messaging safety rule at the query layer (same defense-in-depth spirit as
- * listConnectionsAsStudent/Mentor): the viewer must be a participant, the
- * pair must not be blocked, and the connection must be ACCEPTED or ENDED
+ * listRequestsForRequester/Claimer): the viewer must be a participant, the
+ * pair must not be blocked, and the request must be
+ * CLAIMED/COMPLETED/CANCELLED with contact actually visible
  * (canViewConversation). Returns null rather than throwing when any of
  * those fail, so the page can render a normal "not found"/"not available"
  * state instead of a 500.
+ *
+ * Simpler than the old getConversationForConnection: HelpRequest carries
+ * its own churchId, so lazy-creating the conversation needs no
+ * membership-intersection query to find a shared church.
  */
-export async function getConversationForConnection(connectionId: string, viewerId: string) {
+export async function getConversationForRequest(requestId: string, viewerId: string) {
   let conversation = await prisma.conversation.findUnique({
-    where: { connectionId },
+    where: { requestId },
     include: {
-      connection: {
+      request: {
         select: {
           status: true,
-          student: { select: { id: true, name: true, photoUrl: true } },
-          mentor: { select: { id: true, name: true, photoUrl: true } },
+          requester: { select: { id: true, name: true, photoUrl: true } },
+          claimer: { select: { id: true, name: true, photoUrl: true } },
         },
       },
       messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
@@ -743,63 +827,72 @@ export async function getConversationForConnection(connectionId: string, viewerI
   });
 
   if (!conversation) {
-    const connection = await prisma.mentorConnection.findUnique({
-      where: { id: connectionId },
-      include: {
-        student: { select: { id: true, name: true, photoUrl: true } },
-        mentor: { select: { id: true, name: true, photoUrl: true } }
-      }
+    const request = await prisma.helpRequest.findUnique({
+      where: { id: requestId },
+      select: {
+        status: true,
+        respondedAt: true,
+        churchId: true,
+        requesterId: true,
+        claimerId: true,
+      },
     });
 
-    if (connection && (connection.status === CONNECTION_STATUS.ACCEPTED || connection.status === CONNECTION_STATUS.ENDED)) {
-      const [studentMemberships, mentorMemberships] = await Promise.all([
-        prisma.membership.findMany({ where: { userId: connection.studentId }, select: { churchId: true } }),
-        prisma.membership.findMany({ where: { userId: connection.mentorId }, select: { churchId: true } }),
-      ]);
-      const mentorChurchIds = new Set(mentorMemberships.map((m) => m.churchId));
-      const sharedChurchId = studentMemberships.find((m) => mentorChurchIds.has(m.churchId))?.churchId;
-      
-      if (sharedChurchId) {
-        await prisma.conversation.upsert({
-          where: { connectionId },
-          create: { connectionId, studentId: connection.studentId, mentorId: connection.mentorId, churchId: sharedChurchId, lastMessageAt: new Date() },
-          update: {},
-        });
-        
-        conversation = await prisma.conversation.findUnique({
-          where: { connectionId },
-          include: {
-            connection: {
-              select: {
-                status: true,
-                student: { select: { id: true, name: true } },
-                mentor: { select: { id: true, name: true } },
-              },
+    // Gate lazy-creation on requestContactVisible, not just claimerId being
+    // set — a targeted (PENDING) request already has claimerId set before
+    // the claimer ever responds, so a bare status/claimerId check would
+    // wrongly let a withdrawn-before-response request create a thread with
+    // someone who was never actually matched.
+    if (
+      request?.claimerId &&
+      requestContactVisible(request.status, request.respondedAt)
+    ) {
+      await prisma.conversation.upsert({
+        where: { requestId },
+        create: {
+          requestId,
+          requesterId: request.requesterId,
+          claimerId: request.claimerId,
+          churchId: request.churchId,
+          lastMessageAt: new Date(),
+        },
+        update: {},
+      });
+
+      conversation = await prisma.conversation.findUnique({
+        where: { requestId },
+        include: {
+          request: {
+            select: {
+              status: true,
+              requester: { select: { id: true, name: true, photoUrl: true } },
+              claimer: { select: { id: true, name: true, photoUrl: true } },
             },
-            messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
           },
-        });
-      }
+          messages: { orderBy: { createdAt: "asc" }, select: { id: true, body: true, senderId: true, createdAt: true, readAt: true } },
+        },
+      });
     }
   }
 
   // TypeScript loses the deep types of conversation when we assign it inside the if block.
   // We can assert or just verify it's there.
-  if (!conversation || !conversation.connection || !conversation.messages) return null;
-  if (conversation.studentId !== viewerId && conversation.mentorId !== viewerId) return null;
+  if (!conversation || !conversation.request || !conversation.messages) return null;
+  if (conversation.requesterId !== viewerId && conversation.claimerId !== viewerId) return null;
 
-  const isBlocked = await isBlockedPair(conversation.studentId, conversation.mentorId);
-  if (!canViewConversation(conversation.connection.status, isBlocked)) return null;
+  const isBlocked = await isBlockedPair(conversation.requesterId, conversation.claimerId);
+  if (!canViewConversation(conversation.request.status, isBlocked)) return null;
 
-  const otherParty = conversation.studentId === viewerId ? conversation.connection.mentor : conversation.connection.student;
+  const otherParty =
+    conversation.requesterId === viewerId ? conversation.request.claimer : conversation.request.requester;
   return {
     id: conversation.id,
-    connectionId: conversation.connectionId,
-    connectionStatus: conversation.connection.status,
+    requestId: conversation.requestId,
+    requestStatus: conversation.request.status,
     churchId: conversation.churchId,
     otherParty,
     messages: conversation.messages,
-    canSend: canSendMessage(conversation.connection.status, isBlocked),
+    canSend: canSendMessage(conversation.request.status, isBlocked),
   };
 }
 

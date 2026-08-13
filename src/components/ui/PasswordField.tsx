@@ -2,7 +2,7 @@
 
 import { useId, useState, type InputHTMLAttributes } from "react";
 import { Eye, EyeSlash, LockSimple } from "@phosphor-icons/react/dist/ssr";
-import { INPUT_CLASSES, FieldWrapper } from "@/components/ui/Field";
+import { INPUT_CLASSES } from "@/components/ui/Field";
 
 /**
  * A password input with a show/hide toggle. Testers couldn't tell whether
@@ -15,6 +15,15 @@ import { INPUT_CLASSES, FieldWrapper } from "@/components/ui/Field";
  * Field: this needs `useState` (so, a Client Component), and Field is
  * imported by server components. Keeping the client boundary here means
  * Field stays server-renderable everywhere it already is.
+ *
+ * Uses an explicit `htmlFor`/`id` association instead of FieldWrapper's
+ * usual wrapping `<label>` — wrapping both the input AND the toggle button
+ * in one `<label>` made the input's computed accessible name absorb the
+ * button's own "Show/Hide password" aria-label text (e.g. "Password Show
+ * password"), which in turn made `page.getByLabel("Password")` match two
+ * elements in every e2e spec that fills in a password. Keeping the button
+ * as the label's sibling, not its descendant, avoids polluting the input's
+ * name at all.
  *
  * The toggle is `type="button"` — without that it defaults to `submit`
  * inside a <form> and revealing your password would post the form.
@@ -32,7 +41,10 @@ export function PasswordField({
   const inputId = useId();
 
   return (
-    <FieldWrapper label={label} hint={hint}>
+    <div className="space-y-1.5">
+      <label htmlFor={inputId} className="text-sm font-semibold text-ink-soft">
+        {label}
+      </label>
       <div className="relative">
         <LockSimple
           weight="bold"
@@ -57,6 +69,7 @@ export function PasswordField({
           {revealed ? <EyeSlash weight="bold" className="size-4" /> : <Eye weight="bold" className="size-4" />}
         </button>
       </div>
-    </FieldWrapper>
+      {hint && <span className="block text-xs text-ink-muted">{hint}</span>}
+    </div>
   );
 }

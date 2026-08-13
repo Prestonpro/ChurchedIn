@@ -14,11 +14,13 @@ export type ActionResult = { error: string } | void;
  * actionable until the cache happened to expire.
  */
 function revalidateBlockSurfaces(blockedId: string): void {
-  revalidatePath("/student/mentors");
+  revalidatePath("/student/requests");
   revalidatePath("/events");
+  revalidatePath("/student/dashboard");
   revalidatePath("/volunteer/dashboard");
   revalidatePath("/volunteer/rides");
   revalidatePath("/admin/rides");
+  revalidatePath("/admin/requests");
   revalidatePath(`/profile/${blockedId}`);
 }
 

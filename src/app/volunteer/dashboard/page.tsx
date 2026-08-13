@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { CalendarBlank, Plus, HandHeart, UsersThree, Car, ChatCircleDots } from "@phosphor-icons/react/dist/ssr";
 import { requireRole } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { listConnectionsAsMentor, listOpenRideRequestsForChurch } from "@/lib/queries";
+import { listRequestsForClaimer, listOpenRequestsForChurch, listOpenRideRequestsForChurch } from "@/lib/queries";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { ContactEmail } from "@/components/ui/ContactEmail";
 import { Card } from "@/components/ui/Card";
@@ -13,9 +13,17 @@ import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { RespondToConnectionButtons, EndConnectionButton } from "@/components/ConnectionActions";
+import { RespondToRequestButtons } from "@/components/RequestActions";
+import { RequestActionButton } from "@/components/RequestActionButton";
 import { MeetingPlanEditor } from "@/components/MeetingPlanEditor";
-import { CONNECTION_STATUS, EVENT_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+import { cancelRequestAction, claimRequestAction } from "@/lib/actions/requests";
+import {
+  REQUEST_STATUS,
+  REQUEST_CATEGORY_LABELS,
+  EVENT_STATUS,
+  ROLES,
+  type EventCategory,
+} from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -35,7 +43,7 @@ export default async function VolunteerDashboardPage() {
   };
   const liveUpcoming = { ...eventScope, status: { not: EVENT_STATUS.CANCELLED }, startsAt: { gte: now } };
 
-  const [upcoming, recentPast, upcomingCount, memberCount, openRides, connections] = await Promise.all([
+  const [upcoming, recentPast, upcomingCount, memberCount, openRides, openRequests, requests] = await Promise.all([
     prisma.event.findMany({ where: liveUpcoming, orderBy: { startsAt: "asc" }, take: 10 }),
     prisma.event.findMany({
       where: { ...eventScope, startsAt: { lt: now } },
@@ -49,11 +57,12 @@ export default async function VolunteerDashboardPage() {
     prisma.event.count({ where: liveUpcoming }),
     prisma.membership.count({ where: { churchId } }),
     listOpenRideRequestsForChurch(churchId, user.id),
-    listConnectionsAsMentor(user.id),
+    listOpenRequestsForChurch(churchId, user.id),
+    listRequestsForClaimer(user.id),
   ]);
 
-  const pending = connections.filter((c) => c.status === CONNECTION_STATUS.PENDING);
-  const active = connections.filter((c) => c.status === CONNECTION_STATUS.ACCEPTED);
+  const pending = requests.filter((r) => r.status === REQUEST_STATUS.PENDING);
+  const active = requests.filter((r) => r.status === REQUEST_STATUS.CLAIMED);
   const nextEvent = upcoming[0];
   const myEvents = [...upcoming, ...recentPast];
 
@@ -83,7 +92,7 @@ export default async function VolunteerDashboardPage() {
         />
         <StatCard
           icon={HandHeart}
-          label="Friend requests waiting"
+          label="Requests waiting on you"
           value={pending.length}
           tone="bg-accent-100 text-accent-700"
           accent="border-l-accent-500"
@@ -98,6 +107,14 @@ export default async function VolunteerDashboardPage() {
           href="/volunteer/rides"
         />
         <StatCard
+          icon={HandHeart}
+          label="Open requests to claim"
+          value={openRequests.length}
+          tone="bg-warning-soft text-warning"
+          accent="border-l-warning"
+          href="#open-requests"
+        />
+        <StatCard
           icon={UsersThree}
           label="People in your church"
           value={memberCount}
@@ -109,21 +126,23 @@ export default async function VolunteerDashboardPage() {
 
       {pending.length > 0 && (
         <Card id="pending-requests" className="mb-6">
-          <h2 className="mb-3 font-bold text-ink">Friend requests waiting on you</h2>
+          <h2 className="mb-3 font-bold text-ink">Requests waiting on you</h2>
           <div className="space-y-3">
-            {pending.map((c) => (
+            {pending.map((r) => (
               <div
-                key={c.id}
+                key={r.id}
                 className="flex items-center justify-between gap-3 rounded-xl border border-line p-3"
               >
                 <div className="flex items-center gap-3">
-                  <Avatar name={c.student.name} size="sm" />
+                  <Avatar name={r.requester.name} size="sm" />
                   <div>
-                    <p className="text-sm font-semibold text-ink">{c.student.name}</p>
-                    {c.message && <p className="text-sm text-ink-muted">&quot;{c.message}&quot;</p>}
+                    <p className="text-sm font-semibold text-ink">
+                      {r.requester.name} <span className="font-normal text-ink-muted">· {REQUEST_CATEGORY_LABELS[r.category]}</span>
+                    </p>
+                    {r.description && <p className="text-sm text-ink-muted">&quot;{r.description}&quot;</p>}
                   </div>
                 </div>
-                <RespondToConnectionButtons connectionId={c.id} />
+                <RespondToRequestButtons requestId={r.id} />
               </div>
             ))}
           </div>
@@ -132,26 +151,70 @@ export default async function VolunteerDashboardPage() {
 
       {active.length > 0 && (
         <Card className="mb-6">
-          <h2 className="mb-3 font-bold text-ink">Your friends</h2>
+          <h2 className="mb-3 font-bold text-ink">Your requests</h2>
           <div className="space-y-3">
-            {active.map((c) => (
-              <div key={c.id} className="space-y-2.5 rounded-xl border border-line p-3">
+            {active.map((r) => (
+              <div key={r.id} className="space-y-2.5 rounded-xl border border-line p-3">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
-                    <Avatar name={c.student.name} size="sm" />
+                    <Avatar name={r.requester.name} size="sm" />
                     <div className="min-w-0">
-                      <p className="text-sm font-semibold text-ink">{c.student.name}</p>
-                      {c.student.email && <ContactEmail email={c.student.email} />}
+                      <p className="text-sm font-semibold text-ink">
+                        {r.requester.name} <span className="font-normal text-ink-muted">· {REQUEST_CATEGORY_LABELS[r.category]}</span>
+                      </p>
+                      {r.requester.email && <ContactEmail email={r.requester.email} />}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <LinkButton href={`/messages/${c.id}`} variant="secondary" size="sm">
+                    <LinkButton href={`/messages/${r.id}`} variant="secondary" size="sm">
                       <ChatCircleDots weight="bold" className="size-4" /> Message
                     </LinkButton>
-                    <EndConnectionButton connectionId={c.id} />
+                    <RequestActionButton
+                      requestId={r.id}
+                      action={cancelRequestAction}
+                      label="End"
+                      pendingLabel="Ending…"
+                      variant="ghost"
+                      confirmMessage="End this request?"
+                    />
                   </div>
                 </div>
-                <MeetingPlanEditor connectionId={c.id} plan={c.meetingPlan} />
+                <MeetingPlanEditor requestId={r.id} plan={r.meetingPlan} />
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
+
+      {openRequests.length > 0 && (
+        <Card id="open-requests" className="mb-6">
+          <h2 className="mb-3 font-bold text-ink">Open requests to claim</h2>
+          <p className="mb-3 text-sm text-ink-muted">
+            Untargeted requests from students at your church — any eligible member can claim one.
+          </p>
+          <div className="space-y-3">
+            {openRequests.map((r) => (
+              <div
+                key={r.id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-line p-3"
+              >
+                <div className="flex items-center gap-3">
+                  <Avatar name={r.requester.name} size="sm" />
+                  <div>
+                    <p className="text-sm font-semibold text-ink">
+                      {r.title} <span className="font-normal text-ink-muted">· {REQUEST_CATEGORY_LABELS[r.category]}</span>
+                    </p>
+                    <p className="text-xs text-ink-faint">Requested by {r.requester.name}</p>
+                    {r.description && <p className="text-sm text-ink-muted">{r.description}</p>}
+                  </div>
+                </div>
+                <RequestActionButton
+                  requestId={r.id}
+                  action={claimRequestAction}
+                  label="Claim"
+                  pendingLabel="Claiming…"
+                  variant="primary"
+                />
               </div>
             ))}
           </div>

@@ -5,14 +5,17 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { ROLES } from "@/lib/constants";
 import {
-  mentorProfileSchema,
+  volunteerProfileSchema,
   studentProfileSchema,
   firstIssueMessage,
 } from "@/lib/validation";
 
 export type ActionResult = { error: string } | { ok: true } | void;
 
-export async function updateMentorProfileAction(
+/** Replaces updateMentorProfileAction — these fields now live directly on
+ * User (carried forward from the deleted MentorProfile), so this is a
+ * single update instead of a User write plus a separate profile upsert. */
+export async function updateVolunteerProfileAction(
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
@@ -21,10 +24,10 @@ export async function updateMentorProfileAction(
     user.activeMembership?.role !== ROLES.VOLUNTEER &&
     user.activeMembership?.role !== ROLES.CHURCH_ADMIN
   ) {
-    return { error: "Only volunteers can set up a friend profile." };
+    return { error: "Only volunteers can set up a profile." };
   }
 
-  const parsed = mentorProfileSchema.safeParse({
+  const parsed = volunteerProfileSchema.safeParse({
     bio: formData.get("bio"),
     photoUrl: formData.get("photoUrl"),
     jobTitle: formData.get("jobTitle"),
@@ -36,49 +39,33 @@ export async function updateMentorProfileAction(
     linkedinUrl: formData.get("linkedinUrl"),
     facebookUrl: formData.get("facebookUrl"),
     instagramUrl: formData.get("instagramUrl"),
-    openToMentor: formData.get("openToMentor") === "on",
+    openToMentorship: formData.get("openToMentorship") === "on",
   });
   if (!parsed.success) {
     return { error: firstIssueMessage(parsed.error) };
   }
   const data = parsed.data;
 
-  // bio lives on User (shown identically on the Friends card and the public
-  // profile page), not on MentorProfile — two separate writes, same request.
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: user.id }, data: { bio: data.bio || null, photoUrl: data.photoUrl || null } }),
-    prisma.mentorProfile.upsert({
-      where: { userId: user.id },
-      create: {
-        userId: user.id,
-        jobTitle: data.jobTitle || null,
-        company: data.company || null,
-        industry: data.industry || null,
-        languages: data.languages || null,
-        hobbies: data.hobbies || null,
-        interests: data.interests || null,
-        linkedinUrl: data.linkedinUrl || null,
-        facebookUrl: data.facebookUrl || null,
-        instagramUrl: data.instagramUrl || null,
-        openToMentor: data.openToMentor,
-      },
-      update: {
-        jobTitle: data.jobTitle || null,
-        company: data.company || null,
-        industry: data.industry || null,
-        languages: data.languages || null,
-        hobbies: data.hobbies || null,
-        interests: data.interests || null,
-        linkedinUrl: data.linkedinUrl || null,
-        facebookUrl: data.facebookUrl || null,
-        instagramUrl: data.instagramUrl || null,
-        openToMentor: data.openToMentor,
-      },
-    }),
-  ]);
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      bio: data.bio || null,
+      photoUrl: data.photoUrl || null,
+      jobTitle: data.jobTitle || null,
+      company: data.company || null,
+      industry: data.industry || null,
+      languages: data.languages || null,
+      hobbies: data.hobbies || null,
+      interests: data.interests || null,
+      linkedinUrl: data.linkedinUrl || null,
+      facebookUrl: data.facebookUrl || null,
+      instagramUrl: data.instagramUrl || null,
+      openToMentorship: data.openToMentorship,
+    },
+  });
 
   revalidatePath("/volunteer/profile");
-  revalidatePath("/student/mentors");
+  revalidatePath("/student/requests");
   return { ok: true };
 }
 

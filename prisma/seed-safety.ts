@@ -233,7 +233,10 @@ export async function seedSafetyData() {
   const createdVolunteers: Record<string, Awaited<ReturnType<typeof prisma.user.upsert>>> = {};
 
   for (const vol of volunteers) {
-    const { bio, ...mentorProfileData } = vol.profile;
+    // Volunteer profile fields now live directly on User (carried forward
+    // from the deleted MentorProfile) — a flat create instead of a nested
+    // profile row.
+    const { bio, ...volunteerProfileData } = vol.profile;
     const user = await prisma.user.upsert({
       where: { email: vol.email },
       update: {},
@@ -251,28 +254,27 @@ export async function seedSafetyData() {
             createdAt: vol.createdAt
           }
         },
-        mentorProfile: {
-          create: mentorProfileData
-        }
+        ...volunteerProfileData
       }
     });
     createdVolunteers[vol.name] = user;
     console.log(`Created volunteer: ${vol.name}`);
   }
 
-  // Mentor Connections
-  await prisma.mentorConnection.createMany({
+  // Mentorship HelpRequests — replaces MentorConnection. ACCEPTED -> CLAIMED,
+  // PENDING/DECLINED map straight across (see requestState.ts).
+  await prisma.helpRequest.createMany({
     data: [
-      { studentId: testStudent.id, mentorId: createdVolunteers['Sarah Chen'].id, status: 'ACCEPTED', createdAt: new Date() },
-      { studentId: testStudent.id, mentorId: createdVolunteers['David Kim'].id, status: 'ACCEPTED', createdAt: new Date() },
-      { studentId: testStudent.id, mentorId: createdVolunteers['Emily Rodriguez'].id, status: 'PENDING', createdAt: new Date() },
-      { studentId: testStudent.id, mentorId: createdVolunteers['Robert Martinez'].id, status: 'DECLINED', createdAt: new Date() },
-      { studentId: testStudent.id, mentorId: createdVolunteers['Lisa Wang'].id, status: 'PENDING', createdAt: new Date() },
-      { studentId: testStudent.id, mentorId: createdVolunteers['Kevin Nguyen'].id, status: 'ACCEPTED', createdAt: new Date() },
+      { category: 'MENTORSHIP', title: 'Mentorship', requesterId: testStudent.id, claimerId: createdVolunteers['Sarah Chen'].id, churchId: church.id, status: 'CLAIMED', createdAt: new Date() },
+      { category: 'MENTORSHIP', title: 'Mentorship', requesterId: testStudent.id, claimerId: createdVolunteers['David Kim'].id, churchId: church.id, status: 'CLAIMED', createdAt: new Date() },
+      { category: 'MENTORSHIP', title: 'Mentorship', requesterId: testStudent.id, claimerId: createdVolunteers['Emily Rodriguez'].id, churchId: church.id, status: 'PENDING', createdAt: new Date() },
+      { category: 'MENTORSHIP', title: 'Mentorship', requesterId: testStudent.id, claimerId: createdVolunteers['Robert Martinez'].id, churchId: church.id, status: 'DECLINED', createdAt: new Date() },
+      { category: 'MENTORSHIP', title: 'Mentorship', requesterId: testStudent.id, claimerId: createdVolunteers['Lisa Wang'].id, churchId: church.id, status: 'PENDING', createdAt: new Date() },
+      { category: 'MENTORSHIP', title: 'Mentorship', requesterId: testStudent.id, claimerId: createdVolunteers['Kevin Nguyen'].id, churchId: church.id, status: 'CLAIMED', createdAt: new Date() },
     ],
     skipDuplicates: true
   });
-  console.log("Created Mentor Connections.");
+  console.log("Created Mentorship requests.");
 
   // Events
   const events = [

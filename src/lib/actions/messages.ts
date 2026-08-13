@@ -12,27 +12,27 @@ import { REPORT_STATUS } from "@/lib/constants";
 
 export type ActionResult = { error: string } | { ok: true } | void;
 
-async function requireConversationParticipant(connectionId: string) {
+async function requireConversationParticipant(requestId: string) {
   const user = await requireUser();
   const conversation = await prisma.conversation.findUnique({
-    where: { connectionId },
-    include: { connection: { select: { status: true } } },
+    where: { requestId },
+    include: { request: { select: { status: true } } },
   });
   if (!conversation) {
     return { user, conversation: null, error: "That conversation doesn't exist." };
   }
-  if (conversation.studentId !== user.id && conversation.mentorId !== user.id) {
+  if (conversation.requesterId !== user.id && conversation.claimerId !== user.id) {
     return { user, conversation: null, error: "You don't have access to this conversation." };
   }
   return { user, conversation, error: null };
 }
 
 export async function sendMessageAction(
-  connectionId: string,
+  requestId: string,
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const { user, conversation, error } = await requireConversationParticipant(connectionId);
+  const { user, conversation, error } = await requireConversationParticipant(requestId);
   if (!conversation) {
     return { error: error ?? "That conversation doesn't exist." };
   }
@@ -42,14 +42,15 @@ export async function sendMessageAction(
     return { error: firstIssueMessage(parsed.error) };
   }
 
-  const recipientId = conversation.studentId === user.id ? conversation.mentorId : conversation.studentId;
+  const recipientId = conversation.requesterId === user.id ? conversation.claimerId : conversation.requesterId;
   // Blocked-pair and status checks live here (not just at the conversation
-  // query layer) because sending is a stricter gate than viewing — an ENDED
-  // connection can still be *read*, per canViewConversation, but not
-  // written to. Re-checked on every send rather than trusted from an earlier
-  // page load, since either could have changed since.
+  // query layer) because sending is a stricter gate than viewing — a
+  // COMPLETED/CANCELLED request can still be *read*, per
+  // canViewConversation, but not written to. Re-checked on every send
+  // rather than trusted from an earlier page load, since either could have
+  // changed since.
   const isBlocked = await isBlockedPair(user.id, recipientId);
-  if (!canSendMessage(conversation.connection.status, isBlocked)) {
+  if (!canSendMessage(conversation.request.status, isBlocked)) {
     return { error: "You can't send messages in this conversation." };
   }
 
@@ -74,12 +75,12 @@ export async function sendMessageAction(
   if (shouldNotifyByEmail(recipientUnreadCountBefore)) {
     const recipient = await prisma.user.findUnique({ where: { id: recipientId }, select: { email: true } });
     if (recipient) {
-      const email = newMessageEmail({ senderName: user.name, connectionId });
+      const email = newMessageEmail({ senderName: user.name, requestId });
       await sendEmail({ to: recipient.email, subject: email.subject, body: email.text, html: email.html });
     }
   }
 
-  revalidatePath(`/messages/${connectionId}`);
+  revalidatePath(`/messages/${requestId}`);
   revalidatePath("/messages");
   return { ok: true };
 }
@@ -89,11 +90,11 @@ export async function sendMessageAction(
  * stored on the conversation), so it lands in that church's review queue
  * regardless of which participant filed it. */
 export async function reportConversationAction(
-  connectionId: string,
+  requestId: string,
   _prev: ActionResult,
   formData: FormData,
 ): Promise<ActionResult> {
-  const { user, conversation, error } = await requireConversationParticipant(connectionId);
+  const { user, conversation, error } = await requireConversationParticipant(requestId);
   if (!conversation) {
     return { error: error ?? "That conversation doesn't exist." };
   }
@@ -106,7 +107,7 @@ export async function reportConversationAction(
     return { error: firstIssueMessage(parsed.error) };
   }
 
-  const reportedUserId = conversation.studentId === user.id ? conversation.mentorId : conversation.studentId;
+  const reportedUserId = conversation.requesterId === user.id ? conversation.claimerId : conversation.requesterId;
 
   await prisma.report.create({
     data: {

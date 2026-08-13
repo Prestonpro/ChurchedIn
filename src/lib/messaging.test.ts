@@ -1,37 +1,42 @@
 import { describe, it, expect } from "vitest";
 import { canSendMessage, canViewConversation, unreadCountFor, shouldNotifyByEmail } from "@/lib/messaging";
-import { CONNECTION_STATUS } from "@/lib/constants";
+import { REQUEST_STATUS } from "@/lib/constants";
 
 describe("canSendMessage", () => {
-  it("is true only for ACCEPTED and not blocked", () => {
-    expect(canSendMessage(CONNECTION_STATUS.ACCEPTED, false)).toBe(true);
+  it("is true only for CLAIMED and not blocked", () => {
+    expect(canSendMessage(REQUEST_STATUS.CLAIMED, false)).toBe(true);
   });
 
-  it("is false for ACCEPTED when the pair is blocked", () => {
-    expect(canSendMessage(CONNECTION_STATUS.ACCEPTED, true)).toBe(false);
+  it("is false for CLAIMED when the pair is blocked", () => {
+    expect(canSendMessage(REQUEST_STATUS.CLAIMED, true)).toBe(false);
   });
 
-  it("is false for PENDING, DECLINED, and ENDED", () => {
-    expect(canSendMessage(CONNECTION_STATUS.PENDING, false)).toBe(false);
-    expect(canSendMessage(CONNECTION_STATUS.DECLINED, false)).toBe(false);
-    expect(canSendMessage(CONNECTION_STATUS.ENDED, false)).toBe(false);
+  it("is false for PENDING, OPEN, DECLINED, COMPLETED, and CANCELLED", () => {
+    expect(canSendMessage(REQUEST_STATUS.PENDING, false)).toBe(false);
+    expect(canSendMessage(REQUEST_STATUS.OPEN, false)).toBe(false);
+    expect(canSendMessage(REQUEST_STATUS.DECLINED, false)).toBe(false);
+    expect(canSendMessage(REQUEST_STATUS.COMPLETED, false)).toBe(false);
+    expect(canSendMessage(REQUEST_STATUS.CANCELLED, false)).toBe(false);
   });
 });
 
 describe("canViewConversation", () => {
-  it("is true for ACCEPTED and ENDED (read-only history)", () => {
-    expect(canViewConversation(CONNECTION_STATUS.ACCEPTED, false)).toBe(true);
-    expect(canViewConversation(CONNECTION_STATUS.ENDED, false)).toBe(true);
+  it("is true for CLAIMED, COMPLETED, and CANCELLED (read-only history)", () => {
+    expect(canViewConversation(REQUEST_STATUS.CLAIMED, false)).toBe(true);
+    expect(canViewConversation(REQUEST_STATUS.COMPLETED, false)).toBe(true);
+    expect(canViewConversation(REQUEST_STATUS.CANCELLED, false)).toBe(true);
   });
 
-  it("is false for PENDING and DECLINED (never messaged, nothing to view)", () => {
-    expect(canViewConversation(CONNECTION_STATUS.PENDING, false)).toBe(false);
-    expect(canViewConversation(CONNECTION_STATUS.DECLINED, false)).toBe(false);
+  it("is false for PENDING, OPEN, and DECLINED (never messaged, nothing to view)", () => {
+    expect(canViewConversation(REQUEST_STATUS.PENDING, false)).toBe(false);
+    expect(canViewConversation(REQUEST_STATUS.OPEN, false)).toBe(false);
+    expect(canViewConversation(REQUEST_STATUS.DECLINED, false)).toBe(false);
   });
 
-  it("is false whenever the pair is blocked, even for ACCEPTED/ENDED history", () => {
-    expect(canViewConversation(CONNECTION_STATUS.ACCEPTED, true)).toBe(false);
-    expect(canViewConversation(CONNECTION_STATUS.ENDED, true)).toBe(false);
+  it("is false whenever the pair is blocked, even for CLAIMED/COMPLETED/CANCELLED history", () => {
+    expect(canViewConversation(REQUEST_STATUS.CLAIMED, true)).toBe(false);
+    expect(canViewConversation(REQUEST_STATUS.COMPLETED, true)).toBe(false);
+    expect(canViewConversation(REQUEST_STATUS.CANCELLED, true)).toBe(false);
   });
 });
 

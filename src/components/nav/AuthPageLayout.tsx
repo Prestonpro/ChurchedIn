@@ -5,7 +5,7 @@ import { HandHeart } from "@phosphor-icons/react/dist/ssr";
 export function AuthPageLayout({
   children,
   panelTitle = "A church-by-church home base for hospitality.",
-  panelBody = "Events, RSVPs, and friend connections, organized per church so students always know where to find their people.",
+  panelBody = "Events, RSVPs, and mentor connections, organized per church so students always know where to find their people.",
 }: {
   children: React.ReactNode;
   panelTitle?: string;
