@@ -341,29 +341,36 @@ export async function listOpenRideRequestsForChurch(churchId: string, viewerId: 
     }));
 }
 
-/** Read-only ride overview for a church's leader — every status, no
- * contact info at all (not even once claimed): an admin isn't a party to
- * the ride the way the assigned volunteer is, so this deliberately doesn't
- * reuse rideContactVisible's "reveal once claimed" rule, which is scoped to
- * the two people actually involved. FIRST_VISIT rows still get the
- * first-name-only treatment regardless of status, same reasoning as
- * listOpenRideRequestsForChurch. */
-export async function listAllRideRequestsForChurch(churchId: string) {
+/** Ride overview for a church's leader — every status, at every church
+ * request. A leader isn't a party to a ride claimed by someone else the way
+ * the assigned volunteer is, so contact info for those still stays hidden
+ * (rideContactVisible's "reveal once claimed" rule is scoped to the two
+ * people actually involved). But a leader CAN claim a request themself
+ * (see claimRideRequestAction) — for the one row where `volunteerId ===
+ * viewerId`, they're now the assigned volunteer, so that row's student
+ * contact info is revealed the same way listClaimedRideRequestsForVolunteer
+ * reveals it. FIRST_VISIT rows still get the first-name-only treatment
+ * regardless of status, same reasoning as listOpenRideRequestsForChurch. */
+export async function listAllRideRequestsForChurch(churchId: string, viewerId: string) {
   const rides = await prisma.rideRequest.findMany({
     where: { churchId },
     include: {
-      student: { select: { id: true, name: true, photoUrl: true } },
+      student: { select: { id: true, name: true, email: true, photoUrl: true } },
       volunteer: { select: { id: true, name: true } },
     },
     orderBy: { date: "desc" },
   });
-  return rides.map((r) => ({
-    ...r,
-    student:
+  return rides.map((r) => {
+    const isMyClaim = r.volunteerId === viewerId;
+    const student =
       r.type === RIDE_REQUEST_TYPE.FIRST_VISIT
         ? { ...r.student, name: r.student.name.split(" ")[0] }
-        : r.student,
-  }));
+        : r.student;
+    return {
+      ...r,
+      student: { ...student, email: isMyClaim && rideContactVisible(r.status) ? student.email : null },
+    };
+  });
 }
 
 // Both listRideRequests* functions strip the other party's email from

@@ -137,11 +137,19 @@ async function requireRideParticipant(rideId: string) {
 /** Claims an OPEN ride request — any volunteer at the same church can claim
  * any open request; only reveals contact info to each other once claimed
  * (PLAN.md's contact-reveal safety rule, applied here for the same reason
- * it applies to mentor connections). */
+ * it applies to mentor connections). A church leader can claim one too —
+ * previously CHURCH_ADMIN was flatly rejected here, and /admin/rides was a
+ * pure read-only board with nothing to do when nobody had claimed a
+ * request yet. Full "suggest a specific volunteer" workflow is a bigger,
+ * separate feature; this is the minimal fix for "the leader had no way to
+ * respond." */
 export async function claimRideRequestAction(rideId: string): Promise<ActionResult> {
   const { user, ride } = await requireRideParticipant(rideId);
-  if (!user.activeMembership || user.activeMembership.role !== ROLES.VOLUNTEER) {
-    return { error: "Only volunteers can claim a ride." };
+  if (
+    !user.activeMembership ||
+    (user.activeMembership.role !== ROLES.VOLUNTEER && user.activeMembership.role !== ROLES.CHURCH_ADMIN)
+  ) {
+    return { error: "Only volunteers or church leaders can claim a ride." };
   }
   if (ride.churchId !== user.activeMembership.churchId) {
     return { error: "This ride request isn't at your church." };
