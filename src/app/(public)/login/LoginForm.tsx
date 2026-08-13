@@ -2,9 +2,10 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
-import { EnvelopeSimple, LockSimple } from "@phosphor-icons/react/dist/ssr";
+import { EnvelopeSimple } from "@phosphor-icons/react/dist/ssr";
 import { loginAction } from "@/lib/actions/auth";
 import { Field, FormError } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export function LoginForm() {
@@ -22,12 +23,10 @@ export function LoginForm() {
         required
       />
       <div>
-        <Field
+        <PasswordField
           label="Password"
           name="password"
-          type="password"
           autoComplete="current-password"
-          icon={LockSimple}
           required
         />
         <Link

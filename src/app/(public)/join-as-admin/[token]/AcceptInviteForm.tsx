@@ -1,9 +1,10 @@
 "use client";
 
 import { useActionState } from "react";
-import { User, LockSimple } from "@phosphor-icons/react/dist/ssr";
+import { User } from "@phosphor-icons/react/dist/ssr";
 import { acceptNewCoAdminAction } from "@/lib/actions/churchInvites";
 import { Field, FormError } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export function AcceptInviteForm({ token }: { token: string }) {
@@ -14,12 +15,10 @@ export function AcceptInviteForm({ token }: { token: string }) {
     <form action={formAction} className="space-y-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
       <Field label="Your name" name="name" icon={User} required />
-      <Field
+      <PasswordField
         label="Password"
         name="password"
-        type="password"
         autoComplete="new-password"
-        icon={LockSimple}
         hint="At least 8 characters."
         required
       />

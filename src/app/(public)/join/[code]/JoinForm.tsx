@@ -2,9 +2,10 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
-import { EnvelopeSimple, LockSimple, User, HandHeart, GraduationCap } from "@phosphor-icons/react/dist/ssr";
+import { EnvelopeSimple, User, HandHeart, GraduationCap } from "@phosphor-icons/react/dist/ssr";
 import { joinChurchAction, joinChurchAsExistingUserAction } from "@/lib/actions/auth";
 import { Field, FormError } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 import { GoogleButton, OrDivider } from "@/components/ui/GoogleButton";
 
@@ -77,12 +78,10 @@ export function JoinForm({ code, isLoggedIn }: { code: string; isLoggedIn?: bool
 
         <Field label="Your name" name="name" icon={User} required />
         <Field label="Email" name="email" type="email" autoComplete="email" icon={EnvelopeSimple} required />
-        <Field
+        <PasswordField
           label="Password"
           name="password"
-          type="password"
           autoComplete="new-password"
-          icon={LockSimple}
           hint="At least 8 characters."
           required
         />

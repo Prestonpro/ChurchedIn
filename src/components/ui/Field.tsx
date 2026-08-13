@@ -2,8 +2,23 @@ import { type InputHTMLAttributes, type TextareaHTMLAttributes, type SelectHTMLA
 import type { Icon } from "@phosphor-icons/react";
 import { WarningCircle } from "@phosphor-icons/react/dist/ssr";
 
-const INPUT_CLASSES =
+/** Exported so PasswordField can reuse the exact same input styling —
+ * it can't just render a <Field> because it needs to own the input's
+ * `type` to toggle it, and it adds a trailing show/hide button. */
+export const INPUT_CLASSES =
   "w-full min-h-11 rounded-lg border border-line-strong bg-white px-3.5 py-2.5 text-base text-ink placeholder:text-ink-faint transition-brand hover:border-ink-faint focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100 sm:text-sm";
+
+export function FieldWrapper({
+  label,
+  hint,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  children: React.ReactNode;
+}) {
+  return <Wrapper label={label} hint={hint}>{children}</Wrapper>;
+}
 
 function Wrapper({
   label,

@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { LockSimple } from "@phosphor-icons/react/dist/ssr";
 import { resetPasswordAction } from "@/lib/actions/passwordReset";
-import { Field, FormError } from "@/components/ui/Field";
+import { FormError } from "@/components/ui/Field";
+import { PasswordField } from "@/components/ui/PasswordField";
 import { SubmitButton } from "@/components/ui/SubmitButton";
 
 export function ResetPasswordForm({ token }: { token: string }) {
@@ -13,21 +13,17 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <form action={formAction} className="space-y-4">
       <FormError message={state && "error" in state ? state.error : undefined} />
-      <Field
+      <PasswordField
         label="New password"
         name="password"
-        type="password"
         autoComplete="new-password"
-        icon={LockSimple}
         hint="At least 8 characters."
         required
       />
-      <Field
+      <PasswordField
         label="Confirm new password"
         name="confirmPassword"
-        type="password"
         autoComplete="new-password"
-        icon={LockSimple}
         required
       />
       <SubmitButton pendingText="Saving…" className="w-full">
