@@ -28,30 +28,30 @@ function navLinksForRole(role: Role, unseenEvents: boolean, churchId: string, un
   if (role === ROLES.CHURCH_ADMIN) {
     return [
       { href: "/admin/dashboard", label: "Dashboard", iconKey: "dashboard" },
-      events,
-      discover,
       { href: "/admin/rides", label: "Rides", iconKey: "rides" },
       messages,
       { href: "/admin/reports", label: "Reports", iconKey: "reports" },
       { href: `/churches/${churchId}/settings`, label: "Church settings", iconKey: "settings" },
+      events,
+      discover,
     ];
   }
   if (role === ROLES.VOLUNTEER) {
     return [
       { href: "/volunteer/dashboard", label: "Dashboard", iconKey: "dashboard" },
+      { href: "/volunteer/rides", label: "Rides", iconKey: "rides" },
+      messages,
       events,
       discover,
-      messages,
-      { href: "/volunteer/rides", label: "Rides", iconKey: "rides" },
     ];
   }
   return [
     { href: "/student/dashboard", label: "Dashboard", iconKey: "dashboard" },
+    { href: "/student/requests", label: "Requests", iconKey: "mentors" },
+    { href: "/student/rides", label: "Rides", iconKey: "rides" },
+    messages,
     events,
     discover,
-    { href: "/student/requests", label: "Requests", iconKey: "mentors" },
-    messages,
-    { href: "/student/rides", label: "Rides", iconKey: "rides" },
   ];
 }
 
