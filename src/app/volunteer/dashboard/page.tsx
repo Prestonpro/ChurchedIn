@@ -43,27 +43,35 @@ export default async function VolunteerDashboardPage() {
   };
   const liveUpcoming = { ...eventScope, status: { not: EVENT_STATUS.CANCELLED }, startsAt: { gte: now } };
 
-  const [upcoming, recentPast, upcomingCount, memberCount, openRides, openRequests, requests] = await Promise.all([
-    prisma.event.findMany({ where: liveUpcoming, orderBy: { startsAt: "asc" }, take: 10 }),
-    prisma.event.findMany({
-      where: { ...eventScope, startsAt: { lt: now } },
-      orderBy: { startsAt: "desc" },
-      take: 5,
-    }),
-    // A count, not `upcoming.length`: the list is capped at 10 for display, and
-    // reusing its length made the stat silently plateau there. Ordering was
-    // also descending before, so the ten *furthest-future* events were the ones
-    // kept — which meant "Next:" could name the wrong gathering entirely.
-    prisma.event.count({ where: liveUpcoming }),
-    prisma.membership.count({ where: { churchId } }),
-    listOpenRideRequestsForChurch(churchId, user.id),
-    listOpenRequestsForChurch(churchId, user.id),
-    listRequestsForClaimer(user.id),
-  ]);
+  const [upcoming, recentPast, memberCount, openRides, openRequests, requests, churchUpcomingCount, churchNextEvent] =
+    await Promise.all([
+      prisma.event.findMany({ where: liveUpcoming, orderBy: { startsAt: "asc" }, take: 10 }),
+      prisma.event.findMany({
+        where: { ...eventScope, startsAt: { lt: now } },
+        orderBy: { startsAt: "desc" },
+        take: 5,
+      }),
+      prisma.membership.count({ where: { churchId } }),
+      listOpenRideRequestsForChurch(churchId, user.id),
+      listOpenRequestsForChurch(churchId, user.id),
+      listRequestsForClaimer(user.id),
+      // The stat card below links to /events (every gathering at the
+      // church, not just ones this volunteer hosts) — it needs to be
+      // counted the same way, or it reads as a bug: "0 gatherings" next to
+      // a church that clearly has several. `eventScope`'s
+      // hosting-or-cohosting count still powers "Gatherings you're
+      // planning or helping with" further down, which is the one place
+      // that scope is actually correct.
+      prisma.event.count({ where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: now } } }),
+      prisma.event.findFirst({
+        where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: now } },
+        orderBy: { startsAt: "asc" },
+        select: { id: true, title: true },
+      }),
+    ]);
 
   const pending = requests.filter((r) => r.status === REQUEST_STATUS.PENDING);
   const active = requests.filter((r) => r.status === REQUEST_STATUS.CLAIMED);
-  const nextEvent = upcoming[0];
   const myEvents = [...upcoming, ...recentPast];
 
   return (
@@ -84,8 +92,8 @@ export default async function VolunteerDashboardPage() {
         <StatCard
           icon={CalendarBlank}
           label="Upcoming gatherings"
-          value={upcomingCount}
-          sublabel={nextEvent ? `Next: ${nextEvent.title}` : undefined}
+          value={churchUpcomingCount}
+          sublabel={churchNextEvent ? `Next: ${churchNextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
           href="/events"

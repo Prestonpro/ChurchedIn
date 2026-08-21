@@ -8,7 +8,7 @@ import { LoginForm } from "./LoginForm";
 
 export const metadata: Metadata = {
   title: "Log in",
-  description: "Log in to ChurchedIn to see your church's gatherings, rides, and friend connections.",
+  description: "Log in to ChurchedIn to see your church's gatherings, rides, and requests.",
 };
 
 export default async function LoginPage({
@@ -21,7 +21,7 @@ export default async function LoginPage({
   return (
     <AuthPageLayout
       panelTitle="Welcome back."
-      panelBody="Log in to see what's coming up at your church: events, RSVPs, and any friend requests waiting on you."
+      panelBody="Log in to see what's coming up at your church: events, RSVPs, and any requests waiting on you."
     >
       <h1 className="text-2xl font-extrabold text-ink">Log in</h1>
       <p className="mt-1.5 text-sm text-ink-muted">Good to see you again.</p>

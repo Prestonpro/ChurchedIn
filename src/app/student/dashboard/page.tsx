@@ -11,15 +11,16 @@ import { LinkButton } from "@/components/ui/Button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatCard } from "@/components/ui/StatCard";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
-import { REQUEST_STATUS, RSVP_STATUS, RIDE_STATUS, ROLES, type EventCategory } from "@/lib/constants";
+import { EVENT_STATUS, REQUEST_STATUS, RSVP_STATUS, RIDE_STATUS, ROLES, type EventCategory } from "@/lib/constants";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default async function StudentDashboardPage() {
   const user = await requireRole(ROLES.STUDENT);
   const churchId = user.activeMembership!.churchId;
+  const now = new Date();
 
-  const [rsvps, requests, memberCount, rides] = await Promise.all([
+  const [rsvps, requests, memberCount, rides, churchUpcomingCount, churchNextEvent] = await Promise.all([
     prisma.eventRsvp.findMany({
       where: { userId: user.id, status: { not: RSVP_STATUS.CANCELLED } },
       include: { event: true },
@@ -28,13 +29,22 @@ export default async function StudentDashboardPage() {
     listRequestsForRequester(user.id),
     prisma.membership.count({ where: { churchId } }),
     listRideRequestsForStudent(user.id),
+    // The stat card below links to /events (every gathering at the church),
+    // so it's counted the same way — not by this student's own RSVPs, which
+    // would read "0 upcoming gatherings" next to a church with plenty on
+    // the calendar just because they haven't RSVP'd to anything yet.
+    prisma.event.count({ where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: now } } }),
+    prisma.event.findFirst({
+      where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: now } },
+      orderBy: { startsAt: "asc" },
+      select: { id: true, title: true },
+    }),
   ]);
   const activeRequestCount = requests.filter((r) => r.status === REQUEST_STATUS.CLAIMED).length;
   const activeRides = rides.filter(
     (r) => r.status === RIDE_STATUS.OPEN || r.status === RIDE_STATUS.CLAIMED,
   ).length;
-  const upcoming = rsvps.filter((r) => r.event.startsAt >= new Date());
-  const nextRsvp = [...upcoming].sort((a, b) => a.event.startsAt.getTime() - b.event.startsAt.getTime())[0];
+  const upcoming = rsvps.filter((r) => r.event.startsAt >= now);
 
   return (
     <AuthShell user={user}>
@@ -54,8 +64,8 @@ export default async function StudentDashboardPage() {
         <StatCard
           icon={CalendarBlank}
           label="Upcoming gatherings"
-          value={upcoming.length}
-          sublabel={nextRsvp ? `Next: ${nextRsvp.event.title}` : undefined}
+          value={churchUpcomingCount}
+          sublabel={churchNextEvent ? `Next: ${churchNextEvent.title}` : undefined}
           tone="bg-cat-study-soft text-cat-study"
           accent="border-l-cat-study"
           href="/events"
