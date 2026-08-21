@@ -14,7 +14,7 @@ import {
   IdentificationCard,
 } from "@phosphor-icons/react/dist/ssr";
 import { requireUser } from "@/lib/auth";
-import { getChurchProfile, listEventsForChurch } from "@/lib/queries";
+import { getChurchProfile, listEventsForChurch, listPublicUpcomingEventsForChurch } from "@/lib/queries";
 import { categoryStyle } from "@/lib/eventCategoryStyle";
 import { AuthShell } from "@/components/nav/AuthShell";
 import { Card } from "@/components/ui/Card";
@@ -51,14 +51,15 @@ export default async function ChurchProfilePage({
   const canManageSettings = membership?.role === ROLES.CHURCH_ADMIN;
 
   // A church's own profile (name, bio, service times, location) is public by
-  // design — see listDiscoverableChurches' doc comment. Its *event feed* is
-  // not: that's per-church operational data, and rendering titles/dates here
-  // to any signed-in visitor (including a church-less /browse account, which
-  // reaches this page straight off /discover) leaked it. Non-members get the
-  // upcoming count only, which /discover already publishes anyway.
-  const [church, events] = await Promise.all([
+  // design — see listDiscoverableChurches' doc comment. A non-member gets a
+  // preview of its upcoming events (title/date/category only, via
+  // listPublicUpcomingEventsForChurch) so they can see what they'd be
+  // joining before committing — but never the full RSVP/attendee list
+  // listEventsForChurch carries, which stays member-only operational data.
+  const [church, events, publicEvents] = await Promise.all([
     getChurchProfile(id),
     isMember ? listEventsForChurch(id) : Promise.resolve([]),
+    isMember ? Promise.resolve([]) : listPublicUpcomingEventsForChurch(id),
   ]);
   if (!church) {
     notFound();
@@ -142,15 +143,37 @@ export default async function ChurchProfilePage({
               <CalendarBlank weight="bold" className="size-4.5 text-brand-600" /> Upcoming gatherings
             </h2>
             {!isMember ? (
-              <EmptyState
-                icon={CalendarBlank}
-                title={
-                  church.upcomingEventCount === 0
-                    ? "Nothing on the calendar yet"
-                    : `${church.upcomingEventCount} upcoming ${church.upcomingEventCount === 1 ? "gathering" : "gatherings"}`
-                }
-                body="Join this church to see what's happening and RSVP."
-              />
+              publicEvents.length === 0 ? (
+                <EmptyState
+                  icon={CalendarBlank}
+                  title="Nothing on the calendar yet"
+                  body="Check back soon, or join to get notified when something's posted."
+                />
+              ) : (
+                <div className="space-y-2">
+                  {publicEvents.map((event) => {
+                    const style = categoryStyle(event.category as EventCategory);
+                    const Icon = style.icon;
+                    return (
+                      <div
+                        key={event.id}
+                        className="flex items-center justify-between rounded-xl border border-line p-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`flex size-9 items-center justify-center rounded-lg ${style.bg} ${style.text}`}>
+                            <Icon weight="fill" className="size-4.5" />
+                          </span>
+                          <span className="text-sm font-semibold text-ink">{event.title}</span>
+                        </div>
+                        <span className="text-xs text-ink-muted">{event.startsAt.toLocaleDateString()}</span>
+                      </div>
+                    );
+                  })}
+                  <p className="pt-1 text-center text-xs text-ink-faint">
+                    Join {church.name} to RSVP and see full details.
+                  </p>
+                </div>
+              )
             ) : upcoming.length === 0 ? (
               <EmptyState icon={CalendarBlank} title="Nothing on the calendar yet" />
             ) : (

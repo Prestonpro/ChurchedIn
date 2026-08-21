@@ -37,6 +37,20 @@ export function listEventsForChurch(churchId: string) {
   });
 }
 
+/** Lightweight, non-member-safe preview of a church's upcoming events for
+ * its public profile page (see ChurchProfilePage) — title, date, and
+ * category only. Unlike listEventsForChurch, this never includes
+ * RSVPs/attendees, so it's safe to show a signed-in visitor who hasn't
+ * joined the church yet. */
+export function listPublicUpcomingEventsForChurch(churchId: string) {
+  return prisma.event.findMany({
+    where: { churchId, status: EVENT_STATUS.PUBLISHED, startsAt: { gte: new Date() } },
+    orderBy: { startsAt: "asc" },
+    select: { id: true, title: true, startsAt: true, category: true },
+    take: 10,
+  });
+}
+
 export function getEventById(eventId: string) {
   return prisma.event.findUnique({
     where: { id: eventId },
